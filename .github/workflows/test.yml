@@ -1,0 +1,9 @@
+name: Test Actions Visibility
+on:
+  push:
+    branches: [ main ]
+jobs:
+  ok:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Actions are working"
