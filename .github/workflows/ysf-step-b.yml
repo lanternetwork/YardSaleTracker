@@ -1,0 +1,172 @@
+name: YSF Step B
+on:
+  workflow_dispatch:
+
+jobs:
+  step_b:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Apply Step B changes
+        shell: bash
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          set -e
+          REPO="lanternetwork/YardSaleTracker"
+          BRANCH="ysf-step-B-${GITHUB_RUN_ID}"
+
+          git config user.name "lanternetbot"
+          git config user.email "bot@example.com"
+          git checkout -b "$BRANCH"
+
+          mkdir -p "lib/supabase" "lib" "state" "components" "app/(app)/sale/[id]" "app/(auth)/signin" "app/api/scrape" "supabase/functions/craigslist" "tests/unit" "tests/e2e" "public/icons"
+
+          cat > lib/supabase/client.ts << 'EOF'
+import { createBrowserClient } from '@supabase/ssr'
+export const createSupabaseBrowser = () =>
+  createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+EOF
+
+          cat > lib/supabase/server.ts << 'EOF'
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
+export function createSupabaseServer() {
+  const cookieStore = cookies()
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { get: (name) => cookieStore.get(name)?.value } }
+  )
+}
+EOF
+
+          cat > lib/types.ts << 'EOF'
+export type Sale = {
+  id: string
+  title: string
+  description?: string
+  address?: string
+  city?: string
+  state?: string
+  zip?: string
+  lat?: number
+  lng?: number
+  start_at?: string
+  end_at?: string
+  tags: string[]
+  price_min?: number
+  price_max?: number
+  photos: string[]
+  contact?: string
+  status: 'active'|'completed'|'cancelled'
+  source?: string
+}
+EOF
+
+          cat > lib/zodSchemas.ts << 'EOF'
+import { z } from 'zod'
+export const SaleSchema = z.object({
+  title: z.string().min(3),
+  description: z.string().optional(),
+  address: z.string().optional(),
+  start_at: z.string().optional(),
+  end_at: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  price_min: z.number().optional(),
+  price_max: z.number().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional()
+})
+EOF
+
+          cat > lib/distance.ts << 'EOF'
+export function haversineKm(a:{lat:number,lng:number}, b:{lat:number,lng:number}) {
+  const toRad = (n:number)=> (n*Math.PI)/180
+  const R=6371
+  const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng)
+  const sa=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2
+  return 2*R*Math.asin(Math.sqrt(sa))
+}
+EOF
+
+          mkdir -p state
+          cat > state/filters.ts << 'EOF'
+export type Filters = { q?: string; maxKm?: number; dateFrom?: string; dateTo?: string; tags?: string[]; min?: number; max?: number; category?: string }
+export const defaultFilters: Filters = { q:'', maxKm:25, tags:[] }
+EOF
+
+          mkdir -p components
+          cat > components/EmptyState.tsx << 'EOF'
+export default function EmptyState({ title="No Sales Found", cta }: { title?:string; cta?:React.ReactNode }) {
+  return (
+    <div className="text-center py-16 text-neutral-500">
+      <div className="text-6xl mb-4">🔎</div>
+      <div className="text-lg font-medium">{title}</div>
+      {cta ? <div className="mt-4">{cta}</div> : null}
+    </div>
+  )
+}
+EOF
+
+          cat > components/SaleCard.tsx << 'EOF'
+import Link from 'next/link'
+export default function SaleCard({sale}:{sale:any}) {
+  return (
+    <div className="rounded-xl border p-4 bg-white flex flex-col gap-2">
+      <div className="flex justify-between">
+        <h3 className="text-xl font-semibold">{sale.title}</h3>
+      </div>
+      <p className="text-sm text-neutral-600 line-clamp-2">{sale.description}</p>
+      <div className="text-sm">{sale.address}</div>
+      <div className="text-sm">{sale.start_at ? new Date(sale.start_at).toLocaleString() : null}</div>
+      <Link className="text-amber-600 font-medium" href={`/sale/${sale.id}`}>View Details →</Link>
+    </div>
+  )
+}
+EOF
+
+          mkdir -p "app/(app)/sale/[id]" "app/(auth)/signin"
+          cat > "app/(app)/sale/[id]/page.tsx" << 'EOF'
+export default function SaleDetail(){ return <main className="p-6">Not found.</main> }
+EOF
+          cat > "app/(auth)/signin/page.tsx" << 'EOF'
+'use client'
+export default function SignIn(){ return <div className="p-6">Sign in coming soon</div> }
+EOF
+
+          mkdir -p tests/unit tests/e2e
+          cat > plan.md << 'EOF'
+WIP plan; Steps B→H will populate.
+EOF
+
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.dependencies={...p.dependencies,'@supabase/supabase-js':'^2.45.4','@supabase/ssr':'^0.5.1','@tanstack/react-query':'^5.51.1','zod':'^3.23.8','@googlemaps/js-api-loader':'^1.16.8','clsx':'^2.1.1'};fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+
+          git add -A
+          git commit -m "feat(step-B): Supabase helpers, types, zod, filters stubs"
+          git push "https://x-access-token:${BOT_TOKEN}@github.com/${REPO}.git" HEAD:"$BRANCH"
+
+          cat > pr.json <<JSON
+          {
+            "title": "Step B: Supabase helpers + types + zod",
+            "head": "${BRANCH}",
+            "base": "main",
+            "body": "Adds Supabase helpers, types, zod schema, filters, basic components + plan.md."
+          }
+          JSON
+
+          curl -s -X POST \
+            -H "Authorization: token ${BOT_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/pulls" \
+            -d @pr.json
