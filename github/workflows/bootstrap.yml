@@ -1,6 +1,11 @@
 name: Bootstrap YardSaleFinder
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/bootstrap.yml'
+      - 'README.md'
 
 jobs:
   bootstrap:
