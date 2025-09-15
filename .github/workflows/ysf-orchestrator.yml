@@ -3,11 +3,9 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: "Which step to run"
+        description: "Which step to run (B-H)"
         required: true
         default: "B"
-        type: choice
-        options: ["B","C","D","E","F","G","H"]
 
 jobs:
   run:
@@ -22,17 +20,18 @@ jobs:
 
       - name: Apply step changes
         shell: bash
+        env:
+          STEP: ${{ github.event.inputs.step }}
         run: |
           set -e
-          STEP="${{ github.event.inputs.step }}"
           BRANCH="ysf-step-${STEP}-${{ github.run_id }}"
           git config user.name "lanternetbot"
           git config user.email "bot@example.com"
           git checkout -b "$BRANCH"
 
           if [ "$STEP" = "B" ]; then
-            mkdir -p lib/supabase lib state components app/"(app)"/sale/[id] app/"(auth)"/signin app/api/scrape supabase/functions/craigslist tests/unit tests/e2e public/icons
-            # Lib helpers
+            mkdir -p "lib/supabase" "lib" "state" "components" "app/(app)/sale/[id]" "app/(auth)/signin" "app/api/scrape" "supabase/functions/craigslist" "tests/unit" "tests/e2e" "public/icons"
+
             cat > lib/supabase/client.ts << 'EOF'
 import { createBrowserClient } from '@supabase/ssr'
 export const createSupabaseBrowser = () =>
@@ -41,6 +40,7 @@ export const createSupabaseBrowser = () =>
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 EOF
+
             cat > lib/supabase/server.ts << 'EOF'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
@@ -53,6 +53,7 @@ export function createSupabaseServer() {
   )
 }
 EOF
+
             cat > lib/types.ts << 'EOF'
 export type Sale = {
   id: string
@@ -75,6 +76,7 @@ export type Sale = {
   source?: string
 }
 EOF
+
             cat > lib/zodSchemas.ts << 'EOF'
 import { z } from 'zod'
 export const SaleSchema = z.object({
@@ -90,6 +92,7 @@ export const SaleSchema = z.object({
   lng: z.number().optional()
 })
 EOF
+
             cat > lib/distance.ts << 'EOF'
 export function haversineKm(a:{lat:number,lng:number}, b:{lat:number,lng:number}) {
   const toRad = (n:number)=> (n*Math.PI)/180
@@ -99,13 +102,13 @@ export function haversineKm(a:{lat:number,lng:number}, b:{lat:number,lng:number}
   return 2*R*Math.asin(Math.sqrt(sa))
 }
 EOF
+
             mkdir -p state
             cat > state/filters.ts << 'EOF'
 export type Filters = { q?: string; maxKm?: number; dateFrom?: string; dateTo?: string; tags?: string[]; min?: number; max?: number; category?: string }
 export const defaultFilters: Filters = { q:'', maxKm:25, tags:[] }
 EOF
 
-            # Minimal components/pages stubs to compile
             mkdir -p components
             cat > components/EmptyState.tsx << 'EOF'
 export default function EmptyState({ title="No Sales Found", cta }: { title?:string; cta?:React.ReactNode }) {
@@ -118,6 +121,7 @@ export default function EmptyState({ title="No Sales Found", cta }: { title?:str
   )
 }
 EOF
+
             cat > components/SaleCard.tsx << 'EOF'
 import Link from 'next/link'
 export default function SaleCard({sale}:{sale:any}) {
@@ -134,6 +138,7 @@ export default function SaleCard({sale}:{sale:any}) {
   )
 }
 EOF
+
             cat > components/SalesList.tsx << 'EOF'
 import SaleCard from './SaleCard'
 import EmptyState from './EmptyState'
@@ -147,7 +152,6 @@ export default function SalesList({ sales }:{sales:any[]}) {
 }
 EOF
 
-            # Sale detail and signin stubs
             mkdir -p "app/(app)/sale/[id]" "app/(auth)/signin"
             cat > "app/(app)/sale/[id]/page.tsx" << 'EOF'
 export default function SaleDetail(){ return <main className="p-6">Not found.</main> }
@@ -157,17 +161,12 @@ EOF
 export default function SignIn(){ return <div className="p-6">Sign in coming soon</div> }
 EOF
 
-            # Basic tests directory
             mkdir -p tests/unit tests/e2e
-
-            # plan.md placeholder
             cat > plan.md << 'EOF'
 WIP plan; Steps B→H will populate.
 EOF
 
-            # Update package.json with deps for later steps
             node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.dependencies={...p.dependencies,'@supabase/supabase-js':'^2.45.4','@supabase/ssr':'^0.5.1','@tanstack/react-query':'^5.51.1','zod':'^3.23.8','@googlemaps/js-api-loader':'^1.16.8','clsx':'^2.1.1'};fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
-
           fi
 
           git add -A
