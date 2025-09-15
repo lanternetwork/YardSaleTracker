@@ -1,0 +1,37 @@
+name: Bootstrap YardSaleFinder
+on:
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Scaffold Next.js app
+        run: |
+          npx --yes create-next-app@14 tmpapp --ts --eslint --tailwind --app --no-src-dir --import-alias @/* --use-npm
+          rsync -a tmpapp/ ./
+          rm -rf tmpapp
+
+      - name: Commit scaffold
+        run: |
+          git config user.name "lanternetbot"
+          git config user.email "bot@example.com"
+          git checkout -b bootstrap/step-a
+          git add -A
+          git commit -m "feat(bootstrap): Next.js 14 TS + Tailwind scaffold (Step A)"
+      - name: Push branch via bot token
+        env:
+          REPO: lanternetwork/YardSaleTracker
+          TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          git push "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:bootstrap/step-a
