@@ -14,17 +14,20 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Apply step changes
+      - name: Apply changes and open PR
         shell: bash
         env:
           STEP: ${{ github.event.inputs.step }}
+          REPO: lanternetwork/YardSaleTracker
+          TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           set -e
-          BRANCH="ysf-step-${STEP}-${{ github.run_id }}"
+          BRANCH="ysf-step-${STEP}-${GITHUB_RUN_ID}"
           git config user.name "lanternetbot"
           git config user.email "bot@example.com"
           git checkout -b "$BRANCH"
@@ -139,19 +142,6 @@ export default function SaleCard({sale}:{sale:any}) {
 }
 EOF
 
-            cat > components/SalesList.tsx << 'EOF'
-import SaleCard from './SaleCard'
-import EmptyState from './EmptyState'
-export default function SalesList({ sales }:{sales:any[]}) {
-  if (!sales?.length) return <EmptyState />
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {sales.map(s => <SaleCard key={s.id} sale={s} />)}
-    </div>
-  )
-}
-EOF
-
             mkdir -p "app/(app)/sale/[id]" "app/(auth)/signin"
             cat > "app/(app)/sale/[id]/page.tsx" << 'EOF'
 export default function SaleDetail(){ return <main className="p-6">Not found.</main> }
@@ -171,16 +161,8 @@ EOF
 
           git add -A
           git commit -m "feat(step-${STEP}): add files for step ${STEP}"
-
-      - name: Push branch and open PR
-        env:
-          REPO: lanternetwork/YardSaleTracker
-          TOKEN: ${{ secrets.BOT_TOKEN }}
-          STEP: ${{ github.event.inputs.step }}
-        run: |
-          set -e
-          BRANCH="ysf-step-${STEP}-${{ github.run_id }}"
           git push "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:"$BRANCH"
+
           curl -s -X POST \
             -H "Authorization: token ${TOKEN}" \
             -H "Accept: application/vnd.github+json" \
