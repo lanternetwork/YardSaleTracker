@@ -5,11 +5,13 @@ on:
     branches: [ main ]
     paths:
       - '.github/workflows/bootstrap.yml'
-      - 'README.md'
 
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,19 +23,32 @@ jobs:
         with:
           node-version: 20
 
-      - name: Scaffold Next.js app
+      - name: Scaffold Next.js app without install
         run: |
-          npx --yes create-next-app@14 tmpapp --ts --eslint --tailwind --app --no-src-dir --import-alias @/* --use-npm
-          rsync -a tmpapp/ ./
+          npx --yes create-next-app@14 tmpapp --ts --eslint --tailwind --app --no-src-dir --import-alias "@/*" --use-npm --no-install
+          rm -rf tmpapp/node_modules tmpapp/.next
+          shopt -s dotglob
+          cp -r tmpapp/* .
           rm -rf tmpapp
 
-      - name: Commit scaffold
+      - name: Ensure .gitignore excludes node_modules and build
+        run: |
+          cat << 'EOF' >> .gitignore
+          node_modules
+          .next
+          .vercel
+          *.log
+          .env*
+          EOF
+
+      - name: Create bootstrap branch commit
         run: |
           git config user.name "lanternetbot"
           git config user.email "bot@example.com"
           git checkout -b bootstrap/step-a
           git add -A
-          git commit -m "feat(bootstrap): Next.js 14 TS + Tailwind scaffold (Step A)"
+          git commit -m "feat(bootstrap): Next.js 14 TS + Tailwind scaffold (Step A) [no install]"
+
       - name: Push branch via bot token
         env:
           REPO: lanternetwork/YardSaleTracker
