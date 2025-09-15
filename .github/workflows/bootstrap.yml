@@ -169,17 +169,29 @@ jobs:
           .env*
           EOF
 
-      - name: Commit to bootstrap branch
+      - name: Commit to unique bootstrap branch
+        env:
+          BRANCH: bootstrap/step-a-${{ github.run_id }}
         run: |
           git config user.name "lanternetbot"
           git config user.email "bot@example.com"
-          git checkout -b bootstrap/step-a
+          git checkout -b "$BRANCH"
           git add -A
           git commit -m "feat(bootstrap): Minimal Next.js 14 + Tailwind scaffold (Step A) [no installs]"
 
-      - name: Push branch via bot token
+      - name: Push branch and open PR
         env:
           REPO: lanternetwork/YardSaleTracker
           TOKEN: ${{ secrets.BOT_TOKEN }}
+          BRANCH: bootstrap/step-a-${{ github.run_id }}
         run: |
-          git push "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:bootstrap/step-a
+          set -e
+          git push "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:"$BRANCH"
+          gh pr create \
+            --repo "$REPO" \
+            --head "$BRANCH" \
+            --base main \
+            --title "Step A: Scaffold (Minimal Next.js + Tailwind)" \
+            --body "Bootstrap scaffold for YardSaleFinder. Next steps will add pages and components."
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
