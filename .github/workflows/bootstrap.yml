@@ -179,7 +179,7 @@ jobs:
           git add -A
           git commit -m "feat(bootstrap): Minimal Next.js 14 + Tailwind scaffold (Step A) [no installs]"
 
-      - name: Push branch and open PR
+      - name: Push branch and open PR via API
         env:
           REPO: lanternetwork/YardSaleTracker
           TOKEN: ${{ secrets.BOT_TOKEN }}
@@ -187,11 +187,10 @@ jobs:
         run: |
           set -e
           git push "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:"$BRANCH"
-          gh pr create \
-            --repo "$REPO" \
-            --head "$BRANCH" \
-            --base main \
-            --title "Step A: Scaffold (Minimal Next.js + Tailwind)" \
-            --body "Bootstrap scaffold for YardSaleFinder. Next steps will add pages and components."
+          curl -s -X POST \
+            -H "Authorization: token ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${REPO}/pulls \
+            -d "{\"title\":\"Step A: Scaffold (Minimal Next.js + Tailwind)\",\"head\":\"${BRANCH}\",\"base\":\"main\",\"body\":\"Bootstrap scaffold for YardSaleFinder. Next steps will add pages and components.\"}"
         env:
           GH_TOKEN: ${{ secrets.BOT_TOKEN }}
