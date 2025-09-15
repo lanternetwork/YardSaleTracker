@@ -1,14 +1,9 @@
-name: YSF Orchestrator
+name: YSF Step B
 on:
   workflow_dispatch:
-    inputs:
-      step:
-        description: "Which step to run (B-H)"
-        required: true
-        default: "B"
 
 jobs:
-  run:
+  step_b:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,23 +14,21 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Apply changes and open PR
+      - name: Apply Step B changes
         shell: bash
         env:
-          STEP: ${{ github.event.inputs.step }}
           REPO: lanternetwork/YardSaleTracker
           TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           set -e
-          BRANCH="ysf-step-${STEP}-${GITHUB_RUN_ID}"
+          BRANCH="ysf-step-B-${GITHUB_RUN_ID}"
           git config user.name "lanternetbot"
           git config user.email "bot@example.com"
           git checkout -b "$BRANCH"
 
-          if [ "$STEP" = "B" ]; then
-            mkdir -p "lib/supabase" "lib" "state" "components" "app/(app)/sale/[id]" "app/(auth)/signin" "app/api/scrape" "supabase/functions/craigslist" "tests/unit" "tests/e2e" "public/icons"
+          mkdir -p "lib/supabase" "lib" "state" "components" "app/(app)/sale/[id]" "app/(auth)/signin" "app/api/scrape" "supabase/functions/craigslist" "tests/unit" "tests/e2e" "public/icons"
 
-            cat > lib/supabase/client.ts << 'EOF'
+          cat > lib/supabase/client.ts << 'EOF'
 import { createBrowserClient } from '@supabase/ssr'
 export const createSupabaseBrowser = () =>
   createBrowserClient(
@@ -44,7 +37,7 @@ export const createSupabaseBrowser = () =>
   )
 EOF
 
-            cat > lib/supabase/server.ts << 'EOF'
+          cat > lib/supabase/server.ts << 'EOF'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 export function createSupabaseServer() {
@@ -57,7 +50,7 @@ export function createSupabaseServer() {
 }
 EOF
 
-            cat > lib/types.ts << 'EOF'
+          cat > lib/types.ts << 'EOF'
 export type Sale = {
   id: string
   title: string
@@ -80,7 +73,7 @@ export type Sale = {
 }
 EOF
 
-            cat > lib/zodSchemas.ts << 'EOF'
+          cat > lib/zodSchemas.ts << 'EOF'
 import { z } from 'zod'
 export const SaleSchema = z.object({
   title: z.string().min(3),
@@ -96,7 +89,7 @@ export const SaleSchema = z.object({
 })
 EOF
 
-            cat > lib/distance.ts << 'EOF'
+          cat > lib/distance.ts << 'EOF'
 export function haversineKm(a:{lat:number,lng:number}, b:{lat:number,lng:number}) {
   const toRad = (n:number)=> (n*Math.PI)/180
   const R=6371
@@ -106,14 +99,14 @@ export function haversineKm(a:{lat:number,lng:number}, b:{lat:number,lng:number}
 }
 EOF
 
-            mkdir -p state
-            cat > state/filters.ts << 'EOF'
+          mkdir -p state
+          cat > state/filters.ts << 'EOF'
 export type Filters = { q?: string; maxKm?: number; dateFrom?: string; dateTo?: string; tags?: string[]; min?: number; max?: number; category?: string }
 export const defaultFilters: Filters = { q:'', maxKm:25, tags:[] }
 EOF
 
-            mkdir -p components
-            cat > components/EmptyState.tsx << 'EOF'
+          mkdir -p components
+          cat > components/EmptyState.tsx << 'EOF'
 export default function EmptyState({ title="No Sales Found", cta }: { title?:string; cta?:React.ReactNode }) {
   return (
     <div className="text-center py-16 text-neutral-500">
@@ -125,7 +118,7 @@ export default function EmptyState({ title="No Sales Found", cta }: { title?:str
 }
 EOF
 
-            cat > components/SaleCard.tsx << 'EOF'
+          cat > components/SaleCard.tsx << 'EOF'
 import Link from 'next/link'
 export default function SaleCard({sale}:{sale:any}) {
   return (
@@ -142,29 +135,28 @@ export default function SaleCard({sale}:{sale:any}) {
 }
 EOF
 
-            mkdir -p "app/(app)/sale/[id]" "app/(auth)/signin"
-            cat > "app/(app)/sale/[id]/page.tsx" << 'EOF'
+          mkdir -p "app/(app)/sale/[id]" "app/(auth)/signin"
+          cat > "app/(app)/sale/[id]/page.tsx" << 'EOF'
 export default function SaleDetail(){ return <main className="p-6">Not found.</main> }
 EOF
-            cat > "app/(auth)/signin/page.tsx" << 'EOF'
+          cat > "app/(auth)/signin/page.tsx" << 'EOF'
 'use client'
 export default function SignIn(){ return <div className="p-6">Sign in coming soon</div> }
 EOF
 
-            mkdir -p tests/unit tests/e2e
-            cat > plan.md << 'EOF'
+          mkdir -p tests/unit tests/e2e
+          cat > plan.md << 'EOF'
 WIP plan; Steps B→H will populate.
 EOF
 
-            node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.dependencies={...p.dependencies,'@supabase/supabase-js':'^2.45.4','@supabase/ssr':'^0.5.1','@tanstack/react-query':'^5.51.1','zod':'^3.23.8','@googlemaps/js-api-loader':'^1.16.8','clsx':'^2.1.1'};fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
-          fi
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.dependencies={...p.dependencies,'@supabase/supabase-js':'^2.45.4','@supabase/ssr':'^0.5.1','@tanstack/react-query':'^5.51.1','zod':'^3.23.8','@googlemaps/js-api-loader':'^1.16.8','clsx':'^2.1.1'};fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
 
           git add -A
-          git commit -m "feat(step-${STEP}): add files for step ${STEP}"
+          git commit -m "feat(step-B): Supabase helpers, types, zod, filters stubs"
           git push "https://x-access-token:${TOKEN}@github.com/${REPO}.git" HEAD:"$BRANCH"
 
           curl -s -X POST \
             -H "Authorization: token ${TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${REPO}/pulls" \
-            -d "{\"title\":\"Step ${STEP}: automated changes\",\"head\":\"${BRANCH}\",\"base\":\"main\",\"body\":\"Automated update for Step ${STEP}.\"}"
+            -d "{\"title\":\"Step B: Supabase helpers + types + zod\",\"head\":\"${BRANCH}\",\"base\":\"main\",\"body\":\"Adds Supabase helpers, types, zod schema, filters, basic components + plan.md.\"}"
