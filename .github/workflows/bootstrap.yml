@@ -192,5 +192,3 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/${REPO}/pulls \
             -d "{\"title\":\"Step A: Scaffold (Minimal Next.js + Tailwind)\",\"head\":\"${BRANCH}\",\"base\":\"main\",\"body\":\"Bootstrap scaffold for YardSaleFinder. Next steps will add pages and components.\"}"
-        env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
