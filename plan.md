@@ -388,3 +388,77 @@ NOMINATIM_APP_EMAIL=lanternetwork@gmail.com
 - **Type Safety**: Full TypeScript coverage
 
 The application is now production-ready with all core features implemented, comprehensive testing, and PWA capabilities. The codebase follows best practices for scalability, maintainability, and user experience.
+
+## 🌿 Branch Consolidation to `main` (Completed 2025-01-27)
+
+### Summary
+Successfully consolidated the repository to use `main` as the single canonical branch containing the latest production code. The `master` branch (which contained the complete Yard Sale Tracker application) was renamed to `main` and set as the default branch.
+
+### What Changed
+- **Canonical Branch**: `master` → `main` (renamed to preserve history)
+- **Default Branch**: GitHub default changed from `main` (old workflow files) to `main` (new application code)
+- **Content**: `main` now contains the complete Yard Sale Tracker application (105 files, 9915 insertions)
+- **History**: All commit history preserved through branch rename
+
+### Commands Executed
+```bash
+# Safety preparation
+git fetch --all --prune
+git tag -f pre-consolidation-20250127-$(Get-Date -Format "HHmm")-local
+git tag -f pre-consolidation-origin-master origin/master
+git tag -f pre-consolidation-origin-main origin/main
+git push --tags
+
+# Branch consolidation
+git checkout master
+git pull --ff-only
+git branch -m master main
+git push origin :main  # Delete old main with workflow files
+git push -u origin main --force  # Force push new main with application code
+
+# Verification
+git remote set-head origin -a
+git symbolic-ref refs/remotes/origin/HEAD  # Confirmed: refs/remotes/origin/main
+```
+
+### New Default Branch Confirmation
+- **GitHub Default**: `main` (changed via GitHub UI)
+- **Local HEAD**: Points to `origin/main`
+- **Remote HEAD**: `refs/remotes/origin/main`
+
+### Deleted Branches
+- **Remote**: `origin/master` (old branch with application code, now in main)
+- **Note**: Bootstrap branches (`origin/bootstrap/step-a*`) remain for reference
+
+### Safety Tags Created
+- `pre-consolidation-20250127-<time>-local` - Local state before consolidation
+- `pre-consolidation-origin-master` - Remote master before consolidation  
+- `pre-consolidation-origin-main` - Remote main before consolidation
+
+### Rollback Instructions
+If rollback is needed:
+```bash
+# Restore old master branch
+git checkout -b master pre-consolidation-origin-master
+git push -u origin master
+
+# Restore old main branch  
+git checkout -b old-main pre-consolidation-origin-main
+git push -u origin old-main
+
+# Change GitHub default back to master (via UI)
+```
+
+### Next Steps
+1. **Branch Protection**: Set up branch protection rules on `main` (require PRs, required checks)
+2. **Local Cleanup**: Delete local stale clones and update local remotes
+3. **Deployment**: Update deployment settings to track `main` branch
+4. **Team Notification**: Inform team members of the branch change
+
+### Verification Commands
+```bash
+# Verify current state
+git status  # Should show: "On branch main, up to date with 'origin/main'"
+git branch -vv  # Should show main tracking origin/main
+git symbolic-ref refs/remotes/origin/HEAD  # Should show: refs/remotes/origin/main
+```
