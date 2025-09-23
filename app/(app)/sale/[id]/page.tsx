@@ -4,6 +4,9 @@ import { SaleDetailClient } from './SaleDetailClient'
 import { createSaleMetadata } from '@/lib/metadata'
 import StructuredData from '@/components/StructuredData'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function generateMetadata({ 
   params 
 }: { 
