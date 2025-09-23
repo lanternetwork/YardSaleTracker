@@ -6,6 +6,15 @@ import { createSupabaseServer } from '@/lib/supabase/server'
 
 export async function GET() {
   try {
+    // Check if we're in build mode - if so, return a simple response
+    if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_URL) {
+      return NextResponse.json({ 
+        ok: true,
+        timestamp: new Date().toISOString(),
+        database: 'build_mode'
+      })
+    }
+
     // Test environment variables are loaded
     const supabase = createSupabaseServer()
     
