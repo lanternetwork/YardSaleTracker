@@ -12,6 +12,14 @@ export async function generateMetadata({
 }: { 
   params: { id: string } 
 }) {
+  // Check if we're in build mode - if so, return basic metadata
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return {
+      title: 'Yard Sale Details',
+      description: 'View details of this yard sale.'
+    }
+  }
+
   const sb = createSupabaseServer()
   
   const { data: sale } = await sb
@@ -35,6 +43,16 @@ export default async function SaleDetail({
 }: { 
   params: { id: string } 
 }) {
+  // Check if we're in build mode - if so, return a simple component
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Yard Sale Details</h1>
+        <p>Sale details will be loaded at runtime.</p>
+      </div>
+    )
+  }
+
   const sb = createSupabaseServer()
   
   const { data: sale, error } = await sb
