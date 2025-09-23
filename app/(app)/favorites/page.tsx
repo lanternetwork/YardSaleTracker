@@ -5,7 +5,8 @@ import SalesList from '@/components/SalesList'
 import EmptyState from '@/components/EmptyState'
 
 export default function Favorites() {
-  const { data: favorites = [], isLoading, error } = useFavorites()
+  const { data: favoritesRaw = [], isLoading, error } = useFavorites()
+  const favorites: Sale[] = (favoritesRaw as any[]).flat() as Sale[]
 
   if (isLoading) {
     return (
@@ -57,7 +58,7 @@ export default function Favorites() {
           }
         />
       ) : (
-        <SalesList sales={(favorites as any[]).flat() as Sale[]} />
+        <SalesList sales={favorites} />
       )}
     </main>
   )
