@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { useCreateSale } from '@/lib/hooks/useSales'
 import { geocodeAddress } from '@/lib/geocode'
 import CSVImportExport from './CSVImportExport'
@@ -180,7 +180,7 @@ export default function ImportSales() {
       {activeTab === 'csv' && <CSVImportExport />}
 
       {activeTab === 'craigslist' && (
-        <>
+        <Fragment>
           <div>
             <h3 className="text-lg font-semibold mb-2">Import Sales from Craigslist</h3>
             <p className="text-neutral-600 mb-4">
@@ -310,7 +310,7 @@ export default function ImportSales() {
             ))}
           </div>
         </div>
-        </>
+        </Fragment>
       )}
     </div>
   )
