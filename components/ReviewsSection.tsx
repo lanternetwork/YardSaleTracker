@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
-import type { User } from '@/lib/types'
 
 interface Review {
   id: string
@@ -25,7 +24,7 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
-  const { user } = useAuth() as { user: User | null }
+  const { user } = useAuth() as { user: { id: string } | null }
   const supabase = createSupabaseBrowser()
 
   useEffect(() => {
