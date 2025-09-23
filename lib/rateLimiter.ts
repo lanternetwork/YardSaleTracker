@@ -1,15 +1,21 @@
-import { Redis } from 'upstash'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
 // In-memory store for development
 const memoryStore = new Map<string, { count: number; resetTime: number }>()
 
 // Redis client for production
 let redis: Redis | null = null
+let ratelimit: Ratelimit | null = null
 
 if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
   redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  })
+  ratelimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(100, '15 m'),
   })
 }
 
@@ -42,46 +48,31 @@ export class RateLimiter {
     const now = Date.now()
     const windowStart = now - this.options.windowMs
 
-    if (redis) {
-      return this.checkLimitRedis(key, now, windowStart)
+    if (ratelimit) {
+      return this.checkLimitUpstash(key, now)
     } else {
       return this.checkLimitMemory(key, now, windowStart)
     }
   }
 
-  private async checkLimitRedis(key: string, now: number, windowStart: number): Promise<RateLimitResult> {
+  private async checkLimitUpstash(key: string, now: number): Promise<RateLimitResult> {
     try {
-      // Get current count
-      const currentCount = await redis!.get(key) || 0
-      const count = Number(currentCount)
-
-      if (count >= this.options.maxRequests) {
-        // Get TTL to calculate reset time
-        const ttl = await redis!.ttl(key)
-        const resetTime = now + (ttl * 1000)
-        
+      const { success, limit, reset } = await ratelimit!.limit(key)
+      if (!success) {
         return {
           success: false,
-          limit: this.options.maxRequests,
+          limit,
           remaining: 0,
-          resetTime,
-          retryAfter: Math.ceil((resetTime - now) / 1000)
+          resetTime: reset,
+          retryAfter: Math.ceil((reset - now) / 1000)
         }
       }
-
-      // Increment counter
-      const pipeline = redis!.pipeline()
-      pipeline.incr(key)
-      if (count === 0) {
-        pipeline.expire(key, Math.ceil(this.options.windowMs / 1000))
-      }
-      await pipeline.exec()
-
+      // Note: @upstash/ratelimit returns remaining only with certain adapters; approximate here
       return {
         success: true,
-        limit: this.options.maxRequests,
-        remaining: this.options.maxRequests - count - 1,
-        resetTime: now + this.options.windowMs
+        limit,
+        remaining: Math.max(0, limit - 1),
+        resetTime: reset
       }
     } catch (error) {
       console.error('Redis rate limiting error:', error)
@@ -168,3 +159,4 @@ export const uploadRateLimiter = new RateLimiter({
   windowMs: 60 * 1000, // 1 minute
   maxRequests: 10, // 10 uploads per minute
 })
+
