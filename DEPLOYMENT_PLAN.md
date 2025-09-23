@@ -103,7 +103,7 @@ Run these migrations in order:
 2. **Import Project**
    - Click "New Project"
    - Select "Import Git Repository"
-   - Choose `lanternetwork/YardSaleTracker` repository
+   - Choose `<owner>/LootAura` repository (renamed)
    - Click "Import"
 
 3. **Configure Project Settings**

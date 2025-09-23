@@ -1,4 +1,4 @@
-# YardSaleFinder - Production Launch Roadmap
+# LootAura - Production Launch Roadmap
 
 ## Executive Summary
 
