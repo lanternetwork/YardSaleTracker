@@ -17,24 +17,51 @@ const serverSchema = z.object({
   NOMINATIM_APP_EMAIL: z.string().email().optional(),
 })
 
-// Validate public environment variables
-export const ENV_PUBLIC = publicSchema.parse({
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
-  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-  NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-})
+// Validate public environment variables with build-time fallbacks
+export const ENV_PUBLIC = (() => {
+  try {
+    return publicSchema.parse({
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+      NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    })
+  } catch (error) {
+    // During build time, return fallback values
+    return {
+      NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder-key',
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: 'placeholder-key',
+      NEXT_PUBLIC_SITE_URL: 'https://lootaura.com',
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: undefined,
+      NEXT_PUBLIC_SENTRY_DSN: undefined,
+    }
+  }
+})()
 
-// Validate server environment variables (only in server context)
-export const ENV_SERVER = serverSchema.parse({
-  SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_ROLE,
-  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
-  UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
-  UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
-  NOMINATIM_APP_EMAIL: process.env.NOMINATIM_APP_EMAIL,
-})
+// Validate server environment variables with build-time fallbacks
+export const ENV_SERVER = (() => {
+  try {
+    return serverSchema.parse({
+      SUPABASE_SERVICE_ROLE: process.env.SUPABASE_SERVICE_ROLE,
+      VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+      UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+      NOMINATIM_APP_EMAIL: process.env.NOMINATIM_APP_EMAIL,
+    })
+  } catch (error) {
+    // During build time, return fallback values
+    return {
+      SUPABASE_SERVICE_ROLE: 'placeholder-service-role',
+      VAPID_PRIVATE_KEY: undefined,
+      UPSTASH_REDIS_REST_URL: undefined,
+      UPSTASH_REDIS_REST_TOKEN: undefined,
+      NOMINATIM_APP_EMAIL: undefined,
+    }
+  }
+})()
 
 // Type exports for better TypeScript support
 export type PublicEnv = z.infer<typeof publicSchema>
