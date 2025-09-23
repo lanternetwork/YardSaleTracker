@@ -148,8 +148,9 @@ describe('ReviewsSection', () => {
             })
           }))
         }))
-      }))
-    })
+      })),
+      rpc: vi.fn(() => ({ then: vi.fn() }))
+    } as any)
 
     render(
       <ReviewsSection 
@@ -189,8 +190,9 @@ describe('ReviewsSection', () => {
             })
           }))
         }))
-      }))
-    })
+      })),
+      rpc: vi.fn(() => ({ then: vi.fn() }))
+    } as any)
 
     render(
       <ReviewsSection 
