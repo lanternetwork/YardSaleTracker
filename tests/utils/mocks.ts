@@ -252,12 +252,12 @@ export function createMockSupabaseClient() {
         return {
           data: mockSales,
           error: null
-        }
+        } as any
       }
       return {
         data: [],
         error: null
-      }
+      } as any
     })
   }
 }

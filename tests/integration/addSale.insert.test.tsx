@@ -190,10 +190,16 @@ describe('Add Sale Integration', () => {
     mockCreateSale.mutateAsync.mockRejectedValue(new Error(errorMessage))
 
     vi.mocked(useSales).mockReturnValue({
-      data: [],
+      data: [] as any,
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isPending: false,
+      isLoadingError: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      status: 'success'
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
