@@ -29,7 +29,7 @@
     "web-push": "^3.6.7",
     "@sentry/nextjs": "^8.15.0",
     "web-vitals": "^4.2.0",
-    "upstash": "^1.0.0",
+    "@upstash/redis": "^1.28.3",
     "dompurify": "^3.0.8",
     "jsdom": "^25.0.0"
   },
