@@ -67,7 +67,7 @@ describe('Add Sale Integration', () => {
       error: null
     }
 
-    vi.mocked(useCreateSale).mockReturnValue(mockCreateSale)
+    vi.mocked(useCreateSale).mockReturnValue(mockCreateSale as any)
   })
 
   it('should insert sale with geocoded coordinates', async () => {
