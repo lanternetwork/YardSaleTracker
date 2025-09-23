@@ -1,5 +1,6 @@
 'use client'
 import { useFavorites } from '@/lib/hooks/useAuth'
+import type { Sale } from '@/lib/types'
 import SalesList from '@/components/SalesList'
 import EmptyState from '@/components/EmptyState'
 
@@ -56,7 +57,7 @@ export default function Favorites() {
           }
         />
       ) : (
-        <SalesList sales={favorites} />
+        <SalesList sales={(favorites as any[]).flat() as Sale[]} />
       )}
     </main>
   )
