@@ -14,6 +14,17 @@ webpush.setVapidDetails(
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if we're in build mode - if so, return a simple response
+    if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_URL) {
+      return NextResponse.json({ 
+        success: true,
+        sent: 0,
+        failed: 0,
+        total: 0,
+        message: 'Build mode - test notification skipped'
+      })
+    }
+
     const supabase = createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
     
