@@ -66,8 +66,9 @@ export async function POST(request: NextRequest) {
           )
           return { success: true, endpoint: sub.endpoint }
         } catch (error) {
-          console.error('Error sending notification:', error)
-          return { success: false, endpoint: sub.endpoint, error: error.message }
+          const err = error as Error
+          console.error('Error sending notification:', err)
+          return { success: false, endpoint: sub.endpoint, error: err.message }
         }
       })
     )
@@ -82,7 +83,8 @@ export async function POST(request: NextRequest) {
       total: results.length
     })
   } catch (error) {
-    console.error('Test notification error:', error)
+    const err = error as Error
+    console.error('Test notification error:', err)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
