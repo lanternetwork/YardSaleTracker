@@ -38,7 +38,7 @@ export function useSales(filters?: {
         throw new Error(error.message)
       }
 
-      return data as Sale[]
+      return (data as unknown as any[]).flat ? (data as unknown as any[]).flat() as Sale[] : (data as unknown as Sale[])
     },
   })
 }
@@ -180,7 +180,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) as Sale[]
+      return (data as any[])?.map((fav: any) => fav.yard_sales).filter(Boolean) as Sale[]
     },
   })
 }

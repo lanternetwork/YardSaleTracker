@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
+declare const google: any
 import { logger } from '@/lib/log'
 
 type Marker = { 
