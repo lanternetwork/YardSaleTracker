@@ -19,14 +19,12 @@ const mockSupabase = {
 }
 
 vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => mockSupabase
+  createSupabaseBrowser: () => mockSupabase as any
 }))
 
 // Mock the auth hook
 vi.mock('@/lib/hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { id: 'test-user' }
-  })
+  useAuth: () => ({ data: { id: 'test-user' } }) as any
 }))
 
 describe('ReviewsSection', () => {
