@@ -73,6 +73,27 @@ vi.mock('@googlemaps/js-api-loader', () => ({
   })),
 }))
 
+// Provide a minimal global google object for components using it directly
+;(globalThis as any).google = (globalThis as any).google || {
+  maps: {
+    places: {
+      Autocomplete: class {
+        constructor() {}
+        addListener() {}
+        getPlace() { return { geometry: null, formatted_address: '' } }
+      }
+    },
+    Map: class { constructor() {} },
+    Marker: class { constructor() {}; setMap() {}; addListener() {}; getPosition() { return { lat: () => 0, lng: () => 0 } } },
+    InfoWindow: class { constructor() {}; open() {}; close() {} },
+    LatLngBounds: class { extend() {}; isEmpty() { return true } },
+    LatLng: class { constructor(public lat: number, public lng: number) {} },
+    event: { addListener: () => ({ remove: () => {} }), removeListener: () => {} },
+    ControlPosition: { TOP_LEFT: 'TOP_LEFT' },
+    Size: class { constructor(public width: number, public height: number) {} }
+  }
+}
+
 // Mock geolocation
 Object.defineProperty(navigator, 'geolocation', {
   value: {
