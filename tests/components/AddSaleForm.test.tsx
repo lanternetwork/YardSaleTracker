@@ -62,7 +62,7 @@ describe('AddSaleForm', () => {
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false
-    })
+    } as any)
 
     render(<AddSaleForm />)
     
@@ -136,12 +136,12 @@ describe('AddSaleForm', () => {
     })
   })
 
-  it('shows loading state during submission', () => {
+  it('shows loading state during submission', async () => {
     const { useCreateSale } = vi.mocked(await import('@/lib/hooks/useSales'))
     useCreateSale.mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: true
-    })
+    } as any)
 
     render(<AddSaleForm />)
     
