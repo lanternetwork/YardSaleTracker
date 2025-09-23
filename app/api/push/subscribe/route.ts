@@ -13,6 +13,14 @@ const SubscribeSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if we're in build mode - if so, return a simple response
+    if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_URL) {
+      return NextResponse.json({ 
+        success: true,
+        message: 'Build mode - subscription skipped'
+      })
+    }
+
     const body = await request.json()
     const parsed = SubscribeSchema.safeParse(body)
     
@@ -68,6 +76,14 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Check if we're in build mode - if so, return a simple response
+    if (process.env.NODE_ENV === 'production' && !process.env.SUPABASE_URL) {
+      return NextResponse.json({ 
+        success: true,
+        message: 'Build mode - unsubscription skipped'
+      })
+    }
+
     const { searchParams } = new URL(request.url)
     const endpoint = searchParams.get('endpoint')
     
