@@ -208,7 +208,7 @@ test.describe('Complete User Flow', () => {
     await page.goto('/explore?tab=add')
     
     // Check for proper labels
-    const titleInput = page.getByPlaceholderText('Sale title')
+    const titleInput = (page as any).getByPlaceholderText('Sale title')
     await expect(titleInput).toBeVisible()
     
     // Test form validation with keyboard

@@ -36,7 +36,7 @@ describe('createPageMetadata', () => {
       image: 'https://example.com/image.jpg'
     })
 
-    expect(metadata.openGraph?.images?.[0]?.url).toBe('https://example.com/image.jpg')
+    expect((metadata.openGraph as any)?.images?.[0]?.url).toBe('https://example.com/image.jpg')
   })
 
   it('should handle relative image path', () => {
@@ -46,7 +46,7 @@ describe('createPageMetadata', () => {
       image: '/image.jpg'
     })
 
-    expect(metadata.openGraph?.images?.[0]?.url).toBe('https://yardsalefinder.com/image.jpg')
+    expect((metadata.openGraph as any)?.images?.[0]?.url).toBe('https://yardsalefinder.com/image.jpg')
   })
 })
 

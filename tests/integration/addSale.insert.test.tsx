@@ -92,7 +92,7 @@ describe('Add Sale Integration', () => {
       data: [createdSale],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -123,7 +123,7 @@ describe('Add Sale Integration', () => {
       data: [],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -144,7 +144,7 @@ describe('Add Sale Integration', () => {
       data: [],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -167,7 +167,7 @@ describe('Add Sale Integration', () => {
       data: [],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -255,7 +255,7 @@ describe('Add Sale Integration', () => {
       data: [createdSale],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
