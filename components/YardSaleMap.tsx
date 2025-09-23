@@ -15,8 +15,8 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [map, setMap] = useState<google.maps.Map | null>(null)
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([])
+  const [map, setMap] = useState<any>(null)
+  const [markers, setMarkers] = useState<any[]>([])
   
   const loader = useMemo(() => 
     new Loader({ 
@@ -68,7 +68,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null))
-    const newMarkers: google.maps.Marker[] = []
+    const newMarkers: any[] = []
 
     if (points.length === 0) {
       setMarkers([])

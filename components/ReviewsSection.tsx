@@ -24,15 +24,15 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
-  const { user } = useAuth() as { user: { id: string } | null }
+  const { data: authUser } = useAuth() as unknown as { data: { id: string } | null }
   const supabase = createSupabaseBrowser()
 
   useEffect(() => {
     fetchReviews()
-    if (user) {
+    if (authUser) {
       fetchUserReview()
     }
-  }, [saleId, user])
+  }, [saleId, authUser])
 
   const fetchReviews = async () => {
     try {
@@ -52,14 +52,14 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
   }
 
   const fetchUserReview = async () => {
-    if (!user) return
+    if (!authUser) return
 
     try {
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
         .eq('sale_id', saleId)
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .single()
 
       if (error && error.code !== 'PGRST116') throw error
@@ -76,14 +76,14 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || rating === 0) return
+    if (!authUser || rating === 0) return
 
     setIsSubmitting(true)
 
     try {
       const reviewData = {
         sale_id: saleId,
-        user_id: user.id,
+        user_id: authUser.id,
         rating,
         comment: comment.trim() || null
       }
@@ -164,7 +164,7 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
       </div>
 
       {/* Review Form */}
-      {user && (
+      {authUser && (
         <div className="border rounded-lg p-4">
           <h3 className="text-lg font-semibold mb-3">
             {userReview ? 'Update Your Review' : 'Write a Review'}

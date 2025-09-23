@@ -115,7 +115,7 @@ export function validateNormalizedSale(sale: SaleMinimal): { valid: boolean; err
     SaleSchema.parse(sale)
     return { valid: true, errors: [] }
   } catch (error: any) {
-    const errors = error.errors?.map((e: any) => `${e.path.join('.')}: ${e.message}`) || ['Unknown validation error']
+    const errors = (error as any).errors?.map((e: any) => `${e.path.join('.')}: ${e.message}`) || ['Unknown validation error']
     return { valid: false, errors }
   }
 }
