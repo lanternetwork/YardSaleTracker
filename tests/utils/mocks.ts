@@ -213,7 +213,7 @@ export function createMockSupabaseClient() {
       if (table === 'yard_sales') {
         return {
           select: vi.fn().mockReturnThis(),
-          insert: vi.fn().mockImplementation((data) => {
+          insert: vi.fn().mockImplementation((data: any[]) => {
             const newSale = {
               id: `sale-${nextId++}`,
               ...data[0],
