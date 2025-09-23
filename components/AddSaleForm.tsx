@@ -4,6 +4,7 @@ import { Loader } from '@googlemaps/js-api-loader'
 import { useCreateSale } from '@/lib/hooks/useSales'
 import { geocodeAddress } from '@/lib/geocode'
 import { SaleSchema } from '@/lib/zodSchemas'
+import { logger } from '@/lib/log'
 import ImageUploader from './ImageUploader'
 
 export default function AddSaleForm() {
@@ -39,8 +40,18 @@ export default function AddSaleForm() {
         const geometry = place.geometry?.location
         
         if (geometry) {
-          setCoords({ lat: geometry.lat(), lng: geometry.lng() })
+          const lat = geometry.lat()
+          const lng = geometry.lng()
+          setCoords({ lat, lng })
           setAddress(place.formatted_address || '')
+          
+          logger.info('Address geocoded via Google Places', {
+            component: 'AddSaleForm',
+            operation: 'geocode_places',
+            address: place.formatted_address,
+            lat,
+            lng
+          })
         }
       })
     }).catch(err => {
@@ -57,9 +68,28 @@ export default function AddSaleForm() {
         const result = await geocodeAddress(value)
         if (result) {
           setCoords({ lat: result.lat, lng: result.lng })
+          
+          logger.info('Address geocoded via fallback geocoder', {
+            component: 'AddSaleForm',
+            operation: 'geocode_fallback',
+            address: value,
+            lat: result.lat,
+            lng: result.lng,
+            geocoder: 'nominatim'
+          })
+        } else {
+          logger.warn('Geocoding failed for address', {
+            component: 'AddSaleForm',
+            operation: 'geocode_fallback',
+            address: value
+          })
         }
       } catch (err) {
-        console.error('Geocoding error:', err)
+        logger.error('Geocoding error', err as Error, {
+          component: 'AddSaleForm',
+          operation: 'geocode_fallback',
+          address: value
+        })
       }
     }
   }
@@ -110,7 +140,15 @@ export default function AddSaleForm() {
         return
       }
 
-      await createSale.mutateAsync(parsed.data)
+      const createdSale = await createSale.mutateAsync(parsed.data)
+
+      logger.info('Sale created successfully', {
+        component: 'AddSaleForm',
+        operation: 'create_sale',
+        saleId: createdSale.id,
+        title: createdSale.title,
+        hasCoordinates: !!(coords?.lat && coords?.lng)
+      })
 
       // Reset form
       ;(e.target as HTMLFormElement).reset()

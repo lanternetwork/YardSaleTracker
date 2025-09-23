@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
+import { logger } from '@/lib/log'
 
 type Marker = { 
   id: string
@@ -114,6 +115,13 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     })
 
     setMarkers(newMarkers)
+
+    logger.info('Map markers rendered', {
+      component: 'YardSaleMap',
+      operation: 'render_markers',
+      markerCount: newMarkers.length,
+      hasBounds: !bounds.isEmpty()
+    })
 
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds)

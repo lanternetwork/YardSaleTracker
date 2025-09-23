@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .order('updated_at', { ascending: false })
     .limit(1000) // Limit to prevent sitemap from being too large
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

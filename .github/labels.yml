@@ -1,0 +1,49 @@
+# Common labels for the repository
+- name: type:bug
+  color: d73a4a
+  description: Something isn't working
+- name: type:feature
+  color: a2eeef
+  description: New feature or request
+- name: type:documentation
+  color: 0075ca
+  description: Improvements or additions to documentation
+- name: type:enhancement
+  color: 7057ff
+  description: New feature or request
+- name: a11y
+  color: 1d76db
+  description: Accessibility improvements
+- name: perf
+  color: ff6b6b
+  description: Performance improvements
+- name: security
+  color: ff0000
+  description: Security related issues
+- name: tech-debt
+  color: 8b5cf6
+  description: Technical debt
+- name: good-first-issue
+  color: 7057ff
+  description: Good for newcomers
+- name: help-wanted
+  color: 008672
+  description: Extra attention is needed
+- name: priority:high
+  color: ff0000
+  description: High priority
+- name: priority:medium
+  color: ffd700
+  description: Medium priority
+- name: priority:low
+  color: 90ee90
+  description: Low priority
+- name: status:blocked
+  color: ff6b6b
+  description: Blocked by another issue
+- name: status:in-progress
+  color: ffd700
+  description: Work in progress
+- name: status:ready-for-review
+  color: 90ee90
+  description: Ready for review

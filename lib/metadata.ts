@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { Sale } from '@/lib/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
 const siteName = 'YardSaleFinder'
 const description = 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!'
 

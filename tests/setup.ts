@@ -1,6 +1,8 @@
-import { expect, afterEach } from 'vitest'
+import { expect, afterEach, beforeAll, afterAll } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import * as matchers from '@testing-library/jest-dom/matchers'
+import { setupServer } from 'msw/node'
+import { http, HttpResponse } from 'msw'
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers)
@@ -9,6 +11,16 @@ expect.extend(matchers)
 afterEach(() => {
   cleanup()
 })
+
+// MSW server for API mocking
+const server = setupServer()
+
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+
+// Export server for use in tests
+export { server }
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'

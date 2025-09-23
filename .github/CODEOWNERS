@@ -1,0 +1,15 @@
+# Global owners
+* @lanternetwork
+
+# Documentation
+/docs/ @lanternetwork
+*.md @lanternetwork
+
+# Configuration files
+package.json @lanternetwork
+tsconfig.json @lanternetwork
+next.config.js @lanternetwork
+tailwind.config.ts @lanternetwork
+
+# GitHub workflows
+/.github/ @lanternetwork

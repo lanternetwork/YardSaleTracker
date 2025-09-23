@@ -40,13 +40,13 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
       organizer: {
         '@type': 'Organization',
         name: 'YardSaleFinder',
-        url: process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'
+        url: process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
       },
       eventStatus: sale.status === 'active' ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventCancelled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
       image: sale.photos?.[0] ? [sale.photos[0]] : undefined,
       keywords: sale.tags?.join(', '),
-      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'}/sale/${sale.id}`
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'}/sale/${sale.id}`
     }
 
     return (
@@ -77,7 +77,7 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
       } : undefined,
       category: 'Yard Sale Items',
       keywords: sale.tags?.join(', '),
-      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'}/sale/${sale.id}`
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'}/sale/${sale.id}`
     }
 
     return (
