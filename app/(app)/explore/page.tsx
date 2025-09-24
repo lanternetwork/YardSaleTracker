@@ -7,9 +7,9 @@ import NavTabs from '@/components/NavTabs'
 import SearchFilters from '@/components/SearchFilters'
 import SearchResults from '@/components/SearchResults'
 import VirtualizedSalesList from '@/components/VirtualizedSalesList'
-import dynamic from 'next/dynamic'
+import nextDynamic from 'next/dynamic'
 
-const YardSaleMap = dynamic(() => import('@/components/YardSaleMap'), {
+const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
   loading: () => <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">Loading map...</div>
 })
