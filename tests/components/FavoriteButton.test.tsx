@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import FavoriteButton from '@/components/FavoriteButton'
 
 // Mock the auth hooks
-vi.mock('@/lib/hooks/useAuth', () => ({
+vi.mock('../../lib/hooks/useAuth', () => ({
   useFavorites: () => ({
     data: []
   }),

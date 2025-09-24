@@ -46,11 +46,18 @@ describe('Environment Validation', () => {
     // Clear the module cache to force re-import
     vi.resetModules()
 
+    // Mock the environment to be empty
+    const originalEnv = process.env
+    process.env = {}
+
     const { ENV_PUBLIC } = await import('@/lib/env')
 
     expect(ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL).toBe('https://placeholder.supabase.co')
     expect(ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBe('placeholder-key')
     expect(ENV_PUBLIC.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).toBe('placeholder-key')
+
+    // Restore original env
+    process.env = originalEnv
   })
 
   it('should throw error for invalid URL format', async () => {

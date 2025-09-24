@@ -3,14 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddSaleForm from '@/components/AddSaleForm'
 
 // Mock the hooks
-const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
-const mockUseCreateSale = vi.fn(() => ({
-  mutateAsync: mockMutateAsync,
-  isPending: false
-}))
-
 vi.mock('@/lib/hooks/useSales', () => ({
-  useCreateSale: mockUseCreateSale
+  useCreateSale: vi.fn(() => ({
+    mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
+    isPending: false
+  }))
 }))
 
 // Mock the geocoding function
@@ -60,8 +57,11 @@ describe('AddSaleForm', () => {
   })
 
   it('submits form with valid data', async () => {
-    // Reset the mock before the test
-    mockMutateAsync.mockClear()
+    const { useCreateSale } = await import('@/lib/hooks/useSales')
+    const mockMutateAsync = vi.mocked(useCreateSale).mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
+      isPending: false
+    }).mutateAsync
     
     render(<AddSaleForm />)
     
@@ -149,8 +149,8 @@ describe('AddSaleForm', () => {
   })
 
   it('shows loading state during submission', async () => {
-    // Mock the hook with loading state
-    mockUseCreateSale.mockReturnValue({
+    const { useCreateSale } = await import('@/lib/hooks/useSales')
+    vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: true
     })
