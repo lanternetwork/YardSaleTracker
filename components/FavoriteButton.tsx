@@ -9,13 +9,13 @@ export default function FavoriteButton({
   initial?: boolean 
 }) {
   const { data: favorites = [] } = useFavorites()
-  const { mutateAsync, isPending } = useToggleFavorite()
+  const { mutate, isPending } = useToggleFavorite()
   
   const list = (favorites as any[])
   const isFavorited = list.some((fav: any) => fav && fav.id === saleId)
 
   const handleToggle = () => {
-    mutateAsync({ saleId, isFavorited })
+    mutate({ saleId, isFavorited })
   }
 
   return (

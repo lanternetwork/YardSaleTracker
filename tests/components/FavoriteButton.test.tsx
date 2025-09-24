@@ -34,7 +34,7 @@ describe('FavoriteButton', () => {
       data: []
     })
     mockUseToggleFavorite.mockReturnValue({
-      mutateAsync: vi.fn(),
+      mutate: vi.fn(),
       isPending: false
     })
 
@@ -53,7 +53,7 @@ describe('FavoriteButton', () => {
       data: [{ id: 'test-sale-id', title: 'Test Sale' }]
     })
     mockUseToggleFavorite.mockReturnValue({
-      mutateAsync: vi.fn(),
+      mutate: vi.fn(),
       isPending: false
     })
 
@@ -74,7 +74,7 @@ describe('FavoriteButton', () => {
       data: []
     })
     mockUseToggleFavorite.mockReturnValue({
-      mutateAsync: mockToggle,
+      mutate: mockToggle,
       isPending: false
     })
 
