@@ -20,7 +20,7 @@ const MapMock = vi.fn().mockImplementation((_el: any, _opts: any) => ({
   getZoom: vi.fn(() => 10),
   fitBounds: vi.fn(),
   addListener: vi.fn(),
-  controls: { TOP_LEFT: { push: vi.fn() } },
+  controls: { 0: { push: vi.fn() } },
 }))
 const InfoWindowMock = vi.fn().mockImplementation((_opts: any) => ({
   open: vi.fn(),
@@ -44,13 +44,23 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
     InfoWindow: InfoWindowMock,
     LatLngBounds: LatLngBoundsMock,
     Size: vi.fn().mockImplementation((w: number, h: number) => ({ width: w, height: h })),
-    event: { addListener: vi.fn() },
+    ControlPosition: { TOP_LEFT: 0 },
+    event: { addListener: vi.fn(), removeListener: vi.fn() },
   },
+}
+
+// Geolocation mock for tests that use it
+;(global as any).navigator = (global as any).navigator || {}
+;(global as any).navigator.geolocation = (global as any).navigator.geolocation || {
+  getCurrentPosition: vi.fn().mockImplementation((success: any, _error: any) => {
+    success({ coords: { latitude: 37.7749, longitude: -122.4194 } })
+  }),
 }
 
 // Mock js-api-loader with a spy-able Loader constructor
 vi.mock('@googlemaps/js-api-loader', async () => {
-	const Loader = vi.fn().mockImplementation((_opts: any) => ({ load: vi.fn().mockResolvedValue(undefined) }))
+	const Loader: any = vi.fn().mockImplementation((_opts: any) => ({ load: vi.fn().mockResolvedValue(undefined) }))
+	// Also expose named export for tests that do require() and access Loader directly
 	return { default: Loader, Loader }
 })
 
