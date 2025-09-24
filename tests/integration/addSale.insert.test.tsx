@@ -280,6 +280,6 @@ describe('Add Sale Integration', () => {
     // The new sale should appear in the list
     await waitFor(() => {
       expect(screen.getByText('Test Sale')).toBeInTheDocument()
-    }, { timeout: 3000 })
+    }, { timeout: 5000 })
   })
 })

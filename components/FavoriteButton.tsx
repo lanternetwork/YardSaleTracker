@@ -9,19 +9,19 @@ export default function FavoriteButton({
   initial?: boolean 
 }) {
   const { data: favorites = [] } = useFavorites()
-  const toggleFavorite = useToggleFavorite()
+  const { mutateAsync, isPending } = useToggleFavorite()
   
   const list = (favorites as any[])
   const isFavorited = list.some((fav: any) => fav && fav.id === saleId)
 
   const handleToggle = () => {
-    toggleFavorite.mutate({ saleId, isFavorited })
+    mutateAsync({ saleId, isFavorited })
   }
 
   return (
     <button 
       aria-pressed={isFavorited} 
-      disabled={toggleFavorite.isPending}
+      disabled={isPending}
       className={`rounded px-2 py-1 text-sm font-medium transition-colors ${
         isFavorited 
           ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' 

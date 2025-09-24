@@ -83,6 +83,12 @@ describe('Map Render Integration', () => {
         load: vi.fn().mockResolvedValue(mockGoogle)
       }))
     }))
+    
+    // Ensure the component can access the mock
+    Object.defineProperty(window, 'google', {
+      value: mockGoogle,
+      writable: true
+    })
   })
 
   it('should render map with markers for sales with coordinates', async () => {

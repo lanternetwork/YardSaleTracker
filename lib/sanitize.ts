@@ -194,11 +194,16 @@ export function sanitizeSearchQuery(input: string): string {
   sanitized = sanitized.replace(/"|\'|&/g, '') // remove quotes and ampersand
   sanitized = sanitized.replace(/\s+/g, ' ').trim() // normalize and trim
 
-  // Filter out malicious content - only if the entire content is malicious
+  // Filter out malicious content - remove alert and script patterns
   const lowerSanitized = sanitized.toLowerCase().trim()
-  if (lowerSanitized === 'alert' || lowerSanitized === 'script' || 
-      lowerSanitized.startsWith('alert(') || lowerSanitized.startsWith('script')) {
-    return ''
+  if (lowerSanitized.includes('alert(') || lowerSanitized.includes('script')) {
+    // Remove malicious patterns and return clean content
+    let cleanContent = sanitized
+    cleanContent = cleanContent.replace(/alert\s*\([^)]*\)/gi, '')
+    cleanContent = cleanContent.replace(/<script[^>]*>.*?<\/script>/gi, '')
+    cleanContent = cleanContent.replace(/script/gi, '')
+    cleanContent = cleanContent.replace(/\s+/g, ' ').trim()
+    return cleanContent
   }
 
   return sanitized

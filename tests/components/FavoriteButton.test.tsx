@@ -47,7 +47,7 @@ describe('FavoriteButton', () => {
     expect(screen.getByText('♡ Save')).toBeInTheDocument()
   })
 
-  it('renders saved button when favorited', () => {
+  it('renders saved button when favorited', async () => {
     // Mock the hook to return a favorited sale
     mockUseFavorites.mockReturnValue({
       data: [{ id: 'test-sale-id', title: 'Test Sale' }]
@@ -63,7 +63,9 @@ describe('FavoriteButton', () => {
       </TestWrapper>
     )
 
-    expect(screen.getByText('♥ Saved')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('♥ Saved')).toBeInTheDocument()
+    })
   })
 
   it('calls toggle function when clicked', async () => {
