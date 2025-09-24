@@ -185,44 +185,41 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     }
   }, [map])
 
-  if (loading) {
-    return (
-      <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
-          <div className="text-neutral-600">Loading map...</div>
-        </div>
-      </div>
-    )
-  }
+  return (
+    <div className="relative h-[60vh] w-full rounded-2xl bg-neutral-200">
+      <div id="map" className="h-full w-full rounded-2xl" ref={ref} />
 
-  if (error) {
-    return (
-      <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
-        <div className="text-center text-neutral-600">
-          <div className="text-4xl mb-2">🗺️</div>
-          <div>{error}</div>
-          <div className="text-sm mt-2">
-            {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && 
-              'Please configure your Google Maps API key in the environment variables.'
-            }
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-2xl">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
+            <div className="text-neutral-600">Loading map...</div>
           </div>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  if (points.length === 0) {
-    return (
-      <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
-        <div className="text-center text-neutral-600">
-          <div className="text-4xl mb-2">📍</div>
-          <div>No sales with locations found</div>
-          <div className="text-sm mt-2">Try adding some sales with addresses</div>
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-2xl">
+          <div className="text-center text-neutral-600">
+            <div className="text-4xl mb-2">🗺️</div>
+            <div>{error}</div>
+            <div className="text-sm mt-2">
+              {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY &&
+                'Please configure your Google Maps API key in the environment variables.'}
+            </div>
+          </div>
         </div>
-      </div>
-    )
-  }
+      )}
 
-  return <div id="map" className="h-[60vh] w-full rounded-2xl bg-neutral-200" ref={ref} />
+      {!loading && !error && points.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-2xl">
+          <div className="text-center text-neutral-600">
+            <div className="text-4xl mb-2">📍</div>
+            <div>No sales with locations found</div>
+            <div className="text-sm mt-2">Try adding some sales with addresses</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
