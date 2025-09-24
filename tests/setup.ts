@@ -1,5 +1,7 @@
 // tests/setup.ts
 import { vi } from 'vitest';
+import { setupServer } from 'msw/node';
+import { beforeAll, afterAll, afterEach } from 'vitest';
 
 // Lightweight Supabase client mock that:
 // - returns a deterministic signed-in user
@@ -73,5 +75,12 @@ vi.mock('@supabase/supabase-js', () => {
 		createClient: vi.fn(() => client),
 	};
 });
+
+// MSW server for HTTP mocking in integration tests
+export const server = setupServer();
+
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
 
 export {};
