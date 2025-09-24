@@ -182,6 +182,7 @@ export default function AddSaleForm() {
           name="title" 
           required 
           type="text"
+          aria-label="Sale Title *"
           placeholder="e.g., Estate Sale - Antiques & Collectibles" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
@@ -195,6 +196,7 @@ export default function AddSaleForm() {
           ref={addressRef} 
           required
           type="text"
+          aria-label="Address *"
           value={address}
           onChange={e => handleAddressChange(e.target.value)}
           placeholder="Start typing your address..." 
@@ -210,6 +212,7 @@ export default function AddSaleForm() {
         <textarea 
           id="description"
           name="description" 
+          aria-label="Description"
           placeholder="Describe what you're selling..." 
           rows={3}
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -270,6 +273,7 @@ export default function AddSaleForm() {
           id="contact"
           name="contact" 
           type="text"
+          aria-label="Contact Info"
           placeholder="Phone number or email" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
