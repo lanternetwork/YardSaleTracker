@@ -34,7 +34,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       return
     }
 
-    loader.load().then(() => {
+    const init = () => {
       if (!ref.current) return
 
       const g: any = (window as any).google
@@ -55,6 +55,16 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
       setMap(mapInstance)
       setLoading(false)
+    }
+
+    const gNow: any = (window as any).google
+    if (gNow?.maps?.Map) {
+      init()
+      return
+    }
+
+    loader.load().then(() => {
+      init()
     }).catch(err => {
       console.error('Error loading Google Maps:', err)
       setError('Failed to load map')
