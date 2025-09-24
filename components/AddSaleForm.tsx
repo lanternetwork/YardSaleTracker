@@ -106,7 +106,7 @@ export default function AddSaleForm() {
     setTags(tags.filter(tag => tag !== tagToRemove))
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
       addTag()
@@ -295,7 +295,7 @@ export default function AddSaleForm() {
             id="tag-input"
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             type="text"
             placeholder="Add a tag..." 
             aria-label="Add tag"

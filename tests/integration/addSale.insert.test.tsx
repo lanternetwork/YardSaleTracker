@@ -5,6 +5,7 @@ import { createMockSupabaseClient } from '@/tests/utils/mocks'
 import { useCreateSale, useSales } from '@/lib/hooks/useSales'
 import Explore from '@/app/(app)/explore/page'
 import { getAddressFixtures } from '@/tests/utils/mocks'
+import { geocodeAddress } from '@/lib/geocode'
 
 // Mock the hooks
 vi.mock('@/lib/hooks/useSales', () => ({

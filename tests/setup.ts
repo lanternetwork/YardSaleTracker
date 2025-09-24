@@ -4,8 +4,11 @@ import { setupServer } from 'msw/node';
 import { beforeAll, afterAll, afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest'
 
-// Provide a default API key for map-related tests
+// Provide default environment variables for tests
 process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'test-key'
+process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://test.supabase.co'
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key'
+process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-service-role-key'
 
 // Spyable google maps globals for integration tests
 const MarkerMock = vi.fn().mockImplementation((opts: any) => ({
