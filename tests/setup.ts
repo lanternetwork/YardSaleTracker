@@ -38,6 +38,17 @@ vi.mock('@supabase/supabase-js', () => {
 
 		let updateSpy: any = null
 		let deleteSpy: any = null
+		let lastPromise: Promise<any> | null = null
+
+		const chain = () => ({
+			eq: vi.fn(() => chain()),
+			neq: vi.fn(() => chain()),
+			in: vi.fn(() => chain()),
+			order: vi.fn(() => chain()),
+			limit: vi.fn(() => chain()),
+			range: vi.fn(() => chain()),
+			then: (resolve: any, reject?: any) => (lastPromise || Promise.resolve({ data: bag.rows.slice(), error: null })).then(resolve, reject),
+		})
 
 		const api: any = {
 			insert: vi.fn(async (payload: any | any[]) => {
@@ -49,13 +60,14 @@ vi.mock('@supabase/supabase-js', () => {
 					owner_id: r.owner_id ?? TEST_USER.id,
 				}));
 				bag.rows.push(...inserted);
+				lastPromise = Promise.resolve({ data: inserted, error: null })
 				return { data: inserted, error: null };
 			}),
 			select: vi.fn(async () => ({ data: bag.rows.slice(), error: null })),
 			get update() {
 				return (...args: any[]) => {
-					if (typeof updateSpy === 'function') updateSpy(...args)
-					return api
+					if (typeof updateSpy === 'function') lastPromise = Promise.resolve(updateSpy(...args))
+					return chain()
 				}
 			},
 			set update(fn: any) {
@@ -63,19 +75,13 @@ vi.mock('@supabase/supabase-js', () => {
 			},
 			get delete() {
 				return (...args: any[]) => {
-					if (typeof deleteSpy === 'function') deleteSpy(...args)
-					return api
+					if (typeof deleteSpy === 'function') lastPromise = Promise.resolve(deleteSpy(...args))
+					return chain()
 				}
 			},
 			set delete(fn: any) {
 				deleteSpy = fn
 			},
-			eq: vi.fn(() => api),
-			neq: vi.fn(() => api),
-			in: vi.fn(() => api),
-			order: vi.fn(() => api),
-			limit: vi.fn(() => api),
-			range: vi.fn(() => api),
 			single: vi.fn(async () => ({ data: bag.rows[0] ?? null, error: null })),
 			maybeSingle: vi.fn(async () => ({ data: bag.rows[0] ?? null, error: null })),
 		};

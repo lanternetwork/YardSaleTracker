@@ -10,6 +10,8 @@ export interface ParsedItem {
   city?: string | null
 }
 
+let idCounter = 0
+
 export function parseCraigslistList(html: string, limit: number = 20): ParsedItem[] {
   const results: ParsedItem[] = []
   if (!html) return results
@@ -41,10 +43,12 @@ export function parseCraigslistList(html: string, limit: number = 20): ParsedIte
       }
     }
 
+    const href = link ? (link.startsWith('http') ? link : `https://sfbay.craigslist.org${link}`) : `https://sfbay.craigslist.org/`
+
     results.push({
-      id: `cl_${Date.now()}_${i}`,
+      id: `cl_${Date.now()}_${i}_${idCounter++}`,
       title: title.replace(/<[^>]*>/g, ''),
-      url: link ? (link.startsWith('http') ? link : `https://sfbay.craigslist.org${link}`) : undefined,
+      url: href,
       postedAt: date,
       price: parsedPrice,
       city: null
