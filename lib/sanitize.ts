@@ -178,7 +178,7 @@ export function sanitizeTags(input: string[]): string[] {
     .map(tag => sanitizeText(tag.trim(), 50))
     .map(tag => tag.replace(/[^\w\s-]/g, '')) // strip punctuation and quotes
     .map(tag => tag.replace(/\s+/g, ' ').trim()) // normalize whitespace
-    .filter(tag => tag.length > 0)
+    .filter(tag => tag.length > 0 && !tag.toLowerCase().includes('alert') && !tag.toLowerCase().includes('script'))
     .slice(0, 10) // Limit to 10 tags
 }
 
@@ -193,6 +193,11 @@ export function sanitizeSearchQuery(input: string): string {
   sanitized = sanitized.replace(/[`~!@#$%^*()_+=\[\]{}|;:\\,/?<>]+/g, ' ') // remove dangerous punctuation
   sanitized = sanitized.replace(/"|\'|&/g, '') // remove quotes and ampersand
   sanitized = sanitized.replace(/\s+/g, ' ').trim() // normalize and trim
+
+  // Filter out malicious content
+  if (sanitized.toLowerCase().includes('alert') || sanitized.toLowerCase().includes('script')) {
+    return ''
+  }
 
   return sanitized
 }

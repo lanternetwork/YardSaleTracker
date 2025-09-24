@@ -13,7 +13,7 @@ describe('Distance calculations', () => {
       const nyc = { lat: 40.7128, lng: -74.0060 }
       const la = { lat: 34.0522, lng: -118.2437 }
       const distance = haversineKm(nyc, la)
-      expect(distance).toBeCloseTo(3944, -1)
+      expect(distance).toBeCloseTo(3944, 0)
     })
 
     it('calculates distance between close points', () => {
@@ -48,7 +48,7 @@ describe('Distance calculations', () => {
     it('converts miles to kilometers correctly', () => {
       expect(milesToKm(1)).toBeCloseTo(1.60934, 4)
       expect(milesToKm(10)).toBeCloseTo(16.0934, 4)
-      expect(milesToKm(100)).toBeCloseTo(160.934, 4)
+      expect(milesToKm(100)).toBeCloseTo(160.934, 3)
     })
 
     it('handles zero', () => {

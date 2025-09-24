@@ -85,23 +85,15 @@ describe('AddSaleForm', () => {
     const submitButton = screen.getByRole('button', { name: /post sale/i })
     fireEvent.click(submitButton)
 
-    // Wait for any async operations and check if the form actually submitted
+    // Wait for the form submission to complete
     await waitFor(() => {
-      // Check if the form submission was attempted by looking for error messages or success
-      const errorMessage = screen.queryByText('Please complete required fields')
-      if (errorMessage) {
-        // If we see the error message, the form validation failed
-        expect(errorMessage).not.toBeInTheDocument()
-      }
-    }, { timeout: 1000 })
-
-    // Check if the mocked function was called
-    expect(mockMutateAsync).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: 'Test Sale',
-        address: '123 Test St'
-      })
-    )
+      expect(mockMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Test Sale',
+          address: '123 Test St'
+        })
+      )
+    }, { timeout: 2000 })
   })
 
   it('handles geocoding on address change', async () => {
@@ -179,9 +171,8 @@ describe('AddSaleForm', () => {
     
     render(<AddSaleForm />)
     
-    await waitFor(() => {
-      expect(screen.getByText('Posting...')).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /posting.../i })).toBeDisabled()
-    })
+    // Check that the button shows "Posting..." and is disabled
+    expect(screen.getByText('Posting...')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /posting.../i })).toBeDisabled()
   })
 })
