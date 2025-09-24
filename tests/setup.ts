@@ -7,10 +7,46 @@ import '@testing-library/jest-dom/vitest'
 // Provide a default API key for map-related tests
 process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'test-key'
 
+// Spyable google maps globals for integration tests
+const MarkerMock = vi.fn().mockImplementation((opts: any) => ({
+  setMap: vi.fn(),
+  addListener: vi.fn(),
+  getPosition: vi.fn(() => ({ lat: () => 37.7749, lng: () => -122.4194 })),
+  __opts: opts,
+}))
+const MapMock = vi.fn().mockImplementation((_el: any, _opts: any) => ({
+  setCenter: vi.fn(),
+  setZoom: vi.fn(),
+  addListener: vi.fn(),
+}))
+const InfoWindowMock = vi.fn().mockImplementation((_opts: any) => ({
+  open: vi.fn(),
+  close: vi.fn(),
+}))
+const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
+  extend: vi.fn(),
+  isEmpty: vi.fn(() => false),
+}))
+
+;(global as any).google = (global as any).google || {
+  maps: {
+    places: {
+      Autocomplete: vi.fn().mockImplementation((_input: any, _opts: any) => ({
+        addListener: vi.fn(),
+        getPlace: vi.fn(() => ({ geometry: null })),
+      })),
+    },
+    Map: MapMock,
+    Marker: MarkerMock,
+    InfoWindow: InfoWindowMock,
+    LatLngBounds: LatLngBoundsMock,
+    event: { addListener: vi.fn() },
+  },
+}
+
 // Mock js-api-loader with a spy-able Loader constructor
 vi.mock('@googlemaps/js-api-loader', async () => {
-	const mod: any = await import('@/tests/utils/mocks')
-	const Loader = vi.fn().mockImplementation((opts: any) => new mod.MockGoogleMapsLoader(opts))
+	const Loader = vi.fn().mockImplementation((_opts: any) => ({ load: vi.fn().mockResolvedValue(undefined) }))
 	return { Loader }
 })
 
