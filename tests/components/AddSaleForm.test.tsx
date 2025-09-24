@@ -58,10 +58,25 @@ describe('AddSaleForm', () => {
 
   it('submits form with valid data', async () => {
     const { useCreateSale } = await import('@/lib/hooks/useSales')
-    const mockMutateAsync = vi.mocked(useCreateSale).mockReturnValue({
-      mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
-      isPending: false
-    }).mutateAsync
+    const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
+    
+    vi.mocked(useCreateSale).mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isSuccess: false,
+      isIdle: true,
+      mutate: vi.fn(),
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'idle' as const
+    })
     
     render(<AddSaleForm />)
     
@@ -152,7 +167,20 @@ describe('AddSaleForm', () => {
     const { useCreateSale } = await import('@/lib/hooks/useSales')
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: vi.fn(),
-      isPending: true
+      isPending: true,
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isSuccess: false,
+      isIdle: false,
+      mutate: vi.fn(),
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'pending' as const
     })
     
     render(<AddSaleForm />)

@@ -48,7 +48,7 @@ describe('Environment Validation', () => {
 
     // Mock the environment to be empty
     const originalEnv = process.env
-    process.env = {}
+    process.env = { NODE_ENV: 'test' }
 
     const { ENV_PUBLIC } = await import('@/lib/env')
 
