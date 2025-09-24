@@ -42,7 +42,11 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     start_at: item.postedAt,
     price_min,
     price_max,
-    tags,
+    // Ensure deterministic tag ordering for snapshots (keep 'craigslist' last)
+    tags: (() => {
+      const withoutSource = tags.filter(t => t !== 'craigslist').sort()
+      return [...withoutSource, 'craigslist']
+    })(),
     photos: [],
     source: 'craigslist'
   }
