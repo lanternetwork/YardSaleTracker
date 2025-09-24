@@ -63,7 +63,7 @@ const mockGoogle = {
 // Mock the Loader
 vi.mock('@googlemaps/js-api-loader', () => ({
   Loader: vi.fn().mockImplementation(() => ({
-    load: vi.fn().mockResolvedValue({})
+    load: vi.fn().mockResolvedValue(mockGoogle)
   }))
 }))
 
@@ -101,7 +101,10 @@ describe('Map Render Integration', () => {
     render(<YardSaleMap points={testPoints} />)
 
     // Wait for map to load
-    await new Promise(resolve => setTimeout(resolve, 200))
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Verify map container is rendered
+    expect(screen.getByTestId('map')).toBeInTheDocument()
 
     // Verify map was created
     expect(mockGoogle.maps.Map).toHaveBeenCalled()

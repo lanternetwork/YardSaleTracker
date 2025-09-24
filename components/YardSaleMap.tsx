@@ -197,7 +197,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   return (
     <div className="relative h-[60vh] w-full rounded-2xl bg-neutral-200">
-      <div id="map" className="h-full w-full rounded-2xl" ref={ref} />
+      <div id="map" data-testid="map" className="h-full w-full rounded-2xl" ref={ref} />
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center rounded-2xl">
