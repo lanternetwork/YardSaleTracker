@@ -205,6 +205,11 @@ export function createMockSupabaseClient() {
     if (tableCache['yard_sales']) return tableCache['yard_sales']
     let updateSpy: any = null
     let deleteSpy: any = null
+    let lastPromise: Promise<any> | null = null
+    const chain = () => ({
+      eq: vi.fn(() => chain()),
+      then: (resolve: any, reject?: any) => (lastPromise || Promise.resolve({ data: mockSales.slice(), error: null })).then(resolve, reject),
+    })
     const api: any = {
       select: vi.fn().mockReturnThis(),
       insert: vi.fn().mockImplementation((data: any[]) => {
@@ -216,29 +221,27 @@ export function createMockSupabaseClient() {
           updated_at: new Date().toISOString()
         }
         mockSales.push(newSale)
-        return {
+        const res = {
           data: [newSale],
           error: null
         }
+        lastPromise = Promise.resolve(res)
+        return res
       }),
       get update() {
         return (...args: any[]) => {
-          if (typeof updateSpy === 'function') updateSpy(...args)
-          return api
+          if (typeof updateSpy === 'function') lastPromise = Promise.resolve(updateSpy(...args))
+          return chain()
         }
       },
-      set update(fn: any) {
-        updateSpy = fn
-      },
+      set update(fn: any) { updateSpy = fn },
       get delete() {
         return (...args: any[]) => {
-          if (typeof deleteSpy === 'function') deleteSpy(...args)
-          return api
+          if (typeof deleteSpy === 'function') lastPromise = Promise.resolve(deleteSpy(...args))
+          return chain()
         }
       },
-      set delete(fn: any) {
-        deleteSpy = fn
-      },
+      set delete(fn: any) { deleteSpy = fn },
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockImplementation(() => {
         return {
