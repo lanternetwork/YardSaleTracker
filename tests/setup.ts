@@ -33,8 +33,9 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
   isEmpty: vi.fn(() => false),
 }))
 
-;(global as any).mockGoogle = { maps: { Map: MapMock, Marker: MarkerMock, InfoWindow: InfoWindowMock } }
-;(global as any).google = (global as any).google || {
+// Indirection layer so tests can assign window.google = mockGoogle and still have
+// already-imported modules call into the latest implementation
+;(global as any).__googleImpl = {
   maps: {
     places: {
       Autocomplete: vi.fn().mockImplementation((_input: any, _opts: any) => ({
@@ -42,15 +43,38 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
         getPlace: vi.fn(() => ({ geometry: null })),
       })),
     },
-    Map: (...args: any[]) => (global as any).mockGoogle.maps.Map(...args),
-    Marker: (...args: any[]) => (global as any).mockGoogle.maps.Marker(...args),
-    InfoWindow: (...args: any[]) => (global as any).mockGoogle.maps.InfoWindow(...args),
+    Map: MapMock,
+    Marker: MarkerMock,
+    InfoWindow: InfoWindowMock,
     LatLngBounds: LatLngBoundsMock,
     Size: vi.fn().mockImplementation((w: number, h: number) => ({ width: w, height: h })),
     ControlPosition: { TOP_LEFT },
     event: { addListener: vi.fn(), removeListener: vi.fn() },
   },
 }
+
+const googleWrapper = {
+  maps: {
+    places: (global as any).__googleImpl.maps.places,
+    Map: (...args: any[]) => (global as any).__googleImpl.maps.Map(...args),
+    Marker: (...args: any[]) => (global as any).__googleImpl.maps.Marker(...args),
+    InfoWindow: (...args: any[]) => (global as any).__googleImpl.maps.InfoWindow(...args),
+    LatLngBounds: (...args: any[]) => (global as any).__googleImpl.maps.LatLngBounds(...args),
+    Size: (...args: any[]) => (global as any).__googleImpl.maps.Size(...args),
+    ControlPosition: (global as any).__googleImpl.maps.ControlPosition,
+    event: (global as any).__googleImpl.maps.event,
+  },
+}
+
+Object.defineProperty(global as any, 'google', {
+  configurable: true,
+  get() {
+    return googleWrapper
+  },
+  set(v: any) {
+    ;(global as any).__googleImpl = v
+  },
+})
 
 // Geolocation mock for tests that use it
 ;(global as any).navigator = (global as any).navigator || {}
