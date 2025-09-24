@@ -66,8 +66,8 @@ export function createPageMetadata({
 
 export function createSaleMetadata(sale: Sale): Metadata {
   const title = sale.title
-  const cityPart = sale.city ? `${sale.city}` : ''
-  const description = sale.description || `Yard sale at ${sale.address || cityPart || 'your area'}. ${sale.start_at ? `Starts ${new Date(sale.start_at).toLocaleDateString()}` : ''}`
+  const locationPart = [sale.address, sale.city].filter(Boolean).join(', ')
+  const description = sale.description || `Yard sale at ${locationPart || 'your area'}. ${sale.start_at ? `Starts ${new Date(sale.start_at).toLocaleDateString()}` : ''}`
   const image = sale.photos?.[0] || '/og-sale.jpg'
   const path = `/sale/${sale.id}`
 
