@@ -100,7 +100,10 @@ if (typeof window !== 'undefined') {
 // Mock js-api-loader with a spy-able Loader constructor
 vi.mock('@googlemaps/js-api-loader', async () => {
 	const Loader: any = vi.fn().mockImplementation((_opts: any) => ({
-		load: vi.fn().mockResolvedValue((global as any).google),
+		load: vi.fn().mockImplementation(() => {
+			// Return the current google implementation (which can be overridden by tests)
+			return Promise.resolve((global as any).google || (window as any).google)
+		}),
 	}))
 	// Also expose named export for tests that do require() and access Loader directly
 	return { default: Loader, Loader }

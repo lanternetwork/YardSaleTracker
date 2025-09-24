@@ -71,7 +71,8 @@ describe('Map Render Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Set up global google object
+    // Set up global google object - set the implementation that our proxy uses
+    ;(global as any).__googleImpl = mockGoogle
     if (typeof window !== 'undefined') {
       (window as any).google = mockGoogle
     }
