@@ -1,105 +1,77 @@
-import { expect, afterEach, beforeAll, afterAll } from 'vitest'
-import { cleanup } from '@testing-library/react'
-import * as matchers from '@testing-library/jest-dom/matchers'
-import { setupServer } from 'msw/node'
-import { http, HttpResponse } from 'msw'
+// tests/setup.ts
+import { vi } from 'vitest';
 
-// Extend Vitest's expect with jest-dom matchers
-expect.extend(matchers)
+// Lightweight Supabase client mock that:
+// - returns a deterministic signed-in user
+// - sets owner_id on insert if missing
+// - restricts update/delete to owner rows
+// - exposes spies for assertions
+vi.mock('@supabase/supabase-js', () => {
+	const calls: any = { tables: {}, auth: {} };
+	const TEST_USER = { id: 'test-user-1', email: 'test@example.com' };
 
-// Cleanup after each test
-afterEach(() => {
-  cleanup()
-})
+	const auth = {
+		getUser: vi.fn().mockResolvedValue({ data: { user: TEST_USER }, error: null }),
+		onAuthStateChange: vi.fn().mockImplementation((cb: any) => {
+			cb('SIGNED_IN', { user: TEST_USER });
+			return { data: { subscription: { unsubscribe: vi.fn() } } };
+		}),
+	};
+	calls.auth = auth;
 
-// MSW server for API mocking
-const server = setupServer()
+	function makeTableAPI(table: string) {
+		if (!calls.tables[table]) calls.tables[table] = { rows: [] as any[] };
+		const bag = calls.tables[table];
 
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+		const api: any = {
+			insert: vi.fn(async (payload: any | any[]) => {
+				const arr = Array.isArray(payload) ? payload : [payload];
+				const inserted = arr.map((r) => ({
+					// preserve provided id; only create one if missing
+					id: r.id ?? `sale-${Math.random().toString(36).slice(2, 8)}`,
+					...r,
+					owner_id: r.owner_id ?? TEST_USER.id,
+				}));
+				bag.rows.push(...inserted);
+				return { data: inserted, error: null };
+			}),
+			select: vi.fn(async () => ({ data: bag.rows.slice(), error: null })),
+			update: vi.fn(async (updates: any) => {
+				bag.rows = bag.rows.map((r: any) =>
+					r.owner_id === TEST_USER.id ? { ...r, ...updates } : r
+				);
+				return { data: bag.rows.filter((r: any) => r.owner_id === TEST_USER.id), error: null };
+			}),
+			delete: vi.fn(async () => {
+				const owned = bag.rows.filter((r: any) => r.owner_id === TEST_USER.id);
+				bag.rows = bag.rows.filter((r: any) => r.owner_id !== TEST_USER.id);
+				return { data: owned, error: null };
+			}),
 
-// Export server for use in tests
-export { server }
+			// chainers used in tests; no-ops that return the api for fluency
+			eq: vi.fn(() => api),
+			neq: vi.fn(() => api),
+			in: vi.fn(() => api),
+			order: vi.fn(() => api),
+			limit: vi.fn(() => api),
+			range: vi.fn(() => api),
+			single: vi.fn(async () => ({ data: bag.rows[0] ?? null, error: null })),
+			maybeSingle: vi.fn(async () => ({ data: bag.rows[0] ?? null, error: null })),
+		};
+		return api;
+	}
 
-// Mock environment variables
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
-process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = 'test-maps-key'
+	const client = {
+		auth,
+		from: (table: string) => makeTableAPI(table),
+		rpc: vi.fn(async () => ({ data: null, error: null })),
+		storage: { from: vi.fn(() => ({ upload: vi.fn(), getPublicUrl: vi.fn() })) },
+		__calls: calls, // available to tests if they need to inspect spies
+	};
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-  }),
-  useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/',
-}))
+	return {
+		createClient: vi.fn(() => client),
+	};
+});
 
-// Mock Supabase
-vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => ({
-    auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
-      signInWithPassword: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-    },
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      insert: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    })),
-    storage: {
-      from: vi.fn(() => ({
-        upload: vi.fn(),
-        getPublicUrl: vi.fn(),
-      })),
-    },
-  }),
-}))
-
-// Mock Google Maps
-vi.mock('@googlemaps/js-api-loader', () => ({
-  Loader: vi.fn().mockImplementation(() => ({
-    load: vi.fn().mockResolvedValue({}),
-  })),
-}))
-
-// Provide a minimal global google object for components using it directly
-;(globalThis as any).google = (globalThis as any).google || {
-  maps: {
-    places: {
-      Autocomplete: class {
-        constructor() {}
-        addListener() {}
-        getPlace() { return { geometry: null, formatted_address: '' } }
-      }
-    },
-    Map: class { constructor() {} },
-    Marker: class { constructor() {}; setMap() {}; addListener() {}; getPosition() { return { lat: () => 0, lng: () => 0 } } },
-    InfoWindow: class { constructor() {}; open() {}; close() {} },
-    LatLngBounds: class { extend() {}; isEmpty() { return true } },
-    LatLng: class { constructor(public lat: number, public lng: number) {} },
-    event: { addListener: () => ({ remove: () => {} }), removeListener: () => {} },
-    ControlPosition: { TOP_LEFT: 'TOP_LEFT' },
-    Size: class { constructor(public width: number, public height: number) {} }
-  }
-}
-
-// Mock geolocation
-Object.defineProperty(navigator, 'geolocation', {
-  value: {
-    getCurrentPosition: vi.fn(),
-    watchPosition: vi.fn(),
-    clearWatch: vi.fn(),
-  },
-  writable: true,
-})
+export {};

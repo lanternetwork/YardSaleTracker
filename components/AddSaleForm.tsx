@@ -168,7 +168,7 @@ export default function AddSaleForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form role="form" aria-label="Add sale" onSubmit={onSubmit} className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
           {error}
@@ -272,6 +272,7 @@ export default function AddSaleForm() {
             onChange={e => setTagInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Add a tag..." 
+            aria-label="Add tag"
             className="flex-1 rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
           <button 
