@@ -140,6 +140,15 @@ export default function AddSaleForm() {
         return
       }
 
+      if (
+        typeof payload.price_min === 'number' &&
+        typeof payload.price_max === 'number' &&
+        payload.price_min > payload.price_max
+      ) {
+        setError('Min price must be less than max price')
+        return
+      }
+
       const createdSale = await createSale.mutateAsync(parsed.data)
 
       logger.info('Sale created successfully', {
@@ -168,7 +177,7 @@ export default function AddSaleForm() {
   }
 
   return (
-    <form role="form" aria-label="Add sale" onSubmit={onSubmit} className="space-y-4">
+    <form role="form" aria-label="Add sale" onSubmit={onSubmit} noValidate className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
           {error}
