@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import FavoriteButton from '@/components/FavoriteButton'
+import FavoriteButton from '../../components/FavoriteButton'
 
 // Mock the auth hooks
 vi.mock('../../lib/hooks/useAuth', () => ({
