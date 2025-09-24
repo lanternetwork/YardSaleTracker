@@ -321,6 +321,7 @@ export default function AddSaleForm() {
                   type="button"
                   onClick={() => removeTag(tag)}
                   className="text-amber-600 hover:text-amber-800"
+                  aria-label={`Remove ${tag}`}
                 >
                   ×
                 </button>

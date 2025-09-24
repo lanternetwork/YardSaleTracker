@@ -85,14 +85,23 @@ describe('AddSaleForm', () => {
     const submitButton = screen.getByRole('button', { name: /post sale/i })
     fireEvent.click(submitButton)
 
+    // Wait for any async operations and check if the form actually submitted
     await waitFor(() => {
-      expect(mockMutateAsync).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: 'Test Sale',
-          address: '123 Test St'
-        })
-      )
-    })
+      // Check if the form submission was attempted by looking for error messages or success
+      const errorMessage = screen.queryByText('Please complete required fields')
+      if (errorMessage) {
+        // If we see the error message, the form validation failed
+        expect(errorMessage).not.toBeInTheDocument()
+      }
+    }, { timeout: 1000 })
+
+    // Check if the mocked function was called
+    expect(mockMutateAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Test Sale',
+        address: '123 Test St'
+      })
+    )
   })
 
   it('handles geocoding on address change', async () => {
@@ -134,6 +143,14 @@ describe('AddSaleForm', () => {
   it('validates price range', async () => {
     render(<AddSaleForm />)
     
+    // Fill in required fields first
+    fireEvent.change(screen.getByPlaceholderText('e.g., Estate Sale - Antiques & Collectibles'), {
+      target: { value: 'Test Sale' }
+    })
+    fireEvent.change(screen.getByPlaceholderText('Start typing your address...'), {
+      target: { value: '123 Test St' }
+    })
+    
     const minPriceInput = screen.getByPlaceholderText('0.00')
     const maxPriceInput = screen.getByPlaceholderText('100.00')
 
@@ -162,7 +179,9 @@ describe('AddSaleForm', () => {
     
     render(<AddSaleForm />)
     
-    expect(screen.getByText('Posting...')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /posting.../i })).toBeDisabled()
+    await waitFor(() => {
+      expect(screen.getByText('Posting...')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /posting.../i })).toBeDisabled()
+    })
   })
 })
