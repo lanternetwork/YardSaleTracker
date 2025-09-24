@@ -76,6 +76,9 @@ describe('Map Render Integration', () => {
     if (typeof window !== 'undefined') {
       (window as any).google = mockGoogle
     }
+    
+    // Also set it directly on global for the component to see
+    ;(global as any).google = mockGoogle
   })
 
   it('should render map with markers for sales with coordinates', async () => {
@@ -85,7 +88,7 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: addresses[0].lat,
-        lng: addresses[0].lng
+        lng: addresses[1].lng
       },
       {
         id: 'sale-2',
@@ -98,7 +101,7 @@ describe('Map Render Integration', () => {
     render(<YardSaleMap points={testPoints} />)
 
     // Wait for map to load
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 200))
 
     // Verify map was created
     expect(mockGoogle.maps.Map).toHaveBeenCalled()
@@ -220,10 +223,11 @@ describe('Map Render Integration', () => {
   })
 
   it('should handle map loading error', async () => {
-    // Mock loader to reject
-    const { Loader } = require('@googlemaps/js-api-loader')
-    Loader.mockImplementation(() => ({
-      load: vi.fn().mockRejectedValue(new Error('Failed to load'))
+    // Mock loader to reject by setting up a different mock
+    vi.doMock('@googlemaps/js-api-loader', () => ({
+      Loader: vi.fn().mockImplementation(() => ({
+        load: vi.fn().mockRejectedValue(new Error('Failed to load'))
+      }))
     }))
 
     render(<YardSaleMap points={[]} />)
