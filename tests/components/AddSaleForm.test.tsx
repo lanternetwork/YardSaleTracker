@@ -59,14 +59,19 @@ describe('AddSaleForm', () => {
   it('submits form with valid data', async () => {
     const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
     
-    // Mock the hook directly
+    // Mock the hook with a spy that can be tracked
+    const mockUseCreateSale = vi.fn().mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false
+    })
+
     vi.doMock('@/lib/hooks/useSales', () => ({
-      useCreateSale: () => ({
-        mutateAsync: mockMutateAsync,
-        isPending: false
-      })
+      useCreateSale: mockUseCreateSale
     }))
 
+    // Re-import the component to get the mocked version
+    const { default: AddSaleForm } = await import('@/components/AddSaleForm')
+    
     render(<AddSaleForm />)
     
     // Fill in required fields
@@ -148,6 +153,9 @@ describe('AddSaleForm', () => {
       })
     }))
 
+    // Re-import the component to get the mocked version
+    const { default: AddSaleForm } = await import('@/components/AddSaleForm')
+    
     render(<AddSaleForm />)
     
     expect(screen.getByText('Posting...')).toBeInTheDocument()
