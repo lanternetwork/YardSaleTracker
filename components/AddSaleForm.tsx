@@ -181,6 +181,7 @@ export default function AddSaleForm() {
           id="title"
           name="title" 
           required 
+          type="text"
           placeholder="e.g., Estate Sale - Antiques & Collectibles" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
@@ -193,6 +194,7 @@ export default function AddSaleForm() {
           name="address" 
           ref={addressRef} 
           required
+          type="text"
           value={address}
           onChange={e => handleAddressChange(e.target.value)}
           placeholder="Start typing your address..." 
@@ -267,6 +269,7 @@ export default function AddSaleForm() {
         <input 
           id="contact"
           name="contact" 
+          type="text"
           placeholder="Phone number or email" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
@@ -280,6 +283,7 @@ export default function AddSaleForm() {
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
             onKeyPress={handleKeyPress}
+            type="text"
             placeholder="Add a tag..." 
             aria-label="Add tag"
             className="flex-1 rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
