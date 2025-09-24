@@ -88,7 +88,8 @@ export function sanitizeUrl(input: string): string {
       }
     }
 
-    return url.href
+    // Return without trailing slash for consistency with tests
+    return url.href.replace(/\/$/, '')
   } catch {
     return ''
   }
