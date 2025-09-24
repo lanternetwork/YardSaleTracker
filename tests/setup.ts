@@ -17,7 +17,10 @@ const MarkerMock = vi.fn().mockImplementation((opts: any) => ({
 const MapMock = vi.fn().mockImplementation((_el: any, _opts: any) => ({
   setCenter: vi.fn(),
   setZoom: vi.fn(),
+  getZoom: vi.fn(() => 10),
+  fitBounds: vi.fn(),
   addListener: vi.fn(),
+  controls: { TOP_LEFT: { push: vi.fn() } },
 }))
 const InfoWindowMock = vi.fn().mockImplementation((_opts: any) => ({
   open: vi.fn(),
@@ -40,6 +43,7 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
     Marker: MarkerMock,
     InfoWindow: InfoWindowMock,
     LatLngBounds: LatLngBoundsMock,
+    Size: vi.fn().mockImplementation((w: number, h: number) => ({ width: w, height: h })),
     event: { addListener: vi.fn() },
   },
 }
