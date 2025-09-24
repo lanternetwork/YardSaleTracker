@@ -1,14 +1,14 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
-import { useCreateSale } from '@/lib/hooks/useSales'
+import * as SalesHooks from '@/lib/hooks/useSales'
 import { geocodeAddress } from '@/lib/geocode'
 import { SaleSchema } from '@/lib/zodSchemas'
 import { logger } from '@/lib/log'
 import ImageUploader from './ImageUploader'
 
 export default function AddSaleForm() {
-  const createSale = useCreateSale()
+  const createSale = SalesHooks.useCreateSale()
   const addressRef = useRef<HTMLInputElement>(null)
   const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null)
   const [address, setAddress] = useState('')
