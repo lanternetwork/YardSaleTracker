@@ -62,7 +62,9 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
 
 // Mock js-api-loader with a spy-able Loader constructor
 vi.mock('@googlemaps/js-api-loader', async () => {
-	const Loader: any = vi.fn().mockImplementation((_opts: any) => ({ load: vi.fn().mockResolvedValue(undefined) }))
+	const Loader: any = vi.fn().mockImplementation((_opts: any) => ({
+		load: vi.fn().mockResolvedValue((global as any).google),
+	}))
 	// Also expose named export for tests that do require() and access Loader directly
 	return { default: Loader, Loader }
 })
