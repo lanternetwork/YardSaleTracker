@@ -43,7 +43,7 @@ describe('FavoriteButton', () => {
 
   it('renders saved button when favorited', () => {
     // Mock the hook to return a favorited sale
-    vi.mocked(require('@/lib/hooks/useAuth').useFavorites).mockReturnValue({
+    vi.mocked(require('../../lib/hooks/useAuth').useFavorites).mockReturnValue({
       data: [{ id: 'test-sale-id', title: 'Test Sale' }]
     })
 
@@ -58,7 +58,7 @@ describe('FavoriteButton', () => {
 
   it('calls toggle function when clicked', async () => {
     const mockToggle = vi.fn()
-    vi.mocked(require('@/lib/hooks/useAuth').useToggleFavorite).mockReturnValue({
+    vi.mocked(require('../../lib/hooks/useAuth').useToggleFavorite).mockReturnValue({
       mutate: mockToggle,
       isPending: false
     })
@@ -79,7 +79,7 @@ describe('FavoriteButton', () => {
   })
 
   it('shows loading state when pending', () => {
-    vi.mocked(require('@/lib/hooks/useAuth').useToggleFavorite).mockReturnValue({
+    vi.mocked(require('../../lib/hooks/useAuth').useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: true
     })
