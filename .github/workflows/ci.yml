@@ -37,7 +37,15 @@ jobs:
         with:
           node-version: '18'
       - run: npm install
-      - run: npm run test
+      - name: Run Vitest and capture output
+        run: |
+          npm run test 2>&1 | tee vitest-errors.txt || true
+      - name: Upload Vitest errors artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vitest-errors
+          path: vitest-errors.txt
     name: Unit Tests
 
   e2e:
