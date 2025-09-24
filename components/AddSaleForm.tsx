@@ -317,12 +317,6 @@ export default function AddSaleForm() {
         )}
       </div>
 
-      <ImageUploader 
-        onUpload={setPhotos}
-        maxImages={5}
-        existingImages={photos}
-      />
-
       <button 
         type="submit"
         disabled={createSale.isPending}
@@ -330,6 +324,12 @@ export default function AddSaleForm() {
       >
         {createSale.isPending ? 'Posting...' : 'Post Sale'}
       </button>
+
+      <ImageUploader 
+        onUpload={setPhotos}
+        maxImages={5}
+        existingImages={photos}
+      />
     </form>
   )
 }
