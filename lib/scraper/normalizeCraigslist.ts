@@ -52,11 +52,11 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
   
   Object.entries(normalized).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      if (Array.isArray(value) && value.length === 0) {
-        // Include empty arrays
+      if (Array.isArray(value)) {
+        // Always include arrays (even if empty)
         ;(result as any)[key] = value
-      } else if (!Array.isArray(value) && value !== '') {
-        // Include non-empty strings and other values
+      } else if (value !== '') {
+        // Include non-empty strings and other scalar values
         ;(result as any)[key] = value
       }
     }

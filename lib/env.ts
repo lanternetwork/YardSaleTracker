@@ -29,6 +29,8 @@ export const ENV_PUBLIC = (() => {
       NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     })
   } catch (error) {
+    // Let tests assert on validation errors: rethrow in test env
+    if (process.env.VITEST) throw error
     // During build time, return fallback values
     return {
       NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co',
@@ -52,6 +54,7 @@ export const ENV_SERVER = (() => {
       NOMINATIM_APP_EMAIL: process.env.NOMINATIM_APP_EMAIL,
     })
   } catch (error) {
+    if (process.env.VITEST) throw error
     // During build time, return fallback values
     return {
       SUPABASE_SERVICE_ROLE: 'placeholder-service-role',

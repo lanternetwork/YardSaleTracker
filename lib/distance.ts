@@ -1,6 +1,7 @@
 export function haversineKm(a: {lat: number, lng: number}, b: {lat: number, lng: number}) {
   const toRad = (n: number) => (n * Math.PI) / 180
-  const R = 6371
+  // Use WGS84 mean Earth radius for better accuracy
+  const R = 6371.0088
   const dLat = toRad(b.lat - a.lat)
   const dLng = toRad(b.lng - a.lng)
   const sa = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng/2)**2
