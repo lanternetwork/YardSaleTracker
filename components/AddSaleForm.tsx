@@ -176,8 +176,9 @@ export default function AddSaleForm() {
       )}
       
       <div>
-        <label className="block text-sm font-medium mb-1">Sale Title *</label>
+        <label htmlFor="title" className="block text-sm font-medium mb-1">Sale Title *</label>
         <input 
+          id="title"
           name="title" 
           required 
           placeholder="e.g., Estate Sale - Antiques & Collectibles" 
@@ -186,8 +187,9 @@ export default function AddSaleForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Address *</label>
+        <label htmlFor="address" className="block text-sm font-medium mb-1">Address *</label>
         <input 
+          id="address"
           name="address" 
           ref={addressRef} 
           required
@@ -202,8 +204,9 @@ export default function AddSaleForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
         <textarea 
+          id="description"
           name="description" 
           placeholder="Describe what you're selling..." 
           rows={3}
@@ -213,16 +216,18 @@ export default function AddSaleForm() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Start Date & Time</label>
+          <label htmlFor="start_at" className="block text-sm font-medium mb-1">Start Date & Time</label>
           <input 
+            id="start_at"
             type="datetime-local" 
             name="start_at" 
             className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">End Date & Time</label>
+          <label htmlFor="end_at" className="block text-sm font-medium mb-1">End Date & Time</label>
           <input 
+            id="end_at"
             type="datetime-local" 
             name="end_at" 
             className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -232,8 +237,9 @@ export default function AddSaleForm() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Min Price ($)</label>
+          <label htmlFor="price_min" className="block text-sm font-medium mb-1">Min Price ($)</label>
           <input 
+            id="price_min"
             type="number" 
             name="price_min" 
             min="0"
@@ -243,8 +249,9 @@ export default function AddSaleForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Max Price ($)</label>
+          <label htmlFor="price_max" className="block text-sm font-medium mb-1">Max Price ($)</label>
           <input 
+            id="price_max"
             type="number" 
             name="price_max" 
             min="0"
@@ -256,8 +263,9 @@ export default function AddSaleForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Contact Info</label>
+        <label htmlFor="contact" className="block text-sm font-medium mb-1">Contact Info</label>
         <input 
+          id="contact"
           name="contact" 
           placeholder="Phone number or email" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -265,9 +273,10 @@ export default function AddSaleForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Tags</label>
+        <label htmlFor="tag-input" className="block text-sm font-medium mb-2">Tags</label>
         <div className="flex gap-2 mb-2">
           <input 
+            id="tag-input"
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
             onKeyPress={handleKeyPress}
