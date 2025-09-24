@@ -92,14 +92,13 @@ export class RateLimiter {
     if (!entry || entry.resetTime <= now) {
       // New window or expired entry
       memoryStore.set(key, {
-        count: 1,
+        count: 0,
         resetTime: now + this.options.windowMs
       })
-      
       return {
         success: true,
         limit: this.options.maxRequests,
-        remaining: this.options.maxRequests - 1,
+        remaining: this.options.maxRequests,
         resetTime: now + this.options.windowMs
       }
     }

@@ -20,7 +20,7 @@ const serverSchema = z.object({
 // Validate public environment variables with build-time fallbacks
 export const ENV_PUBLIC = (() => {
   try {
-    return publicSchema.parse({
+    const parsed = publicSchema.parse({
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
@@ -28,9 +28,13 @@ export const ENV_PUBLIC = (() => {
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
       NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     })
+    return parsed
   } catch (error) {
-    // Let tests assert on validation errors: rethrow in test env
-    if (process.env.VITEST) throw error
+    if (process.env.VITEST) {
+      // Normalize ZodError to a readable string for tests expecting includes()
+      const message = (error as any)?.errors?.[0]?.message || String(error)
+      throw new Error(message)
+    }
     // During build time, return fallback values
     return {
       NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co',

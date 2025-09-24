@@ -47,7 +47,7 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
 // Mock js-api-loader with a spy-able Loader constructor
 vi.mock('@googlemaps/js-api-loader', async () => {
 	const Loader = vi.fn().mockImplementation((_opts: any) => ({ load: vi.fn().mockResolvedValue(undefined) }))
-	return { Loader }
+	return { default: Loader, Loader }
 })
 
 // Lightweight Supabase client mock that:
