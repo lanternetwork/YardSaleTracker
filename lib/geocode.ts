@@ -43,7 +43,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   }
 }
 
-async function geocodeWithGoogle(address: string): Promise<GeocodeResult | null> {
+export async function geocodeWithGoogle(address: string): Promise<GeocodeResult | null> {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   if (!apiKey) return null
 
@@ -76,11 +76,18 @@ async function geocodeWithGoogle(address: string): Promise<GeocodeResult | null>
   return null
 }
 
-async function geocodeWithNominatim(address: string): Promise<GeocodeResult | null> {
+export async function geocodeWithNominatim(address: string): Promise<GeocodeResult | null> {
   const email = process.env.NOMINATIM_APP_EMAIL || 'noreply@yardsalefinder.com'
   
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&email=${email}&limit=1`
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&email=${email}&limit=1`,
+    {
+      headers: {
+        'User-Agent': 'LootAura Test Suite',
+        'Accept': 'application/json',
+        'Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com',
+      },
+    }
   )
   
   const data = await response.json()
