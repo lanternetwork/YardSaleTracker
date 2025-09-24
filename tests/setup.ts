@@ -76,6 +76,19 @@ Object.defineProperty(global as any, 'google', {
   },
 })
 
+// Also set on window for browser environment
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window as any, 'google', {
+    configurable: true,
+    get() {
+      return googleWrapper
+    },
+    set(v: any) {
+      ;(global as any).__googleImpl = v
+    },
+  })
+}
+
 // Geolocation mock for tests that use it
 ;(global as any).navigator = (global as any).navigator || {}
 ;(global as any).navigator.geolocation = (global as any).navigator.geolocation || {
