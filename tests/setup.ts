@@ -33,6 +33,7 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
   isEmpty: vi.fn(() => false),
 }))
 
+;(global as any).mockGoogle = { maps: { Map: MapMock, Marker: MarkerMock, InfoWindow: InfoWindowMock } }
 ;(global as any).google = (global as any).google || {
   maps: {
     places: {
@@ -41,9 +42,9 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
         getPlace: vi.fn(() => ({ geometry: null })),
       })),
     },
-    Map: MapMock,
-    Marker: MarkerMock,
-    InfoWindow: InfoWindowMock,
+    Map: (...args: any[]) => (global as any).mockGoogle.maps.Map(...args),
+    Marker: (...args: any[]) => (global as any).mockGoogle.maps.Marker(...args),
+    InfoWindow: (...args: any[]) => (global as any).mockGoogle.maps.InfoWindow(...args),
     LatLngBounds: LatLngBoundsMock,
     Size: vi.fn().mockImplementation((w: number, h: number) => ({ width: w, height: h })),
     ControlPosition: { TOP_LEFT },
