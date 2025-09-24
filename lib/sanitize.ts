@@ -176,6 +176,8 @@ export function sanitizeTags(input: string[]): string[] {
   return input
     .filter(tag => typeof tag === 'string' && tag.trim().length > 0)
     .map(tag => sanitizeText(tag.trim(), 50))
+    .map(tag => tag.replace(/[^\w\s-]/g, '')) // strip punctuation and quotes
+    .map(tag => tag.replace(/\s+/g, ' ').trim()) // normalize whitespace
     .filter(tag => tag.length > 0)
     .slice(0, 10) // Limit to 10 tags
 }
@@ -187,7 +189,10 @@ export function sanitizeSearchQuery(input: string): string {
   let sanitized = sanitizeText(input, 200)
 
   // Remove potentially dangerous characters
-  sanitized = sanitized.replace(/[<>'"&]/g, '')
+  sanitized = sanitized.replace(/<[^>]*>/g, '') // strip any residual HTML
+  sanitized = sanitized.replace(/[`~!@#$%^*()_+=\[\]{}|;:\\,/?<>]+/g, ' ') // remove dangerous punctuation
+  sanitized = sanitized.replace(/"|\'|&/g, '') // remove quotes and ampersand
+  sanitized = sanitized.replace(/\s+/g, ' ').trim() // normalize and trim
 
   return sanitized
 }
