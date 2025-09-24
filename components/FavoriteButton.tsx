@@ -1,5 +1,5 @@
 'use client'
-import { useFavorites, useToggleFavorite } from '@/lib/hooks/useAuth'
+import { useFavorites, useToggleFavorite } from '@/lib/hooks/useFavorites'
 
 export default function FavoriteButton({ 
   saleId, 
