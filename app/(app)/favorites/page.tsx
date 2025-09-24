@@ -1,5 +1,5 @@
 'use client'
-import { useFavorites } from '@/lib/hooks/useAuth'
+import { useFavorites } from '@/lib/hooks/useFavorites'
 import type { Sale } from '@/lib/types'
 import SalesList from '@/components/SalesList'
 import EmptyState from '@/components/EmptyState'
