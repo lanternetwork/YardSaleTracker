@@ -38,10 +38,10 @@ describe('AddSaleForm', () => {
   it('renders form fields', () => {
     render(<AddSaleForm />)
     
-    expect(screen.getByPlaceholderText('Sale title')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Address')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Description')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Contact info')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('e.g., Estate Sale - Antiques & Collectibles')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Start typing your address...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Describe what you\'re selling...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Phone number or email')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /post sale/i })).toBeInTheDocument()
   })
 
@@ -67,10 +67,10 @@ describe('AddSaleForm', () => {
     render(<AddSaleForm />)
     
     // Fill in required fields
-    fireEvent.change(screen.getByPlaceholderText('Sale title'), {
+    fireEvent.change(screen.getByPlaceholderText('e.g., Estate Sale - Antiques & Collectibles'), {
       target: { value: 'Test Sale' }
     })
-    fireEvent.change(screen.getByPlaceholderText('Address'), {
+    fireEvent.change(screen.getByPlaceholderText('Start typing your address...'), {
       target: { value: '123 Test St' }
     })
 
@@ -92,7 +92,7 @@ describe('AddSaleForm', () => {
     
     render(<AddSaleForm />)
     
-    const addressInput = screen.getByPlaceholderText('Address')
+    const addressInput = screen.getByPlaceholderText('Start typing your address...')
     fireEvent.change(addressInput, {
       target: { value: '123 Test St, New York, NY' }
     })
@@ -106,7 +106,7 @@ describe('AddSaleForm', () => {
   it('adds and removes tags', () => {
     render(<AddSaleForm />)
     
-    const tagInput = screen.getByPlaceholderText('Add tags (press Enter)')
+    const tagInput = screen.getByPlaceholderText('Add a tag...')
     fireEvent.change(tagInput, { target: { value: 'furniture' } })
     fireEvent.keyDown(tagInput, { key: 'Enter' })
 
@@ -122,8 +122,8 @@ describe('AddSaleForm', () => {
   it('validates price range', async () => {
     render(<AddSaleForm />)
     
-    const minPriceInput = screen.getByPlaceholderText('Min price')
-    const maxPriceInput = screen.getByPlaceholderText('Max price')
+    const minPriceInput = screen.getByPlaceholderText('0.00')
+    const maxPriceInput = screen.getByPlaceholderText('100.00')
 
     fireEvent.change(minPriceInput, { target: { value: '100' } })
     fireEvent.change(maxPriceInput, { target: { value: '50' } })
