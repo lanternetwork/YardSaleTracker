@@ -203,7 +203,9 @@ export function createMockSupabaseClient() {
 
   function getYardSalesAPI() {
     if (tableCache['yard_sales']) return tableCache['yard_sales']
-    const api = {
+    let updateSpy: any = null
+    let deleteSpy: any = null
+    const api: any = {
       select: vi.fn().mockReturnThis(),
       insert: vi.fn().mockImplementation((data: any[]) => {
         const newSale = {
@@ -219,8 +221,24 @@ export function createMockSupabaseClient() {
           error: null
         }
       }),
-      update: vi.fn().mockReturnThis(),
-      delete: vi.fn().mockReturnThis(),
+      get update() {
+        return (...args: any[]) => {
+          if (typeof updateSpy === 'function') updateSpy(...args)
+          return api
+        }
+      },
+      set update(fn: any) {
+        updateSpy = fn
+      },
+      get delete() {
+        return (...args: any[]) => {
+          if (typeof deleteSpy === 'function') deleteSpy(...args)
+          return api
+        }
+      },
+      set delete(fn: any) {
+        deleteSpy = fn
+      },
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockImplementation(() => {
         return {

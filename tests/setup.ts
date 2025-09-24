@@ -2,6 +2,17 @@
 import { vi } from 'vitest';
 import { setupServer } from 'msw/node';
 import { beforeAll, afterAll, afterEach } from 'vitest';
+import '@testing-library/jest-dom/vitest'
+
+// Provide a default API key for map-related tests
+process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'test-key'
+
+// Mock js-api-loader with a spy-able Loader constructor
+vi.mock('@googlemaps/js-api-loader', async () => {
+	const mod: any = await import('@/tests/utils/mocks')
+	const Loader = vi.fn().mockImplementation((opts: any) => new mod.MockGoogleMapsLoader(opts))
+	return { Loader }
+})
 
 // Lightweight Supabase client mock that:
 // - returns a deterministic signed-in user
@@ -25,6 +36,9 @@ vi.mock('@supabase/supabase-js', () => {
 		if (!calls.tables[table]) calls.tables[table] = { rows: [] as any[] };
 		const bag = calls.tables[table];
 
+		let updateSpy: any = null
+		let deleteSpy: any = null
+
 		const api: any = {
 			insert: vi.fn(async (payload: any | any[]) => {
 				const arr = Array.isArray(payload) ? payload : [payload];
@@ -38,19 +52,24 @@ vi.mock('@supabase/supabase-js', () => {
 				return { data: inserted, error: null };
 			}),
 			select: vi.fn(async () => ({ data: bag.rows.slice(), error: null })),
-			update: vi.fn(async (updates: any) => {
-				bag.rows = bag.rows.map((r: any) =>
-					r.owner_id === TEST_USER.id ? { ...r, ...updates } : r
-				);
-				return { data: bag.rows.filter((r: any) => r.owner_id === TEST_USER.id), error: null };
-			}),
-			delete: vi.fn(async () => {
-				const owned = bag.rows.filter((r: any) => r.owner_id === TEST_USER.id);
-				bag.rows = bag.rows.filter((r: any) => r.owner_id !== TEST_USER.id);
-				return { data: owned, error: null };
-			}),
-
-			// chainers used in tests; no-ops that return the api for fluency
+			get update() {
+				return (...args: any[]) => {
+					if (typeof updateSpy === 'function') updateSpy(...args)
+					return api
+				}
+			},
+			set update(fn: any) {
+				updateSpy = fn
+			},
+			get delete() {
+				return (...args: any[]) => {
+					if (typeof deleteSpy === 'function') deleteSpy(...args)
+					return api
+				}
+			},
+			set delete(fn: any) {
+				deleteSpy = fn
+			},
 			eq: vi.fn(() => api),
 			neq: vi.fn(() => api),
 			in: vi.fn(() => api),
