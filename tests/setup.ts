@@ -56,11 +56,11 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
 const googleWrapper = {
   maps: {
     places: (global as any).__googleImpl.maps.places,
-    Map: (...args: any[]) => (global as any).__googleImpl.maps.Map(...args),
-    Marker: (...args: any[]) => (global as any).__googleImpl.maps.Marker(...args),
-    InfoWindow: (...args: any[]) => (global as any).__googleImpl.maps.InfoWindow(...args),
-    LatLngBounds: (...args: any[]) => (global as any).__googleImpl.maps.LatLngBounds(...args),
-    Size: (...args: any[]) => (global as any).__googleImpl.maps.Size(...args),
+    Map: (global as any).__googleImpl.maps.Map,
+    Marker: (global as any).__googleImpl.maps.Marker,
+    InfoWindow: (global as any).__googleImpl.maps.InfoWindow,
+    LatLngBounds: (global as any).__googleImpl.maps.LatLngBounds,
+    Size: (global as any).__googleImpl.maps.Size,
     ControlPosition: (global as any).__googleImpl.maps.ControlPosition,
     event: (global as any).__googleImpl.maps.event,
   },
