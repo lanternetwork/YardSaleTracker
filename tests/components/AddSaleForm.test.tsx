@@ -76,7 +76,7 @@ describe('AddSaleForm', () => {
       failureReason: null,
       isPaused: false,
       status: 'idle' as const,
-      submittedAt: undefined
+      submittedAt: 0
     })
     
     render(<AddSaleForm />)
