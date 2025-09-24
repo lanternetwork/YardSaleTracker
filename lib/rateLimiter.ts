@@ -40,6 +40,11 @@ export class RateLimiter {
     this.options = options
   }
 
+  // Method to clear memory store for testing
+  static clearMemoryStore(): void {
+    memoryStore.clear()
+  }
+
   async checkLimit(req: Request): Promise<RateLimitResult> {
     const key = this.options.keyGenerator ? 
       this.options.keyGenerator(req) : 

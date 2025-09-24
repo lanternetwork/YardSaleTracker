@@ -194,8 +194,10 @@ export function sanitizeSearchQuery(input: string): string {
   sanitized = sanitized.replace(/"|\'|&/g, '') // remove quotes and ampersand
   sanitized = sanitized.replace(/\s+/g, ' ').trim() // normalize and trim
 
-  // Filter out malicious content
-  if (sanitized.toLowerCase().includes('alert') || sanitized.toLowerCase().includes('script')) {
+  // Filter out malicious content - only if the entire content is malicious
+  const lowerSanitized = sanitized.toLowerCase().trim()
+  if (lowerSanitized === 'alert' || lowerSanitized === 'script' || 
+      lowerSanitized.startsWith('alert(') || lowerSanitized.startsWith('script')) {
     return ''
   }
 

@@ -158,7 +158,10 @@ describe('Geocoding Fallback', () => {
 
     await geocodeAddress(testAddress.address)
     
-    const nominatimCall = (global.fetch as any).mock.calls[1]
+    const fetchCalls = (global.fetch as any).mock.calls
+    expect(fetchCalls).toHaveLength(2)
+    
+    const nominatimCall = fetchCalls[1]
     expect(nominatimCall[0]).toContain('nominatim.openstreetmap.org')
     expect(nominatimCall[0]).toContain(`email=${encodeURIComponent('test@example.com')}`)
   })

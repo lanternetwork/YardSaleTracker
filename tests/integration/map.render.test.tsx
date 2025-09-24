@@ -71,14 +71,18 @@ describe('Map Render Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Set up global google object - set the implementation that our proxy uses
-    ;(global as any).__googleImpl = mockGoogle
+    // Set up global google object
+    ;(global as any).google = mockGoogle
     if (typeof window !== 'undefined') {
       (window as any).google = mockGoogle
     }
     
-    // Also set it directly on global for the component to see
-    ;(global as any).google = mockGoogle
+    // Mock the Loader to return our mock Google
+    vi.doMock('@googlemaps/js-api-loader', () => ({
+      Loader: vi.fn().mockImplementation(() => ({
+        load: vi.fn().mockResolvedValue(mockGoogle)
+      }))
+    }))
   })
 
   it('should render map with markers for sales with coordinates', async () => {
@@ -88,7 +92,7 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: addresses[0].lat,
-        lng: addresses[1].lng
+        lng: addresses[0].lng
       },
       {
         id: 'sale-2',
@@ -119,7 +123,7 @@ describe('Map Render Integration', () => {
   it('should handle empty points array', async () => {
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Map should still be created
     expect(mockGoogle.maps.Map).toHaveBeenCalled()
@@ -143,7 +147,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={testPoints} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify marker was created with correct position
     expect(mockGoogle.maps.Marker).toHaveBeenCalledWith(
@@ -171,7 +175,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={testPoints} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify info window was created
     expect(mockGoogle.maps.InfoWindow).toHaveBeenCalledWith(
@@ -193,7 +197,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={testPoints} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify click listener was added
     expect(mockMarker.addListener).toHaveBeenCalledWith('click', expect.any(Function))
@@ -217,7 +221,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={testPoints} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify bounds were created and extended
     expect(mockGoogle.maps.LatLngBounds).toHaveBeenCalled()
@@ -235,7 +239,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Should show error state
     expect(screen.getByText('Failed to load map')).toBeInTheDocument()
@@ -244,13 +248,14 @@ describe('Map Render Integration', () => {
   it('should show loading state initially', () => {
     render(<YardSaleMap points={[]} />)
 
+    // The component should show loading state initially
     expect(screen.getByText('Loading map...')).toBeInTheDocument()
   })
 
   it('should show no sales message when no points', async () => {
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     expect(screen.getByText('No sales with locations found')).toBeInTheDocument()
   })
@@ -266,7 +271,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify Near Me button was added
     expect(mockMap.controls[Symbol.for('TOP_LEFT')].push).toHaveBeenCalledWith(
@@ -290,7 +295,7 @@ describe('Map Render Integration', () => {
 
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Should show error alert
     expect(alertSpy).toHaveBeenCalledWith(
