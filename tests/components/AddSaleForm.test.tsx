@@ -3,11 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddSaleForm from '@/components/AddSaleForm'
 
 // Mock the hooks
+const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
+const mockUseCreateSale = vi.fn(() => ({
+  mutateAsync: mockMutateAsync,
+  isPending: false
+}))
+
 vi.mock('@/lib/hooks/useSales', () => ({
-  useCreateSale: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
-    isPending: false
-  })
+  useCreateSale: mockUseCreateSale
 }))
 
 // Mock the geocoding function
@@ -57,20 +60,8 @@ describe('AddSaleForm', () => {
   })
 
   it('submits form with valid data', async () => {
-    const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
-    
-    // Mock the hook with a spy that can be tracked
-    const mockUseCreateSale = vi.fn().mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: false
-    })
-
-    vi.doMock('@/lib/hooks/useSales', () => ({
-      useCreateSale: mockUseCreateSale
-    }))
-
-    // Re-import the component to get the mocked version
-    const { default: AddSaleForm } = await import('@/components/AddSaleForm')
+    // Reset the mock before the test
+    mockMutateAsync.mockClear()
     
     render(<AddSaleForm />)
     
@@ -159,15 +150,10 @@ describe('AddSaleForm', () => {
 
   it('shows loading state during submission', async () => {
     // Mock the hook with loading state
-    vi.doMock('@/lib/hooks/useSales', () => ({
-      useCreateSale: () => ({
-        mutateAsync: vi.fn(),
-        isPending: true
-      })
-    }))
-
-    // Re-import the component to get the mocked version
-    const { default: AddSaleForm } = await import('@/components/AddSaleForm')
+    mockUseCreateSale.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: true
+    })
     
     render(<AddSaleForm />)
     

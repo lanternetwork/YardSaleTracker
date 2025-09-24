@@ -9,7 +9,7 @@ vi.mock('@/lib/hooks/useAuth', () => ({
     data: []
   }),
   useToggleFavorite: () => ({
-    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
     isPending: false
   })
 }))

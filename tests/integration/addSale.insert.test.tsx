@@ -109,7 +109,8 @@ describe('Add Sale Integration', () => {
 
   it('should handle geocoding failure gracefully', async () => {
     // Mock geocoding to fail
-    vi.mocked(require('@/lib/geocode').geocodeAddress).mockResolvedValue(null)
+    const { geocodeAddress } = await import('@/lib/geocode')
+    vi.mocked(geocodeAddress).mockResolvedValue(null)
 
     mockCreateSale.mutateAsync.mockResolvedValue({
       id: 'sale-123',

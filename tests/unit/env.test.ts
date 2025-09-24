@@ -43,6 +43,9 @@ describe('Environment Validation', () => {
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
+    // Clear the module cache to force re-import
+    vi.resetModules()
+
     const { ENV_PUBLIC } = await import('@/lib/env')
 
     expect(ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL).toBe('https://placeholder.supabase.co')
