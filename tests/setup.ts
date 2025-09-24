@@ -14,13 +14,15 @@ const MarkerMock = vi.fn().mockImplementation((opts: any) => ({
   getPosition: vi.fn(() => ({ lat: () => 37.7749, lng: () => -122.4194 })),
   __opts: opts,
 }))
+const TOP_LEFT = Symbol.for('TOP_LEFT')
+
 const MapMock = vi.fn().mockImplementation((_el: any, _opts: any) => ({
   setCenter: vi.fn(),
   setZoom: vi.fn(),
   getZoom: vi.fn(() => 10),
   fitBounds: vi.fn(),
   addListener: vi.fn(),
-  controls: { 0: { push: vi.fn() } },
+  controls: { [TOP_LEFT]: { push: vi.fn() } },
 }))
 const InfoWindowMock = vi.fn().mockImplementation((_opts: any) => ({
   open: vi.fn(),
@@ -44,7 +46,7 @@ const LatLngBoundsMock = vi.fn().mockImplementation(() => ({
     InfoWindow: InfoWindowMock,
     LatLngBounds: LatLngBoundsMock,
     Size: vi.fn().mockImplementation((w: number, h: number) => ({ width: w, height: h })),
-    ControlPosition: { TOP_LEFT: 0 },
+    ControlPosition: { TOP_LEFT },
     event: { addListener: vi.fn(), removeListener: vi.fn() },
   },
 }
