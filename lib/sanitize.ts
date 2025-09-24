@@ -195,18 +195,15 @@ export function sanitizeSearchQuery(input: string): string {
   sanitized = sanitized.replace(/\s+/g, ' ').trim() // normalize and trim
 
   // Filter out malicious content - remove alert and script patterns
-  const lowerSanitized = sanitized.toLowerCase().trim()
-  if (lowerSanitized.includes('alert(') || lowerSanitized.includes('script')) {
-    // Remove malicious patterns and return clean content
-    let cleanContent = sanitized
-    cleanContent = cleanContent.replace(/alert\s*\([^)]*\)/gi, '')
-    cleanContent = cleanContent.replace(/<script[^>]*>.*?<\/script>/gi, '')
-    cleanContent = cleanContent.replace(/script/gi, '')
-    cleanContent = cleanContent.replace(/\s+/g, ' ').trim()
-    return cleanContent
-  }
-
-  return sanitized
+  let cleanContent = sanitized
+  cleanContent = cleanContent.replace(/alert\s*\([^)]*\)/gi, '')
+  cleanContent = cleanContent.replace(/<script[^>]*>.*?<\/script>/gi, '')
+  cleanContent = cleanContent.replace(/\balert\b/gi, '')
+  cleanContent = cleanContent.replace(/\bscript\b/gi, '')
+  cleanContent = cleanContent.replace(/\bxss\b/gi, '')
+  cleanContent = cleanContent.replace(/\s+/g, ' ').trim()
+  
+  return cleanContent
 }
 
 // Validation helpers

@@ -7,7 +7,7 @@ import FavoriteButton from '../../components/FavoriteButton'
 const mockUseFavorites = vi.fn()
 const mockUseToggleFavorite = vi.fn()
 
-vi.mock('../../lib/hooks/useAuth', () => ({
+vi.mock('../../lib/hooks/useFavorites', () => ({
   useFavorites: mockUseFavorites,
   useToggleFavorite: mockUseToggleFavorite
 }))
@@ -63,9 +63,8 @@ describe('FavoriteButton', () => {
       </TestWrapper>
     )
 
-    await waitFor(() => {
-      expect(screen.getByText('♥ Saved')).toBeInTheDocument()
-    })
+    // The component should immediately show the favorited state
+    expect(screen.getByText('♥ Saved')).toBeInTheDocument()
   })
 
   it('calls toggle function when clicked', async () => {
@@ -98,7 +97,7 @@ describe('FavoriteButton', () => {
       data: []
     })
     mockUseToggleFavorite.mockReturnValue({
-      mutateAsync: vi.fn(),
+      mutate: vi.fn(),
       isPending: true
     })
 

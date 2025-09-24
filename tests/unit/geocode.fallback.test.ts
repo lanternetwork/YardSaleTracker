@@ -156,7 +156,7 @@ describe('Geocoding Fallback', () => {
         }])
       })
 
-    await geocodeAddress(testAddress.address)
+    await geocodeAddress(testAddress.address + ' #' + Date.now())
     
     const fetchCalls = (global.fetch as any).mock.calls
     expect(fetchCalls.length).toBeGreaterThanOrEqual(1)

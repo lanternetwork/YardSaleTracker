@@ -15,7 +15,7 @@ vi.mock('@/lib/hooks/useSales', () => ({
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams('?tab=add'),
+  useSearchParams: () => new URLSearchParams('?tab=list'),
   useRouter: () => ({ push: vi.fn() })
 }))
 

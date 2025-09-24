@@ -212,7 +212,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         <div className="absolute inset-0 flex items-center justify-center rounded-2xl">
           <div className="text-center text-neutral-600">
             <div className="text-4xl mb-2">🗺️</div>
-            <div>{error}</div>
+            <div>Failed to load map</div>
             <div className="text-sm mt-2">
               {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY &&
                 'Please configure your Google Maps API key in the environment variables.'}

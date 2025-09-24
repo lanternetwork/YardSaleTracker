@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import YardSaleMap from '@/components/YardSaleMap'
 import { getAddressFixtures } from '@/tests/utils/mocks'
 
@@ -302,6 +302,12 @@ describe('Map Render Integration', () => {
     render(<YardSaleMap points={[]} />)
 
     await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Click the "Near Me" button to trigger geolocation
+    const nearMeButton = screen.getByText('📍 Near Me')
+    fireEvent.click(nearMeButton)
+
+    await new Promise(resolve => setTimeout(resolve, 200))
 
     // Should show error alert
     expect(alertSpy).toHaveBeenCalledWith(
