@@ -10,7 +10,7 @@ const publicSchema = z.object({
 })
 
 const serverSchema = z.object({
-  SUPABASE_SERVICE_ROLE: z.string().min(10, 'SUPABASE_SERVICE_ROLE must be at least 10 characters'),
+  SUPABASE_SERVICE_ROLE: z.string().min(10, 'SUPABASE_SERVICE_ROLE must be at least 10 characters').optional(),
   VAPID_PRIVATE_KEY: z.string().min(10).optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(10).optional(),

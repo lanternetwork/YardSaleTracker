@@ -89,7 +89,7 @@ export class RateLimiter {
   private checkLimitMemory(key: string, now: number, windowStart: number): RateLimitResult {
     const entry = memoryStore.get(key)
     
-    if (!entry || entry.resetTime < now) {
+    if (!entry || entry.resetTime <= now) {
       // New window or expired entry
       memoryStore.set(key, {
         count: 1,
