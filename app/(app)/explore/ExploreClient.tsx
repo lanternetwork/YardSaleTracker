@@ -9,6 +9,7 @@ import AddSaleForm from '@/components/AddSaleForm'
 import ImportSales from '@/components/ImportSales'
 import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
+import { Sale } from '@/lib/types'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import EnvironmentCheck from '@/components/EnvironmentCheck'
 import ConnectionDiagnostics from '@/components/ConnectionDiagnostics'
@@ -30,7 +31,7 @@ export default function ExploreClient() {
   const { data: sales = [], isLoading, error } = useSales(filters)
 
   const mapPoints = useMemo(
-    () => sales.filter(s => s.lat && s.lng).map(s => ({ id: s.id, title: s.title, lat: s.lat!, lng: s.lng! })),
+    () => (sales as Sale[]).filter(s => s.lat && s.lng).map(s => ({ id: s.id, title: s.title, lat: s.lat!, lng: s.lng! })),
     [sales]
   )
 

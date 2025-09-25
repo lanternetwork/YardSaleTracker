@@ -17,7 +17,7 @@ export function useSales(filters?: {
   min?: number
   max?: number
 }) {
-  return useQuery({
+  return useQuery<Sale[]>({
     queryKey: ['sales', filters],
     queryFn: async () => {
       try {

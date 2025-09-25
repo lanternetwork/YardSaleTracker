@@ -2,9 +2,10 @@
 import { Virtuoso } from 'react-virtuoso'
 import SaleCard from './SaleCard'
 import EmptyState from './EmptyState'
+import { Sale } from '@/lib/types'
 
 interface VirtualizedSalesListProps {
-  sales: any[]
+  sales: Sale[]
   isLoading?: boolean
   error?: Error | null
 }
