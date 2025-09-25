@@ -1,55 +1,114 @@
-# Ingestion (Craigslist RSS-first)
+# Craigslist Ingestion System
 
-This system enables cloud-only discovery and ingestion of yard sales via Craigslist RSS, with admin-only controls and a nearby API for the UI.
+This document describes the Craigslist ingestion system for the Yard Sale Tracker application.
 
-## Environment Variables (set in Vercel Project Settings)
+## Overview
 
-Server-only:
-- CRAIGSLIST_INGEST_TOKEN
-- GEOCODING_API_KEY
-- FEATURE_FIND_MORE (default false)
-- FEATURE_INGEST_RSS (default true)
-- FEATURE_INGEST_HTML (default false)
-- ADMIN_EMAILS (comma-separated)
-- CRAIGSLIST_SITES (optional)
+The ingestion system scrapes yard sale listings from Craigslist and stores them in the database for display in the application.
 
-Client-visible:
-- NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-- NEXT_PUBLIC_ENABLE_DIAG (default 0)
+## Components
 
-## Vercel Cron
-Configure an HTTP cron invoking:
-- Path: `/api/ingest/cron`
-- Method: POST
-- Header: `X-INGEST-TOKEN: $CRAIGSLIST_INGEST_TOKEN`
-- Cadence: hourly 5am–10pm local, off-peak every 3–6h
+### Inline Diagnostics
+- **Location**: Browse page (`/explore`)
+- **Purpose**: Quick overview of ingestion status
+- **Features**: 
+  - Last run summary with counts
+  - Dry Run and Run Now buttons
+  - Sample items from recent runs
+  - Link to full diagnostics
 
-## Data Model
-See `supabase/migrations/004_ingestion_schema.sql` for `sales` and `geocode_cache` tables. PostGIS is optional and detected automatically.
+### Full Diagnostics
+- **Location**: `/_diag/ingest`
+- **Purpose**: Comprehensive monitoring and data management
+- **Features**:
+  - Recent ingestion runs (last 20)
+  - Paginated scraped sales table
+  - Search and filtering capabilities
+  - Real-time data from database
 
-## Nearby API
-Route: `/api/sales/nearby?lat=..&lng=..&radius_miles=..&limit=200`
-- radius_miles ∈ {5,10,25,50,100} (default 25)
-- limit ≤ 200
-- Uses PostGIS if available; otherwise bounding-box + haversine fallback
+## API Endpoints
 
-## Admin Page
-Route: `/admin/ingest` (admin-only via `ADMIN_EMAILS`).
-- Manual trigger (dry-run) calls server route which enqueues background work.
+### `/api/ingest/status`
+- **Method**: GET
+- **Purpose**: Retrieve last ingestion run status
+- **Authentication**: `X-INGEST-TOKEN` header (dev-token for development)
+- **Response**: Run metadata with counts and timestamps
 
-## Background Worker
-Recommended: Supabase Edge Function to perform batch ingest with politeness limits; invoked by `/api/ingest/cron` or `/api/ingest/trigger`.
+### `/api/ingest/trigger`
+- **Method**: POST
+- **Purpose**: Trigger new ingestion run
+- **Authentication**: `X-INGEST-TOKEN` header (dev-token for development)
+- **Parameters**:
+  - `dryRun`: boolean (default: false)
+  - `site`: string (default: 'sfbay')
+  - `limit`: number (default: 10)
+- **Response**: Run results with counts and sample data
 
-## Security & RLS
-- End-users have SELECT-only on `sales`.
-- Admin mutations use service role server-side only.
+## Database Schema
 
-## Test Plan (CI Only)
-- Unit tests for nearby parameter validation, `isAdminEmail`, staleness transitions, RSS normalization. No external network calls.
+### Sales Table
+The scraped sales are stored in the `sales` table with the following key fields:
+- `source`: Set to 'craigslist' for scraped data
+- `title`: Sale title from Craigslist
+- `url`: Original Craigslist URL
+- `location_text`: Location information
+- `posted_at`: When the sale was originally posted
+- `first_seen_at`: When we first scraped it
+- `last_seen_at`: When we last saw it
+- `status`: Current status (published/draft/archived)
 
-## Post-merge Checklist
-- Set all env vars in Vercel (no values in repo)
-- Add Vercel Cron (path + header)
-- Verify Preview deployment: map, nearby endpoint, admin page
+## Security
 
+### Server-Side Authentication
+- All database operations use server-side Supabase client with service role
+- No secrets are exposed to the client
+- Authentication tokens are validated server-side only
 
+### Data Access
+- Full diagnostics page uses service role for unrestricted data access
+- RLS policies are bypassed for diagnostic purposes
+- No client-side database credentials
+
+## Usage
+
+### Development
+1. Navigate to Browse page (`/explore`)
+2. Use inline diagnostic card for quick tests
+3. Click "Full Diagnostics →" for comprehensive view
+4. Use "Dry Run" to test without database writes
+5. Use "Run Now" to execute full ingestion
+
+### Production
+- Set `INGEST_TOKEN` environment variable
+- Configure Supabase service role key
+- Monitor ingestion runs via diagnostics page
+- Review scraped data quality and coverage
+
+## Monitoring
+
+### Key Metrics
+- **Fetched Count**: Number of items scraped from Craigslist
+- **New Count**: Number of new sales added to database
+- **Updated Count**: Number of existing sales updated
+- **Run Duration**: Time taken for ingestion process
+- **Error Rate**: Failed runs and error messages
+
+### Data Quality
+- Monitor duplicate detection
+- Check location accuracy
+- Verify URL validity
+- Review status transitions
+
+## Troubleshooting
+
+### Common Issues
+1. **Authentication Errors**: Verify `X-INGEST-TOKEN` header
+2. **Database Errors**: Check Supabase service role configuration
+3. **Scraping Failures**: Review Craigslist rate limiting
+4. **Data Quality**: Use full diagnostics to inspect results
+
+### Debug Steps
+1. Check inline diagnostic for last run status
+2. Use full diagnostics page for detailed analysis
+3. Review server logs for error messages
+4. Verify environment variables are set correctly
