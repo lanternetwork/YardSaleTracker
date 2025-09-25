@@ -71,7 +71,7 @@ export default function DebugPanel() {
       // Check if favorites table exists
       const { data: favoritesData, error: favoritesError } = await supabase
         .from('favorites')
-        .select('id')
+        .select('*')
         .limit(10)
       
       if (favoritesError) {

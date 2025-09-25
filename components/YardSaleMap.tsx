@@ -55,6 +55,13 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       })
 
       setMap(mapInstance)
+      // Force a resize once the map container is visible to avoid grey tiles
+      setTimeout(() => {
+        const g2: any = (window as any).google
+        if (g2?.maps?.event) {
+          g2.maps.event.trigger(mapInstance, 'resize')
+        }
+      }, 50)
       setLoading(false)
     }
 
@@ -142,10 +149,11 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds)
-      // Ensure minimum zoom level
+      // Ensure minimum zoom level and force a post-fit resize to render tiles
       const listener = g.maps.event.addListener(map, 'idle', () => {
         if (map.getZoom()! > 15) map.setZoom(15)
         g.maps.event.removeListener(listener)
+        g.maps.event.trigger(map, 'resize')
       })
     }
   }, [map, points])
