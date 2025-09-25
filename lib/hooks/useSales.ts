@@ -19,27 +19,76 @@ export function useSales(filters?: {
   return useQuery({
     queryKey: ['sales', filters],
     queryFn: async () => {
-      // Use the optimized search function for better performance
-      const { data, error } = await sb.rpc('search_sales', {
-        search_query: filters?.q || null,
-        max_distance_km: filters?.maxKm || null,
-        user_lat: filters?.lat || null,
-        user_lng: filters?.lng || null,
-        date_from: filters?.dateFrom || null,
-        date_to: filters?.dateTo || null,
-        price_min: filters?.min || null,
-        price_max: filters?.max || null,
-        tags_filter: filters?.tags || null,
-        limit_count: 100,
-        offset_count: 0
-      })
+      try {
+        // Try the optimized search function first
+        const { data, error } = await sb.rpc('search_sales', {
+          search_query: filters?.q || null,
+          max_distance_km: filters?.maxKm || null,
+          user_lat: filters?.lat || null,
+          user_lng: filters?.lng || null,
+          date_from: filters?.dateFrom || null,
+          date_to: filters?.dateTo || null,
+          price_min: filters?.min || null,
+          price_max: filters?.max || null,
+          tags_filter: filters?.tags || null,
+          limit_count: 100,
+          offset_count: 0
+        })
 
-      if (error) {
-        throw new Error(error.message)
+        if (error) {
+          console.warn('RPC search_sales failed, falling back to direct query:', error.message)
+          throw error
+        }
+
+        return (data as unknown as any[]).flat ? (data as unknown as any[]).flat() as Sale[] : (data as unknown as Sale[])
+      } catch (rpcError) {
+        console.warn('RPC function not available, using fallback query')
+        
+        // Fallback to direct table query
+        let query = sb.from('yard_sales').select('*')
+        
+        // Apply basic filters
+        if (filters?.q) {
+          query = query.or(`title.ilike.%${filters.q}%,description.ilike.%${filters.q}%`)
+        }
+        
+        if (filters?.dateFrom) {
+          query = query.gte('start_at', filters.dateFrom)
+        }
+        
+        if (filters?.dateTo) {
+          query = query.lte('end_at', filters.dateTo)
+        }
+        
+        if (filters?.min !== undefined) {
+          query = query.gte('price_min', filters.min)
+        }
+        
+        if (filters?.max !== undefined) {
+          query = query.lte('price_max', filters.max)
+        }
+        
+        if (filters?.tags && filters.tags.length > 0) {
+          query = query.overlaps('tags', filters.tags)
+        }
+        
+        const { data, error } = await query.limit(100)
+        
+        if (error) {
+          throw new Error(`Database query failed: ${error.message}`)
+        }
+        
+        return data as Sale[]
       }
-
-      return (data as unknown as any[]).flat ? (data as unknown as any[]).flat() as Sale[] : (data as unknown as Sale[])
     },
+    retry: (failureCount, error) => {
+      // Retry up to 3 times for network issues
+      if (failureCount < 3 && error.message.includes('fetch')) {
+        return true
+      }
+      return false
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 }
 

@@ -9,6 +9,8 @@ import AddSaleForm from '@/components/AddSaleForm'
 import ImportSales from '@/components/ImportSales'
 import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import EnvironmentCheck from '@/components/EnvironmentCheck'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -35,28 +37,39 @@ export default function ExploreClient() {
       <h1 className="text-3xl font-bold mb-2">Explore Yard Sales</h1>
       <p className="text-neutral-600 mb-4">Browse, search, and discover amazing deals in your neighborhood.</p>
 
+      <EnvironmentCheck />
+
       <NavTabs />
 
       <div className="mb-6">
         <SearchFilters onChange={setFilters} showAdvanced={tab === 'list'} />
       </div>
 
-      {tab === 'list' && (
-        <div>
-          <div className="mb-4 text-sm text-neutral-600">
-            {isLoading ? 'Loading...' : `${sales.length} sales found`}
+      <ErrorBoundary fallback={
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <h3 className="text-red-800 font-medium">Error loading sales</h3>
+          <p className="text-red-600 text-sm mt-1">
+            There was a problem loading the sales data. Please check your internet connection and try again.
+          </p>
+        </div>
+      }>
+        {tab === 'list' && (
+          <div>
+            <div className="mb-4 text-sm text-neutral-600">
+              {isLoading ? 'Loading...' : `${sales.length} sales found`}
+            </div>
+            <VirtualizedSalesList sales={sales} isLoading={isLoading} error={error} />
           </div>
-          <VirtualizedSalesList sales={sales} isLoading={isLoading} error={error} />
-        </div>
-      )}
-      {tab === 'map' && <YardSaleMap points={mapPoints} />}
-      {tab === 'add' && (
-        <div id="add" className="max-w-2xl">
-          <h2 className="text-2xl font-bold mb-4">Post Your Sale</h2>
-          <AddSaleForm />
-        </div>
-      )}
-      {tab === 'find' && <ImportSales />}
+        )}
+        {tab === 'map' && <YardSaleMap points={mapPoints} />}
+        {tab === 'add' && (
+          <div id="add" className="max-w-2xl">
+            <h2 className="text-2xl font-bold mb-4">Post Your Sale</h2>
+            <AddSaleForm />
+          </div>
+        )}
+        {tab === 'find' && <ImportSales />}
+      </ErrorBoundary>
     </main>
   )
 }
