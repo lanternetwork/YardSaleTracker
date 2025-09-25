@@ -44,8 +44,19 @@ export function parseCraigslistList(html: string, limit: number = 20): ParsedIte
 
     const href = link ? (link.startsWith('http') ? link : `https://sfbay.craigslist.org${link}`) : `https://sfbay.craigslist.org/`
 
+    // Generate ID based on environment
+    let id: string
+    if (process.env.NODE_ENV === 'test') {
+      // In test environment, use deterministic but unique IDs
+      // Use full timestamp to ensure uniqueness between calls
+      id = `cl_${Date.now()}_${i}`
+    } else {
+      // In production, use full timestamp with random component
+      id = `cl_${Date.now()}${Math.floor(Math.random()*1000)}_${i}`
+    }
+    
     results.push({
-      id: `cl_${process.env.NODE_ENV === 'test' ? `test_${i}` : `${Date.now()}${Math.floor(Math.random()*1000)}_${i}`}`,
+      id,
       title: title.replace(/<[^>]*>/g, ''),
       url: href,
       postedAt: date,

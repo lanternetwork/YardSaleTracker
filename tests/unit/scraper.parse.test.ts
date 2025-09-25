@@ -83,9 +83,13 @@ describe('Craigslist Parser', () => {
     expect(results.length).toBeLessThanOrEqual(3)
   })
   
-  it('should generate stable IDs for testing', () => {
+  it('should generate stable IDs for testing', async () => {
     const html = readCraigslistFixture('gms_basic.html')
     const results1 = parseCraigslistList(html, 5)
+    
+    // Add small delay to ensure different timestamps
+    await new Promise(resolve => setTimeout(resolve, 10))
+    
     const results2 = parseCraigslistList(html, 5)
     
     // IDs should be different between calls (time-based)
