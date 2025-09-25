@@ -95,7 +95,7 @@ export default function CraigslistIngestDiagnostic() {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold text-blue-900">🔧 Craigslist Ingestion</h3>
         <Link 
-          href="/_diag/ingest" 
+          href="/diagnostics/ingest" 
           className="text-sm text-blue-600 hover:text-blue-800 underline"
         >
           Full Diagnostics →
