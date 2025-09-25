@@ -18,7 +18,7 @@ export function useAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: any, session: any) => {
         setUser(session?.user ?? null)
         setLoading(false)
       }
