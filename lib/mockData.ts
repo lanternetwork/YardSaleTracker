@@ -16,10 +16,12 @@ export const mockSales: Sale[] = [
     tags: ['furniture', 'electronics'],
     price_min: 5,
     price_max: 50,
+    photos: [],
     contact: 'sample@example.com',
+    status: 'active',
+    owner_id: 'mock-user',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    user_id: 'mock-user'
+    updated_at: new Date().toISOString()
   },
   {
     id: 'mock-2',
@@ -36,10 +38,12 @@ export const mockSales: Sale[] = [
     tags: ['antiques', 'furniture', 'collectibles'],
     price_min: 25,
     price_max: 200,
+    photos: [],
     contact: 'estate@example.com',
+    status: 'active',
+    owner_id: 'mock-user',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    user_id: 'mock-user'
+    updated_at: new Date().toISOString()
   }
 ]
 
