@@ -39,15 +39,21 @@ In Supabase Authentication settings:
 1. User clicks "Continue with Google/GitHub"
 2. Redirected to provider for authentication
 3. Provider redirects to `/auth/callback?returnTo=<encoded-path>`
-4. Callback handler exchanges code for session
-5. User redirected to `returnTo` or `/account`
+4. Callback handler exchanges code for session using server-side Supabase client
+5. User redirected to sanitized `returnTo` or `/`
 
 ### Magic Link Flow
 1. User enters email and clicks "Send magic link"
 2. Email sent with link to `/auth/callback?code=<token>`
 3. User clicks link in email
-4. Callback handler processes the code
-5. User redirected to `returnTo` or `/account`
+4. Callback handler processes the code using server-side session exchange
+5. User redirected to sanitized `returnTo` or `/`
+
+### Server-Side Session Handling
+- `/auth` page checks for existing session server-side
+- If session exists, user is immediately redirected to `returnTo` or `/`
+- Navbar renders server-side based on session state
+- No client-side session checks to prevent hydration mismatches
 
 ## Code Implementation
 
@@ -56,9 +62,16 @@ In Supabase Authentication settings:
 - **Method**: GET
 - **Behavior**: 
   - Extracts `code` from query params
-  - Calls `supabase.auth.exchangeCodeForSession({ code })`
-  - Redirects to `returnTo` or `/account` on success
-  - Shows error page on failure
+  - Calls `supabase.auth.exchangeCodeForSession({ code })` using server client
+  - Sanitizes `returnTo` parameter (blocks external URLs, auth loops)
+  - Redirects to sanitized `returnTo` or `/` on success
+  - Redirects to `/auth?error=...` on failure
+
+### Safe Redirect Handling
+- Only allows relative paths (starting with `/`)
+- Blocks external URLs (`http://`, `https://`)
+- Prevents redirect loops to `/auth` or `/auth/callback`
+- Defaults to `/` for invalid or missing `returnTo`
 
 ### Redirect URL Construction
 ```typescript
