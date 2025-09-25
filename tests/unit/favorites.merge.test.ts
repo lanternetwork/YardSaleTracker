@@ -1,9 +1,11 @@
+import { vi, describe, it, beforeEach, expect } from 'vitest'
+
 // Mock Supabase client for testing favorites merge logic
 const mockSupabaseClient = {
-  from: jest.fn(() => ({
-    insert: jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn()
+  from: vi.fn(() => ({
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn()
       }))
     }))
   }))
@@ -11,7 +13,7 @@ const mockSupabaseClient = {
 
 describe('Favorites Merge Logic', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it('should merge local favorites to server on first sign-in', async () => {
@@ -20,8 +22,8 @@ describe('Favorites Merge Logic', () => {
     
     // Mock localStorage
     const mockLocalStorage = {
-      getItem: jest.fn().mockReturnValue(JSON.stringify(localFavorites)),
-      removeItem: jest.fn()
+      getItem: vi.fn().mockReturnValue(JSON.stringify(localFavorites)),
+      removeItem: vi.fn()
     }
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
@@ -29,7 +31,8 @@ describe('Favorites Merge Logic', () => {
     })
 
     // Mock fetch for adding favorites
-    global.fetch = jest.fn().mockResolvedValue({
+    // @ts-ignore
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ data: { id: 'favorite-1' } })
     })
@@ -66,15 +69,16 @@ describe('Favorites Merge Logic', () => {
 
   it('should handle empty local favorites gracefully', async () => {
     const mockLocalStorage = {
-      getItem: jest.fn().mockReturnValue(null),
-      removeItem: jest.fn()
+      getItem: vi.fn().mockReturnValue(null),
+      removeItem: vi.fn()
     }
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
       writable: true
     })
 
-    global.fetch = jest.fn()
+    // @ts-ignore
+    global.fetch = vi.fn()
 
     const mergeLocalFavorites = async () => {
       const localFavorites = localStorage.getItem('favorites')
@@ -98,15 +102,16 @@ describe('Favorites Merge Logic', () => {
 
   it('should handle invalid JSON in localStorage', async () => {
     const mockLocalStorage = {
-      getItem: jest.fn().mockReturnValue('invalid-json'),
-      removeItem: jest.fn()
+      getItem: vi.fn().mockReturnValue('invalid-json'),
+      removeItem: vi.fn()
     }
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
       writable: true
     })
 
-    global.fetch = jest.fn()
+    // @ts-ignore
+    global.fetch = vi.fn()
 
     const mergeLocalFavorites = async () => {
       try {
@@ -135,8 +140,8 @@ describe('Favorites Merge Logic', () => {
   it('should handle server errors gracefully', async () => {
     const localFavorites = ['sale-1', 'sale-2']
     const mockLocalStorage = {
-      getItem: jest.fn().mockReturnValue(JSON.stringify(localFavorites)),
-      removeItem: jest.fn()
+      getItem: vi.fn().mockReturnValue(JSON.stringify(localFavorites)),
+      removeItem: vi.fn()
     }
     Object.defineProperty(window, 'localStorage', {
       value: mockLocalStorage,
@@ -144,7 +149,8 @@ describe('Favorites Merge Logic', () => {
     })
 
     // Mock fetch to return errors
-    global.fetch = jest.fn()
+    // @ts-ignore
+    global.fetch = vi.fn()
       .mockResolvedValueOnce({ ok: true }) // First call succeeds
       .mockResolvedValueOnce({ ok: false, status: 409 }) // Second call fails (already favorited)
 

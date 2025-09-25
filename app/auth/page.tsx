@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createSupabaseClient } from '@/lib/supabase/client'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function AuthPage() {
@@ -12,7 +12,7 @@ export default function AuthPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
-  const supabase = createSupabaseClient()
+  const supabase = createSupabaseBrowser()
   
   const returnTo = searchParams.get('returnTo') || '/account'
 

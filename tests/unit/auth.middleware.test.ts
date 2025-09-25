@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server'
 import { authMiddleware } from '@/lib/auth/middleware'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 
 // Mock Supabase
-jest.mock('@/lib/supabase/server', () => ({
-  createSupabaseServer: jest.fn(() => ({
+vi.mock('@/lib/supabase/server', () => ({
+  createSupabaseServer: vi.fn(() => ({
     auth: {
-      getSession: jest.fn()
+      getSession: vi.fn()
     }
   }))
 }))
@@ -14,7 +15,11 @@ describe('authMiddleware', () => {
   const createMockRequest = (pathname: string) => ({
     nextUrl: { pathname },
     url: `https://example.com${pathname}`
-  } as NextRequest)
+  } as unknown as NextRequest)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('should allow static assets without auth check', async () => {
     const request = createMockRequest('/manifest.json')
@@ -29,10 +34,10 @@ describe('authMiddleware', () => {
   })
 
   it('should redirect to auth for protected routes when not authenticated', async () => {
-    const { createSupabaseServer } = require('@/lib/supabase/server')
-    createSupabaseServer.mockReturnValue({
+    const { createSupabaseServer } = await import('@/lib/supabase/server')
+    ;(createSupabaseServer as any).mockReturnValue({
       auth: {
-        getSession: jest.fn().mockResolvedValue({ data: { session: null } })
+        getSession: vi.fn().mockResolvedValue({ data: { session: null } })
       }
     })
 
@@ -43,10 +48,10 @@ describe('authMiddleware', () => {
   })
 
   it('should allow access to protected routes when authenticated', async () => {
-    const { createSupabaseServer } = require('@/lib/supabase/server')
-    createSupabaseServer.mockReturnValue({
+    const { createSupabaseServer } = await import('@/lib/supabase/server')
+    ;(createSupabaseServer as any).mockReturnValue({
       auth: {
-        getSession: jest.fn().mockResolvedValue({ 
+        getSession: vi.fn().mockResolvedValue({ 
           data: { session: { user: { id: 'test-user' } } } 
         })
       }
@@ -59,10 +64,10 @@ describe('authMiddleware', () => {
   })
 
   it('should handle multiple protected routes', async () => {
-    const { createSupabaseServer } = require('@/lib/supabase/server')
-    createSupabaseServer.mockReturnValue({
+    const { createSupabaseServer } = await import('@/lib/supabase/server')
+    ;(createSupabaseServer as any).mockReturnValue({
       auth: {
-        getSession: jest.fn().mockResolvedValue({ data: { session: null } })
+        getSession: vi.fn().mockResolvedValue({ data: { session: null } })
       }
     })
 
