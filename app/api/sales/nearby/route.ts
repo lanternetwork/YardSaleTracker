@@ -51,8 +51,8 @@ export async function GET(req: NextRequest) {
 
   const center = { lat, lng }
   const withDistance = (data || [])
-    .filter(row => row.lat != null && row.lng != null)
-    .map(row => ({
+    .filter((row: any) => row.lat != null && row.lng != null)
+    .map((row: any) => ({
       ...row,
       distance_km: haversineKm({ lat: center.lat, lng: center.lng }, { lat: row.lat as number, lng: row.lng as number })
     }))
