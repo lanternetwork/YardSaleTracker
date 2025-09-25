@@ -20,8 +20,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const loader = useMemo(() => 
     new Loader({ 
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!, 
-      libraries: ['places'],
-      version: 'weekly'
+      libraries: ['places']
     }), 
     []
   )
@@ -45,6 +44,8 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         fullscreenControl: true,
         zoomControl: true,
         zoom: 10,
+        mapTypeId: g.maps.MapTypeId.ROADMAP,
+        backgroundColor: '#e5e5e5',
         styles: [
           {
             featureType: 'poi',
@@ -73,6 +74,17 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           }
         }
       }, 50)
+
+      // If tiles fail to load within 3s, surface a helpful error
+      let tilesLoaded = false
+      g.maps.event.addListenerOnce(mapInstance, 'tilesloaded', () => {
+        tilesLoaded = true
+      })
+      setTimeout(() => {
+        if (!tilesLoaded) {
+          setError('Map tiles failed to load. Check Google Maps API key referrer restrictions and billing settings.')
+        }
+      }, 3000)
       setLoading(false)
     }
 
