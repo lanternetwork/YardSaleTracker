@@ -39,17 +39,17 @@ export default function SupabaseClientTest() {
       // Test 2: RPC function test
       try {
         const { data, error } = await supabase.rpc('search_sales', {
-          search_query: null,
-          max_distance_km: null,
-          user_lat: null,
-          user_lng: null,
-          date_from: null,
-          date_to: null,
-          price_min: null,
-          price_max: null,
-          tags_filter: null,
-          limit_count: 1,
-          offset_count: 0
+          p_search_query: null,
+          p_max_distance_km: null,
+          p_user_lat: null,
+          p_user_lng: null,
+          p_date_from: null,
+          p_date_to: null,
+          p_price_min: null,
+          p_price_max: null,
+          p_tags_filter: null,
+          p_limit_count: 1,
+          p_offset_count: 0
         })
         result.tests.rpcTest = {
           success: !error,
