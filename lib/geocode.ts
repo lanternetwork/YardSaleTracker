@@ -85,7 +85,7 @@ export async function geocodeWithNominatim(address: string): Promise<GeocodeResu
   const email = process.env.NOMINATIM_APP_EMAIL || 'noreply@yardsalefinder.com'
   
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&email=${email}&limit=1`,
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&email=${encodeURIComponent(email)}&limit=1`,
     {
       headers: {
         'User-Agent': 'LootAura Test Suite',
