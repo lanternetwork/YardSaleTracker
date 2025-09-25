@@ -29,7 +29,26 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 describe('FavoriteButton', () => {
   it('renders save button when not favorited', () => {
     vi.mocked(useFavorites).mockReturnValue({
-      data: []
+      data: [],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      isIdle: false,
+      status: 'success',
+      fetchStatus: 'idle',
+      isRefetching: false,
+      isFetching: false,
+      isStale: false,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isRefetchError: false,
+      isInitialLoading: false,
+      refetch: vi.fn(),
+      remove: vi.fn()
     })
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
@@ -48,7 +67,26 @@ describe('FavoriteButton', () => {
   it('renders saved button when favorited', async () => {
     // Mock the hook to return a favorited sale
     vi.mocked(useFavorites).mockReturnValue({
-      data: [{ id: 'test-sale-id', title: 'Test Sale' }]
+      data: [{ id: 'test-sale-id', title: 'Test Sale' }],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      isIdle: false,
+      status: 'success',
+      fetchStatus: 'idle',
+      isRefetching: false,
+      isFetching: false,
+      isStale: false,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isRefetchError: false,
+      isInitialLoading: false,
+      refetch: vi.fn(),
+      remove: vi.fn()
     })
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
@@ -68,7 +106,26 @@ describe('FavoriteButton', () => {
   it('calls toggle function when clicked', async () => {
     const mockToggle = vi.fn()
     vi.mocked(useFavorites).mockReturnValue({
-      data: []
+      data: [],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      isIdle: false,
+      status: 'success',
+      fetchStatus: 'idle',
+      isRefetching: false,
+      isFetching: false,
+      isStale: false,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isRefetchError: false,
+      isInitialLoading: false,
+      refetch: vi.fn(),
+      remove: vi.fn()
     })
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: mockToggle,
@@ -92,7 +149,26 @@ describe('FavoriteButton', () => {
 
   it('shows loading state when pending', () => {
     vi.mocked(useFavorites).mockReturnValue({
-      data: []
+      data: [],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      isIdle: false,
+      status: 'success',
+      fetchStatus: 'idle',
+      isRefetching: false,
+      isFetching: false,
+      isStale: false,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isRefetchError: false,
+      isInitialLoading: false,
+      refetch: vi.fn(),
+      remove: vi.fn()
     })
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
