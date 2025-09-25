@@ -88,6 +88,8 @@ test.describe('Add Sale E2E Flow', () => {
         maps: {
           places: {
             Autocomplete: class MockAutocomplete {
+              public input: HTMLInputElement
+              public options: any
               constructor(input: HTMLInputElement, options: any) {
                 this.input = input
                 this.options = options
