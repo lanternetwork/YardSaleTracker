@@ -299,7 +299,7 @@ curl https://lootaura.com/api/health
 
 1. **Build Failures**
    - Check environment variables
-   - Verify Node.js version (18.x)
+   - Verify Node.js version (20.x)
    - Check for TypeScript errors
 
 2. **Runtime Errors**
