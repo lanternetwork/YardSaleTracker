@@ -237,7 +237,8 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       }
     }
 
-    const ro = new (window as any).ResizeObserver?.(() => handle())
+    const ResizeObserverCtor = (window as any).ResizeObserver
+    const ro = ResizeObserverCtor ? new ResizeObserverCtor(() => handle()) : null
     if (ro) ro.observe(element)
 
     const onWindowResize = () => handle()
