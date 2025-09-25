@@ -1,17 +1,64 @@
+import Image from 'next/image'
+
 export default function Landing() {
   return (
     <main className="relative">
-      <section className="bg-cover bg-center" style={{backgroundImage:'url(/hero.jpg)'}}>
-        <div className="backdrop-brightness-75 py-24 text-center text-white">
-          <h1 className="text-5xl font-extrabold">Find Amazing <span className="text-amber-300">Yard Sale Treasures</span></h1>
-          <p className="mt-4 text-lg max-w-2xl mx-auto">Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!</p>
-          <div className="mt-8 flex justify-center gap-3">
-            <input aria-label="Enter city or zip" className="w-[480px] max-w-[90vw] rounded-lg px-4 py-3 text-neutral-900" placeholder="Enter your city or zip code" />
-            <a href="/explore" className="rounded-lg bg-amber-500 px-5 py-3 font-semibold">Find Sales</a>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 w-full h-full">
+          <Image
+            src="/icons/icon-512.png"
+            alt="Neighborhood yard sales community"
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        </div>
+        
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 w-full h-full hero-overlay" />
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-hero-mobile sm:text-hero font-bold text-white mb-6">
+            Find Amazing <span className="text-accent-300">Yard Sale Treasures</span>
+          </h1>
+          <p className="text-xl sm:text-2xl text-white/90 max-w-3xl mx-auto mb-12 leading-relaxed">
+            Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!
+          </p>
+          
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input 
+                aria-label="Enter city or zip" 
+                className="flex-1 rounded-2xl px-6 py-4 text-lg text-neutral-900 placeholder-neutral-500 shadow-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2" 
+                placeholder="Enter your city or zip code" 
+              />
+              <a 
+                href="/explore" 
+                className="btn-primary text-lg px-8 py-4 rounded-2xl"
+              >
+                Find Sales
+              </a>
+            </div>
           </div>
-          <div className="mt-4 flex justify-center gap-4">
-            <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore#map">View Map</a>
-            <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore#add">Post Your Sale</a>
+          
+          {/* Secondary CTAs */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <a 
+              className="btn-secondary text-lg px-8 py-4 rounded-2xl bg-white/90 text-neutral-800 hover:bg-white" 
+              href="/explore?tab=map"
+            >
+              View Map
+            </a>
+            <a 
+              className="btn-secondary text-lg px-8 py-4 rounded-2xl bg-white/90 text-neutral-800 hover:bg-white" 
+              href="/sell/new"
+            >
+              Post Your Sale
+            </a>
           </div>
         </div>
       </section>
