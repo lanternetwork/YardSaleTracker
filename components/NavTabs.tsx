@@ -15,14 +15,15 @@ export default function NavTabs() {
   ]
 
   return (
-    <div className="flex gap-2 border-b mb-4">
+    <div className="segmented-control mb-6">
       {tabs.map(tab => (
         <Link 
           key={tab.href} 
-          className={`px-3 py-2 hover:bg-neutral-100 rounded ${
-            currentTab === tab.key ? 'bg-amber-100 text-amber-800 font-medium' : ''
-          }`} 
+          className={`${
+            currentTab === tab.key ? 'aria-pressed="true"' : ''
+          }`}
           href={tab.href}
+          aria-pressed={currentTab === tab.key}
         >
           {tab.label}
         </Link>

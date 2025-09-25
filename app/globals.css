@@ -1,4 +1,80 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body { min-height: 100vh; }
+
+:root {
+  --hero-overlay-opacity: 0.4;
+  --hero-blend-mode: overlay;
+  --focus-ring-offset: 2px;
+  --focus-ring-width: 2px;
+}
+
+.dark {
+  --hero-overlay-opacity: 0.6;
+}
+
+body { 
+  min-height: 100vh; 
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Focus visible styles */
+.focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: 0 0 0 var(--focus-ring-width) theme(colors.brand.600);
+}
+
+/* Hero overlay styles */
+.hero-overlay {
+  background: linear-gradient(135deg, theme(colors.brand.600) 0%, theme(colors.accent.500) 100%);
+  mix-blend-mode: var(--hero-blend-mode);
+  opacity: var(--hero-overlay-opacity);
+}
+
+/* Button base styles */
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-soft;
+}
+
+.btn-secondary {
+  @apply btn bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:bg-neutral-300 border border-neutral-200;
+}
+
+.btn-ghost {
+  @apply btn bg-transparent text-neutral-700 hover:bg-neutral-100 active:bg-neutral-200;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white rounded-2xl shadow-soft border border-neutral-100 transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5;
+}
+
+/* Segmented control */
+.segmented-control {
+  @apply inline-flex rounded-xl bg-neutral-100 p-1;
+}
+
+.segmented-control button {
+  @apply relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2;
+}
+
+.segmented-control button[aria-pressed="true"] {
+  @apply bg-white text-brand-700 shadow-soft;
+}
+
+/* Navbar backdrop */
+.navbar-backdrop {
+  @apply backdrop-blur-md bg-white/80 dark:bg-neutral-900/80 border-b border-neutral-200/50;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn, .card, .segmented-control button {
+    transition: none;
+  }
+}
