@@ -19,6 +19,8 @@ import DatabaseSchemaCheck from '@/components/DatabaseSchemaCheck'
 import RealDataTest from '@/components/RealDataTest'
 import SimpleDebug from '@/components/SimpleDebug'
 import SupabaseConfigTest from '@/components/SupabaseConfigTest'
+import EnvironmentDebug from '@/components/EnvironmentDebug'
+import SupabaseClientTest from '@/components/SupabaseClientTest'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -66,6 +68,12 @@ export default function ExploreClient() {
         </ErrorBoundary>
         <ErrorBoundary fallback={<div className="text-red-500">SupabaseConfigTest error</div>}>
           <SupabaseConfigTest />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div className="text-red-500">EnvironmentDebug error</div>}>
+          <EnvironmentDebug />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div className="text-red-500">SupabaseClientTest error</div>}>
+          <SupabaseClientTest />
         </ErrorBoundary>
       </div>
       
