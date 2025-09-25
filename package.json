@@ -13,7 +13,8 @@
     "test:e2e": "node scripts/check-node-version.js && cross-env NODE_VERSION=20.18.0 playwright test",
     "format": "prettier -w .",
     "check:storage": "tsx scripts/storage-check.ts",
-    "smoke:scrape": "tsx scripts/smoke-scrape.ts"
+    "smoke:scrape": "tsx scripts/smoke-scrape.ts",
+    "setup:node20": "node scripts/setup-node20.js"
   },
   "dependencies": {
     "next": "14.2.4",

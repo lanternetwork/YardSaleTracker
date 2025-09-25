@@ -2,6 +2,7 @@
 
 const requiredVersion = '20.0.0'
 const currentVersion = process.version.slice(1) // Remove 'v' prefix
+const isDevelopment = process.env.NODE_ENV !== 'production' && process.env.CI !== 'true'
 
 function compareVersions(version1, version2) {
   const v1parts = version1.split('.').map(Number)
@@ -18,11 +19,20 @@ function compareVersions(version1, version2) {
 }
 
 if (compareVersions(currentVersion, requiredVersion) < 0) {
-  console.error(`❌ Node.js version ${currentVersion} is not supported.`)
-  console.error(`   Required: Node.js ${requiredVersion} or higher`)
-  console.error(`   Current:  Node.js ${currentVersion}`)
-  console.error(`   Please upgrade to Node.js 20 or later.`)
-  process.exit(1)
+  if (isDevelopment) {
+    console.warn(`⚠️  Node.js version ${currentVersion} is deprecated for Supabase.`)
+    console.warn(`   Recommended: Node.js ${requiredVersion} or higher`)
+    console.warn(`   Current:     Node.js ${currentVersion}`)
+    console.warn(`   You may see deprecation warnings during tests.`)
+    console.warn(`   To fix: Upgrade to Node.js 20+ or use nvm to switch versions.`)
+    console.warn(`   Continue with tests...`)
+  } else {
+    console.error(`❌ Node.js version ${currentVersion} is not supported.`)
+    console.error(`   Required: Node.js ${requiredVersion} or higher`)
+    console.error(`   Current:  Node.js ${currentVersion}`)
+    console.error(`   Please upgrade to Node.js 20 or later.`)
+    process.exit(1)
+  }
+} else {
+  console.log(`✅ Node.js version ${currentVersion} is supported.`)
 }
-
-console.log(`✅ Node.js version ${currentVersion} is supported.`)
