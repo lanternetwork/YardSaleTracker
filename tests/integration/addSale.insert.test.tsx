@@ -273,7 +273,7 @@ describe('Add Sale Integration', () => {
 
     // Mock navigation to show list view
     const { useSearchParams } = await import('next/navigation')
-    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('?tab=list'))
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('?tab=list') as any)
 
     render(
       <QueryClientProvider client={queryClient}>
