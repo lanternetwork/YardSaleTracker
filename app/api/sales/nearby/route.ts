@@ -57,8 +57,8 @@ export async function GET(req: NextRequest) {
       distance_km: haversineKm({ lat: center.lat, lng: center.lng }, { lat: row.lat as number, lng: row.lng as number })
     }))
 
-  const within = withDistance.filter(r => r.distance_km <= radiusMiles * 1.60934)
-  within.sort((a, b) => a.distance_km - b.distance_km || new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime())
+  const within = withDistance.filter((r: any) => r.distance_km <= radiusMiles * 1.60934)
+  within.sort((a: any, b: any) => a.distance_km - b.distance_km || new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime())
 
   const items = within.slice(0, limit)
   return new Response(
