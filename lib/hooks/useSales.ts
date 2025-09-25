@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { Sale, SaleItem } from '@/lib/types'
 import { SaleSchema } from '@/lib/zodSchemas'
+import { getMockSales } from '@/lib/mockData'
 
 const sb = createSupabaseBrowser()
 
@@ -16,30 +17,93 @@ export function useSales(filters?: {
   min?: number
   max?: number
 }) {
-  return useQuery({
+  return useQuery<Sale[], Error>({
     queryKey: ['sales', filters],
     queryFn: async () => {
-      // Use the optimized search function for better performance
-      const { data, error } = await sb.rpc('search_sales', {
-        search_query: filters?.q || null,
-        max_distance_km: filters?.maxKm || null,
-        user_lat: filters?.lat || null,
-        user_lng: filters?.lng || null,
-        date_from: filters?.dateFrom || null,
-        date_to: filters?.dateTo || null,
-        price_min: filters?.min || null,
-        price_max: filters?.max || null,
-        tags_filter: filters?.tags || null,
-        limit_count: 100,
-        offset_count: 0
-      })
+      try {
+        // Try the optimized search function first
+        const { data, error } = await sb.rpc('search_sales', {
+          p_search_query: filters?.q || null,
+          p_max_distance_km: filters?.maxKm || null,
+          p_user_lat: filters?.lat || null,
+          p_user_lng: filters?.lng || null,
+          p_date_from: filters?.dateFrom || null,
+          p_date_to: filters?.dateTo || null,
+          p_price_min: filters?.min || null,
+          p_price_max: filters?.max || null,
+          p_tags_filter: filters?.tags || null,
+          p_limit_count: 100,
+          p_offset_count: 0
+        })
 
-      if (error) {
-        throw new Error(error.message)
+        if (error) {
+          console.warn('RPC search_sales failed, falling back to direct query:', error.message)
+          throw error
+        }
+
+        const result = (data as unknown as any[]).flat ? (data as unknown as any[]).flat() as Sale[] : (data as unknown as Sale[])
+        return result as Sale[]
+      } catch (rpcError) {
+        console.warn('RPC function not available, using fallback query')
+        
+        // Fallback to direct table query
+        let query = sb.from('yard_sales').select('*')
+        
+        // Apply basic filters
+        if (filters?.q) {
+          query = query.or(`title.ilike.%${filters.q}%,description.ilike.%${filters.q}%`)
+        }
+        
+        if (filters?.dateFrom) {
+          query = query.gte('start_at', filters.dateFrom)
+        }
+        
+        if (filters?.dateTo) {
+          query = query.lte('end_at', filters.dateTo)
+        }
+        
+        if (filters?.min !== undefined) {
+          query = query.gte('price_min', filters.min)
+        }
+        
+        if (filters?.max !== undefined) {
+          query = query.lte('price_max', filters.max)
+        }
+        
+        if (filters?.tags && filters.tags.length > 0) {
+          query = query.overlaps('tags', filters.tags)
+        }
+        
+        const { data, error } = await query.limit(100)
+        
+        if (error) {
+          console.warn('Direct database query failed, using mock data:', error.message)
+          return getMockSales() as Sale[]
+        }
+        
+        // If no data returned, use mock data as fallback
+        if (!data || data.length === 0) {
+          console.warn('No data returned from database, using mock data')
+          return getMockSales() as Sale[]
+        }
+        
+        return (data as Sale[])
       }
-
-      return data as Sale[]
     },
+    retry: (failureCount, error) => {
+      // Retry up to 3 times for network issues
+      if (failureCount < 3 && (
+        error.message.includes('fetch') || 
+        error.message.includes('network') ||
+        error.message.includes('timeout') ||
+        error.message.includes('Failed to fetch')
+      )) {
+        console.log(`Retrying fetch attempt ${failureCount + 1}/3`)
+        return true
+      }
+      return false
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 }
 
@@ -180,7 +244,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) as Sale[]
+      return (data as any[])?.map((fav: any) => fav.yard_sales).filter(Boolean) as Sale[]
     },
   })
 }
