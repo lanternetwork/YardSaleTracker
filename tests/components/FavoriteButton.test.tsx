@@ -37,18 +37,9 @@ describe('FavoriteButton', () => {
       isSuccess: true,
       status: 'success',
       fetchStatus: 'idle',
-      isRefetching: false,
-      isFetching: false,
-      isStale: false,
-      isPlaceholderData: false,
-      isPreviousData: false,
-      isFetched: true,
-      isFetchedAfterMount: true,
-      isRefetchError: false,
-      isInitialLoading: false,
       refetch: vi.fn(),
       remove: vi.fn()
-    })
+    } as any)
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: false
@@ -74,18 +65,9 @@ describe('FavoriteButton', () => {
       isSuccess: true,
       status: 'success',
       fetchStatus: 'idle',
-      isRefetching: false,
-      isFetching: false,
-      isStale: false,
-      isPlaceholderData: false,
-      isPreviousData: false,
-      isFetched: true,
-      isFetchedAfterMount: true,
-      isRefetchError: false,
-      isInitialLoading: false,
       refetch: vi.fn(),
       remove: vi.fn()
-    })
+    } as any)
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: false
@@ -112,18 +94,9 @@ describe('FavoriteButton', () => {
       isSuccess: true,
       status: 'success',
       fetchStatus: 'idle',
-      isRefetching: false,
-      isFetching: false,
-      isStale: false,
-      isPlaceholderData: false,
-      isPreviousData: false,
-      isFetched: true,
-      isFetchedAfterMount: true,
-      isRefetchError: false,
-      isInitialLoading: false,
       refetch: vi.fn(),
       remove: vi.fn()
-    })
+    } as any)
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: mockToggle,
       isPending: false
@@ -154,18 +127,9 @@ describe('FavoriteButton', () => {
       isSuccess: true,
       status: 'success',
       fetchStatus: 'idle',
-      isRefetching: false,
-      isFetching: false,
-      isStale: false,
-      isPlaceholderData: false,
-      isPreviousData: false,
-      isFetched: true,
-      isFetchedAfterMount: true,
-      isRefetchError: false,
-      isInitialLoading: false,
       refetch: vi.fn(),
       remove: vi.fn()
-    })
+    } as any)
     vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: true
