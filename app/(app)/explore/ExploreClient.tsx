@@ -23,6 +23,7 @@ import SimpleDebug from '@/components/SimpleDebug'
 import SupabaseConfigTest from '@/components/SupabaseConfigTest'
 import EnvironmentDebug from '@/components/EnvironmentDebug'
 import SupabaseClientTest from '@/components/SupabaseClientTest'
+import CraigslistIngestDiagnostic from '@/components/CraigslistIngestDiagnostic'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -62,6 +63,9 @@ export default function ExploreClient() {
 
       <OfflineIndicator />
       <EnvironmentCheck />
+      
+      {/* Craigslist Ingestion Diagnostic - First and most visible */}
+      <CraigslistIngestDiagnostic />
       
       {/* Debug Components - Always show for troubleshooting */}
       <div className="mb-4 p-2 bg-gray-100 rounded">
