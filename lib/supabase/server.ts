@@ -7,6 +7,20 @@ export function createSupabaseServer() {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   
   if (!supabaseUrl || !supabaseKey) {
+    // During static export, return a mock client to avoid build errors
+    if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+      return {
+        auth: {
+          getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+          signOut: () => Promise.resolve({ error: null })
+        },
+        from: () => ({
+          select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+          insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+          delete: () => ({ eq: () => Promise.resolve({ error: null }) })
+        })
+      } as any
+    }
     throw new Error('Missing Supabase environment variables')
   }
   
