@@ -25,6 +25,20 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['react-virtuoso'],
   },
+  webpack: (config, { dev, isServer }) => {
+    // Optimize webpack cache for better performance
+    if (dev) {
+      config.cache = {
+        type: 'filesystem',
+        buildDependencies: {
+          config: [__filename],
+        },
+        // Use Buffer for large strings to improve performance
+        compression: 'gzip',
+      }
+    }
+    return config
+  },
   // Enable static optimization for better performance
   output: 'standalone',
   // Compress responses

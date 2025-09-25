@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ui": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/check-node-version.js && cross-env NODE_VERSION=20.18.0 playwright test",
     "format": "prettier -w .",
     "check:storage": "tsx scripts/storage-check.ts",
     "smoke:scrape": "tsx scripts/smoke-scrape.ts"
@@ -54,7 +54,8 @@
     "msw": "^2.3.1",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "cross-env": "^7.0.3"
   },
   "engines": {
     "node": ">=20.0.0",
