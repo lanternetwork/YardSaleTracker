@@ -24,6 +24,10 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['react-virtuoso'],
+    // Enable modern module system
+    esmExternals: 'loose',
+    // Fix module system issues
+    serverComponentsExternalPackages: [],
   },
   webpack: (config, { dev, isServer }) => {
     // Optimize webpack cache for better performance
@@ -40,25 +44,28 @@ const nextConfig = {
         memoryCacheUnaffected: true,
       }
       
-      // Optimize module resolution for better performance
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: {
-              minChunks: 2,
-              priority: -20,
-              reuseExistingChunk: true,
-            },
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              priority: -10,
-              chunks: 'all',
+      // Fix module resolution for Next.js compatibility
+      config.resolve = {
+        ...config.resolve,
+        extensionAlias: {
+          '.js': ['.js', '.ts', '.tsx'],
+        },
+        // Ensure proper module resolution
+        fullySpecified: false,
+      }
+      
+      // Fix module system conflicts
+      config.module = {
+        ...config.module,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.m?js$/,
+            resolve: {
+              fullySpecified: false,
             },
           },
-        },
+        ],
       }
     }
     return config
