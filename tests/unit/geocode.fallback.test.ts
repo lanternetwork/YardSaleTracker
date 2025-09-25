@@ -176,6 +176,9 @@ describe('Geocoding Fallback', () => {
     const addresses = getAddressFixtures()
     const testAddress = addresses[0]
     
+    // Clear any existing cache
+    vi.clearAllMocks()
+    
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({
