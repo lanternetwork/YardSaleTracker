@@ -307,7 +307,17 @@ describe('Map Render Integration', () => {
     // Mock alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
-    render(<YardSaleMap points={[]} />)
+    // Provide at least one point to initialize the map
+    const addresses = getAddressFixtures()
+    const testPoints = [{
+      id: 'test-1',
+      title: 'Test Sale',
+      lat: addresses[0].lat,
+      lng: addresses[0].lng,
+      address: addresses[0].address
+    }]
+    
+    render(<YardSaleMap points={testPoints} />)
 
     await new Promise(resolve => setTimeout(resolve, 500))
 

@@ -14,8 +14,9 @@ vi.mock('@/lib/hooks/useSales', () => ({
 }))
 
 // Mock Next.js navigation
+const mockUseSearchParams = vi.fn(() => new URLSearchParams('?tab=add'))
 vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams('?tab=add'),
+  useSearchParams: mockUseSearchParams,
   useRouter: () => ({ push: vi.fn() })
 }))
 
@@ -270,6 +271,9 @@ describe('Add Sale Integration', () => {
       isLoading: false,
       error: null
     } as any)
+
+    // Mock navigation to show list view
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('?tab=list'))
 
     render(
       <QueryClientProvider client={queryClient}>

@@ -171,10 +171,14 @@ describe('Geocoding Fallback', () => {
   })
 
   it('should cache results to avoid repeated API calls', async () => {
+    // Set up environment to use Google Maps
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = 'valid-key'
     
     const addresses = getAddressFixtures()
     const testAddress = addresses[0]
+    
+    // Use unique address to avoid cache hits from other tests
+    const uniqueAddress = testAddress.address + ' #cache-test-' + Date.now()
     
     // Clear any existing cache
     vi.clearAllMocks()
@@ -196,11 +200,11 @@ describe('Geocoding Fallback', () => {
     })
 
     // First call
-    const result1 = await geocodeAddress(testAddress.address)
+    const result1 = await geocodeAddress(uniqueAddress)
     expect(result1).toBeTruthy()
     
     // Second call should use cache
-    const result2 = await geocodeAddress(testAddress.address)
+    const result2 = await geocodeAddress(uniqueAddress)
     expect(result2).toEqual(result1)
     
     // Should only call API once due to caching
