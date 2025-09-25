@@ -26,6 +26,7 @@ if (compareVersions(currentVersion, requiredVersion) < 0) {
     console.warn(`   You may see deprecation warnings during tests.`)
     console.warn(`   To fix: Upgrade to Node.js 20+ or use nvm to switch versions.`)
     console.warn(`   Continue with tests...`)
+    // Allow development to continue with warnings
   } else {
     console.error(`❌ Node.js version ${currentVersion} is not supported.`)
     console.error(`   Required: Node.js ${requiredVersion} or higher`)
