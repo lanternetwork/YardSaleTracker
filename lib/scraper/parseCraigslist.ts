@@ -45,7 +45,7 @@ export function parseCraigslistList(html: string, limit: number = 20): ParsedIte
     const href = link ? (link.startsWith('http') ? link : `https://sfbay.craigslist.org${link}`) : `https://sfbay.craigslist.org/`
 
     results.push({
-      id: `cl_${Date.now()}${Math.floor(Math.random()*1000)}_${i}`,
+      id: `cl_${process.env.NODE_ENV === 'test' ? `test_${i}` : `${Date.now()}${Math.floor(Math.random()*1000)}_${i}`}`,
       title: title.replace(/<[^>]*>/g, ''),
       url: href,
       postedAt: date,

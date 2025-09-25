@@ -154,6 +154,7 @@ describe('Craigslist Normalization', () => {
     // Redact dynamic fields for stable snapshots
     const snapshot = normalized.map(item => ({
       ...item,
+      id: 'REDACTED_ID',
       start_at: 'REDACTED_DATE'
     }))
     
