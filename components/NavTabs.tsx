@@ -10,7 +10,8 @@ export default function NavTabs() {
     { href: '/explore?tab=list', label: 'Browse Sales', key: 'list' },
     { href: '/explore?tab=map', label: 'Map View', key: 'map' },
     { href: '/explore?tab=add', label: 'Add Sale', key: 'add' },
-    { href: '/explore?tab=find', label: 'Find More', key: 'find' }
+    // Hide public "Find More" tab; admins can navigate manually
+    // { href: '/explore?tab=find', label: 'Find More', key: 'find' }
   ]
 
   return (
