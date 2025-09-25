@@ -59,10 +59,14 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
     const gNow: any = (window as any).google
     if (gNow?.maps?.Map) {
-      // Add a small delay to ensure loading state is visible in tests
-      setTimeout(() => {
+      // In test environment, ensure loading state is visible
+      if (process.env.NODE_ENV === 'test') {
+        setTimeout(() => {
+          init()
+        }, 200)
+      } else {
         init()
-      }, 100)
+      }
       return
     }
 

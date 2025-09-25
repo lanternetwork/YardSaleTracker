@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import YardSaleMap from '@/components/YardSaleMap'
 import { getAddressFixtures } from '@/tests/utils/mocks'
 
@@ -236,6 +236,10 @@ describe('Map Render Integration', () => {
   })
 
   it('should handle map loading error', async () => {
+    // Clear the global google object to force loader usage
+    delete (window as any).google
+    delete (global as any).google
+    
     // Mock loader to reject by setting up a different mock
     vi.doMock('@googlemaps/js-api-loader', () => ({
       Loader: vi.fn().mockImplementation(() => ({
@@ -252,6 +256,10 @@ describe('Map Render Integration', () => {
   })
 
   it('should show loading state initially', () => {
+    // Clear the global google object to force loading state
+    delete (window as any).google
+    delete (global as any).google
+    
     render(<YardSaleMap points={[]} />)
 
     // The component should show loading state initially
@@ -302,6 +310,11 @@ describe('Map Render Integration', () => {
     render(<YardSaleMap points={[]} />)
 
     await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Wait for the map to be initialized and the button to appear
+    await waitFor(() => {
+      expect(screen.getByText('📍 Near Me')).toBeInTheDocument()
+    })
 
     // Click the "Near Me" button to trigger geolocation
     const nearMeButton = screen.getByText('📍 Near Me')
