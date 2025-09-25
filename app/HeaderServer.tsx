@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import UserProfileServer from '@/components/UserProfileServer'
 
-export async function HeaderServer() {
+export default async function HeaderServer() {
   const supabase = createSupabaseServer()
   const { data: { session } } = await supabase.auth.getSession()
 
