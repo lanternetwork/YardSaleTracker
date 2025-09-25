@@ -98,16 +98,6 @@ export function useSales(filters?: {
       return false
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    onError: (error) => {
-      console.error('useSales error:', error)
-      // Log additional context for debugging
-      console.error('Error details:', {
-        message: error.message,
-        stack: error.stack,
-        filters,
-        timestamp: new Date().toISOString()
-      })
-    },
   })
 }
 
