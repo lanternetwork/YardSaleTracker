@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
-import { haversineDistanceKm } from '@/lib/distance'
+import { haversineKm } from '@/lib/distance'
 
 const ALLOWED_RADII = [5, 10, 25, 50, 100]
 
@@ -50,10 +50,12 @@ export async function GET(req: NextRequest) {
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 })
 
   const center = { lat, lng }
-  const withDistance = (data || []).filter(row => row.lat != null && row.lng != null).map(row => ({
-    ...row,
-    distance_km: haversineDistanceKm(center.lat, center.lng, row.lat as number, row.lng as number)
-  }))
+  const withDistance = (data || [])
+    .filter(row => row.lat != null && row.lng != null)
+    .map(row => ({
+      ...row,
+      distance_km: haversineKm({ lat: center.lat, lng: center.lng }, { lat: row.lat as number, lng: row.lng as number })
+    }))
 
   const within = withDistance.filter(r => r.distance_km <= radiusMiles * 1.60934)
   within.sort((a, b) => a.distance_km - b.distance_km || new Date(b.last_seen_at).getTime() - new Date(a.last_seen_at).getTime())
