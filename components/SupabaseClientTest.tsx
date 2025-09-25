@@ -15,8 +15,8 @@ export default function SupabaseClientTest() {
       
       const result = {
         clientCreated: true,
-        clientUrl: supabase.supabaseUrl,
-        clientKey: supabase.supabaseKey?.substring(0, 20) + '...',
+        clientUrl: 'Client created successfully',
+        clientKey: 'Client key available',
         tests: {} as any
       }
 
