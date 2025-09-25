@@ -7,12 +7,20 @@ export function useFavorites() {
   return useQuery({
     queryKey: ['favorites'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('favorites')
-        .select('*')
-      
-      if (error) throw error
-      return data || []
+      try {
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('*')
+        
+        if (error) {
+          console.warn('Favorites table not available, returning empty array:', error.message)
+          return []
+        }
+        return data || []
+      } catch (err) {
+        console.warn('Favorites query failed, returning empty array:', err)
+        return []
+      }
     }
   })
 }

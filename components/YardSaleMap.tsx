@@ -28,8 +28,9 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   // Initialize map
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-      setError('Google Maps API key not configured')
+    if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 
+        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'placeholder-key') {
+      setError('Google Maps API key not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.')
       setLoading(false)
       return
     }

@@ -81,6 +81,12 @@ export function useSales(filters?: {
           return getMockSales() as Sale[]
         }
         
+        // If no data returned, use mock data as fallback
+        if (!data || data.length === 0) {
+          console.warn('No data returned from database, using mock data')
+          return getMockSales() as Sale[]
+        }
+        
         return (data as Sale[])
       }
     },

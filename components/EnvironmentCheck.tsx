@@ -6,10 +6,12 @@ export default function EnvironmentCheck() {
     supabaseUrl: boolean
     supabaseKey: boolean
     googleMaps: boolean
+    siteUrl: boolean
   }>({
     supabaseUrl: false,
     supabaseKey: false,
     googleMaps: false,
+    siteUrl: false,
   })
 
   useEffect(() => {
@@ -21,6 +23,8 @@ export default function EnvironmentCheck() {
           process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'placeholder-key',
         googleMaps: !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && 
           process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY !== 'placeholder-key',
+        siteUrl: !!process.env.NEXT_PUBLIC_SITE_URL && 
+          process.env.NEXT_PUBLIC_SITE_URL !== 'https://lootaura.com',
       })
     }
 
@@ -29,7 +33,7 @@ export default function EnvironmentCheck() {
 
   const allConfigured = envStatus.supabaseUrl && envStatus.supabaseKey
 
-  if (allConfigured) return null
+  if (allConfigured && envStatus.googleMaps) return null
 
   return (
     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
@@ -45,7 +49,10 @@ export default function EnvironmentCheck() {
           <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY is missing or invalid</li>
         )}
         {!envStatus.googleMaps && (
-          <li>• NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing (maps may not work)</li>
+          <li>• NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is missing (maps will not work)</li>
+        )}
+        {!envStatus.siteUrl && (
+          <li>• NEXT_PUBLIC_SITE_URL is missing (some features may not work)</li>
         )}
       </ul>
     </div>
