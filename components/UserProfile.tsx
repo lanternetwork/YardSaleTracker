@@ -45,20 +45,12 @@ export default function UserProfile() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-3">
-        <a 
-          href="/auth" 
-          className="text-neutral-700 hover:text-amber-600 font-medium"
-        >
-          Sign In
-        </a>
-        <a 
-          href="/account" 
-          className="text-neutral-700 hover:text-amber-600 font-medium"
-        >
-          Account
-        </a>
-      </div>
+      <a 
+        href="/auth" 
+        className="text-neutral-700 hover:text-brand-600 font-medium transition-colors"
+      >
+        Sign In
+      </a>
     )
   }
 

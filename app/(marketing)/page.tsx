@@ -7,7 +7,7 @@ export default function Landing() {
         {/* Hero Background Image */}
         <div className="absolute inset-0 w-full h-full">
           <Image
-            src="/icons/icon-512.png"
+            src="/assets/hero-yard-sale.jpg"
             alt="Neighborhood yard sales community"
             fill
             className="object-cover"

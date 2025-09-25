@@ -112,6 +112,6 @@ export const config = {
      * - public folder
      */
     // Exclude common public assets and PWA files from middleware
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|site.webmanifest|robots.txt|sitemap.xml|sw.js|icon.*|apple-touch-icon.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|site.webmanifest|robots.txt|sitemap.xml|sw.js|icon.*|apple-touch-icon.*|assets/.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
