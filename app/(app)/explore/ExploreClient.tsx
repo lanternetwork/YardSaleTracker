@@ -14,6 +14,9 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import EnvironmentCheck from '@/components/EnvironmentCheck'
 import ConnectionDiagnostics from '@/components/ConnectionDiagnostics'
 import OfflineIndicator from '@/components/OfflineIndicator'
+import DebugPanel from '@/components/DebugPanel'
+import DatabaseSchemaCheck from '@/components/DatabaseSchemaCheck'
+import RealDataTest from '@/components/RealDataTest'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -43,6 +46,9 @@ export default function ExploreClient() {
 
       <OfflineIndicator />
       <EnvironmentCheck />
+      <DebugPanel />
+      <DatabaseSchemaCheck />
+      <RealDataTest />
       
       {error && <ConnectionDiagnostics />}
 
