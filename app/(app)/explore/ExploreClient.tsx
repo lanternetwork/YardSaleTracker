@@ -11,6 +11,8 @@ import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import EnvironmentCheck from '@/components/EnvironmentCheck'
+import ConnectionDiagnostics from '@/components/ConnectionDiagnostics'
+import OfflineIndicator from '@/components/OfflineIndicator'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -37,7 +39,10 @@ export default function ExploreClient() {
       <h1 className="text-3xl font-bold mb-2">Explore Yard Sales</h1>
       <p className="text-neutral-600 mb-4">Browse, search, and discover amazing deals in your neighborhood.</p>
 
+      <OfflineIndicator />
       <EnvironmentCheck />
+      
+      {error && <ConnectionDiagnostics />}
 
       <NavTabs />
 

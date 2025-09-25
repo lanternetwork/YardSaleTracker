@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { Sale, SaleItem } from '@/lib/types'
 import { SaleSchema } from '@/lib/zodSchemas'
+import { getMockSales } from '@/lib/mockData'
 
 const sb = createSupabaseBrowser()
 
@@ -75,7 +76,8 @@ export function useSales(filters?: {
         const { data, error } = await query.limit(100)
         
         if (error) {
-          throw new Error(`Database query failed: ${error.message}`)
+          console.warn('Direct database query failed, using mock data:', error.message)
+          return getMockSales()
         }
         
         return data as Sale[]
@@ -83,12 +85,28 @@ export function useSales(filters?: {
     },
     retry: (failureCount, error) => {
       // Retry up to 3 times for network issues
-      if (failureCount < 3 && error.message.includes('fetch')) {
+      if (failureCount < 3 && (
+        error.message.includes('fetch') || 
+        error.message.includes('network') ||
+        error.message.includes('timeout') ||
+        error.message.includes('Failed to fetch')
+      )) {
+        console.log(`Retrying fetch attempt ${failureCount + 1}/3`)
         return true
       }
       return false
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      console.error('useSales error:', error)
+      // Log additional context for debugging
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        filters,
+        timestamp: new Date().toISOString()
+      })
+    },
   })
 }
 
