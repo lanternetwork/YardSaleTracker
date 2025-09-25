@@ -18,6 +18,7 @@ import DebugPanel from '@/components/DebugPanel'
 import DatabaseSchemaCheck from '@/components/DatabaseSchemaCheck'
 import RealDataTest from '@/components/RealDataTest'
 import SimpleDebug from '@/components/SimpleDebug'
+import SupabaseConfigTest from '@/components/SupabaseConfigTest'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -62,6 +63,9 @@ export default function ExploreClient() {
         </ErrorBoundary>
         <ErrorBoundary fallback={<div className="text-red-500">RealDataTest error</div>}>
           <RealDataTest />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div className="text-red-500">SupabaseConfigTest error</div>}>
+          <SupabaseConfigTest />
         </ErrorBoundary>
       </div>
       
