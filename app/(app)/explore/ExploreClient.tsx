@@ -7,6 +7,8 @@ import VirtualizedSalesList from '@/components/VirtualizedSalesList'
 import nextDynamic from 'next/dynamic'
 import AddSaleForm from '@/components/AddSaleForm'
 import ImportSales from '@/components/ImportSales'
+import { isAdminEmail } from '@/lib/security/admin'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
 import { Sale } from '@/lib/types'
@@ -32,6 +34,16 @@ const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
 export default function ExploreClient() {
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<Filters>({ q: '', maxKm: 25, tags: [] })
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  // Determine admin on client (non-authoritative, for UI only)
+  useMemo(() => {
+    const supabase = createSupabaseBrowser()
+    supabase.auth.getUser().then(({ data }: any) => {
+      const em = data?.user?.email ?? null
+      setIsAdmin(isAdminEmail(em))
+    })
+  }, [])
 
   const tab = (searchParams.get('tab') as 'list' | 'map' | 'add' | 'find') || 'list'
 
@@ -108,7 +120,7 @@ export default function ExploreClient() {
             <AddSaleForm />
           </div>
         )}
-        {tab === 'find' && <ImportSales />}
+        {tab === 'find' && isAdmin && <ImportSales />}
       </ErrorBoundary>
     </main>
   )

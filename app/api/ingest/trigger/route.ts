@@ -1,10 +1,22 @@
 import { NextRequest } from 'next/server'
+import { createSupabaseServer } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/security/admin'
 
 export async function POST(req: NextRequest) {
+  // Allow either: server-to-server token OR admin user session
   const token = req.headers.get('x-ingest-token') || ''
-  if (!process.env.CRAIGSLIST_INGEST_TOKEN || token !== process.env.CRAIGSLIST_INGEST_TOKEN) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  let authorized = false
+  if (process.env.CRAIGSLIST_INGEST_TOKEN && token === process.env.CRAIGSLIST_INGEST_TOKEN) {
+    authorized = true
+  } else {
+    try {
+      const supabase = createSupabaseServer()
+      const { data }: any = await supabase.auth.getUser()
+      const email = data?.user?.email ?? null
+      authorized = isAdminEmail(email)
+    } catch {}
   }
+  if (!authorized) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
 
   // Validate payload
   let body: any = {}
