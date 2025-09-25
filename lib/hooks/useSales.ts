@@ -23,17 +23,17 @@ export function useSales(filters?: {
       try {
         // Try the optimized search function first
         const { data, error } = await sb.rpc('search_sales', {
-          search_query: filters?.q || null,
-          max_distance_km: filters?.maxKm || null,
-          user_lat: filters?.lat || null,
-          user_lng: filters?.lng || null,
-          date_from: filters?.dateFrom || null,
-          date_to: filters?.dateTo || null,
-          price_min: filters?.min || null,
-          price_max: filters?.max || null,
-          tags_filter: filters?.tags || null,
-          limit_count: 100,
-          offset_count: 0
+          p_search_query: filters?.q || null,
+          p_max_distance_km: filters?.maxKm || null,
+          p_user_lat: filters?.lat || null,
+          p_user_lng: filters?.lng || null,
+          p_date_from: filters?.dateFrom || null,
+          p_date_to: filters?.dateTo || null,
+          p_price_min: filters?.min || null,
+          p_price_max: filters?.max || null,
+          p_tags_filter: filters?.tags || null,
+          p_limit_count: 100,
+          p_offset_count: 0
         })
 
         if (error) {
