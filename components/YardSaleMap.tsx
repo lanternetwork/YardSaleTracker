@@ -54,12 +54,23 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         ]
       })
 
+      // If we already have points, set an initial center before markers render
+      if (points && points.length > 0) {
+        const first = points[0]
+        mapInstance.setCenter({ lat: first.lat, lng: first.lng })
+      }
+
       setMap(mapInstance)
       // Force a resize once the map container is visible to avoid grey tiles
       setTimeout(() => {
         const g2: any = (window as any).google
         if (g2?.maps?.event) {
           g2.maps.event.trigger(mapInstance, 'resize')
+          // Nudge the map to redraw tiles
+          const currentZoom = mapInstance.getZoom()
+          if (typeof currentZoom === 'number') {
+            mapInstance.setZoom(currentZoom)
+          }
         }
       }, 50)
       setLoading(false)
@@ -85,7 +96,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       setError('Failed to load map')
       setLoading(false)
     })
-  }, [loader])
+  }, [loader, points])
 
   // Update markers when points change
   useEffect(() => {
@@ -154,6 +165,9 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         if (map.getZoom()! > 15) map.setZoom(15)
         g.maps.event.removeListener(listener)
         g.maps.event.trigger(map, 'resize')
+        // Recenter after resize to ensure correct viewport
+        const center = bounds.getCenter()
+        map.setCenter(center)
       })
     }
   }, [map, points])
@@ -208,6 +222,29 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       if (btn.parentNode) {
         btn.parentNode.removeChild(btn)
       }
+    }
+  }, [map])
+
+  // Observe container size changes and trigger map resize
+  useEffect(() => {
+    if (!map || !ref.current) return
+    const element = ref.current
+    const g: any = (window as any).google
+
+    const handle = () => {
+      if (g?.maps?.event) {
+        g.maps.event.trigger(map, 'resize')
+      }
+    }
+
+    const ro = new (window as any).ResizeObserver?.(() => handle())
+    if (ro) ro.observe(element)
+
+    const onWindowResize = () => handle()
+    window.addEventListener('resize', onWindowResize)
+    return () => {
+      window.removeEventListener('resize', onWindowResize)
+      if (ro) ro.disconnect()
     }
   }, [map])
 
