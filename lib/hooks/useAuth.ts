@@ -11,8 +11,8 @@ export function useAuth() {
     const supabase = createSupabaseBrowser()
     
     // Get initial session
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
       setLoading(false)
     })
 
