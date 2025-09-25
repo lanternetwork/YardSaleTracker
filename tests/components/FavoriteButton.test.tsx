@@ -2,14 +2,12 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import FavoriteButton from '../../components/FavoriteButton'
+import { useFavorites, useToggleFavorite } from '../../lib/hooks/useFavorites'
 
 // Mock the auth hooks
-const mockUseFavorites = vi.fn()
-const mockUseToggleFavorite = vi.fn()
-
 vi.mock('../../lib/hooks/useFavorites', () => ({
-  useFavorites: mockUseFavorites,
-  useToggleFavorite: mockUseToggleFavorite
+  useFavorites: vi.fn(),
+  useToggleFavorite: vi.fn()
 }))
 
 const createTestQueryClient = () => new QueryClient({
@@ -30,10 +28,10 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 
 describe('FavoriteButton', () => {
   it('renders save button when not favorited', () => {
-    mockUseFavorites.mockReturnValue({
+    vi.mocked(useFavorites).mockReturnValue({
       data: []
     })
-    mockUseToggleFavorite.mockReturnValue({
+    vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: false
     })
@@ -49,10 +47,10 @@ describe('FavoriteButton', () => {
 
   it('renders saved button when favorited', async () => {
     // Mock the hook to return a favorited sale
-    mockUseFavorites.mockReturnValue({
+    vi.mocked(useFavorites).mockReturnValue({
       data: [{ id: 'test-sale-id', title: 'Test Sale' }]
     })
-    mockUseToggleFavorite.mockReturnValue({
+    vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: false
     })
@@ -69,10 +67,10 @@ describe('FavoriteButton', () => {
 
   it('calls toggle function when clicked', async () => {
     const mockToggle = vi.fn()
-    mockUseFavorites.mockReturnValue({
+    vi.mocked(useFavorites).mockReturnValue({
       data: []
     })
-    mockUseToggleFavorite.mockReturnValue({
+    vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: mockToggle,
       isPending: false
     })
@@ -93,10 +91,10 @@ describe('FavoriteButton', () => {
   })
 
   it('shows loading state when pending', () => {
-    mockUseFavorites.mockReturnValue({
+    vi.mocked(useFavorites).mockReturnValue({
       data: []
     })
-    mockUseToggleFavorite.mockReturnValue({
+    vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: true
     })
