@@ -3,9 +3,11 @@ import { useState } from 'react'
 import { useSales, useCreateSale } from '@/lib/hooks/useSales'
 import { exportToCSV, parseCSV, downloadCSV, CSVRow } from '@/lib/csv'
 import { geocodeAddress } from '@/lib/geocode'
+import { Sale } from '@/lib/types'
 
 export default function CSVImportExport() {
   const { data: sales = [] } = useSales()
+  const salesArray = (sales as Sale[]) || []
   const createSale = useCreateSale()
   const [csvData, setCsvData] = useState('')
   const [parsedData, setParsedData] = useState<CSVRow[]>([])
@@ -35,7 +37,7 @@ export default function CSVImportExport() {
   }
 
   const handleExport = () => {
-    const csv = exportToCSV(sales)
+    const csv = exportToCSV(salesArray)
     downloadCSV(csv, 'yard_sales.csv')
   }
 
@@ -132,7 +134,7 @@ export default function CSVImportExport() {
           onClick={handleExport}
           className="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600"
         >
-          Export {sales.length} Sales to CSV
+          Export {salesArray.length} Sales to CSV
         </button>
       </div>
 

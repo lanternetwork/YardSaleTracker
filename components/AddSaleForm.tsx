@@ -1,14 +1,14 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
-import { useCreateSale } from '@/lib/hooks/useSales'
+import * as SalesHooks from '@/lib/hooks/useSales'
 import { geocodeAddress } from '@/lib/geocode'
 import { SaleSchema } from '@/lib/zodSchemas'
 import { logger } from '@/lib/log'
 import ImageUploader from './ImageUploader'
 
 export default function AddSaleForm() {
-  const createSale = useCreateSale()
+  const createSale = SalesHooks.useCreateSale()
   const addressRef = useRef<HTMLInputElement>(null)
   const [coords, setCoords] = useState<{ lat: number, lng: number } | null>(null)
   const [address, setAddress] = useState('')
@@ -106,7 +106,7 @@ export default function AddSaleForm() {
     setTags(tags.filter(tag => tag !== tagToRemove))
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
       addTag()
@@ -140,6 +140,15 @@ export default function AddSaleForm() {
         return
       }
 
+      if (
+        typeof payload.price_min === 'number' &&
+        typeof payload.price_max === 'number' &&
+        payload.price_min > payload.price_max
+      ) {
+        setError('Min price must be less than max price')
+        return
+      }
+
       const createdSale = await createSale.mutateAsync(parsed.data)
 
       logger.info('Sale created successfully', {
@@ -168,7 +177,7 @@ export default function AddSaleForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form role="form" aria-label="Add sale" onSubmit={onSubmit} noValidate className="space-y-4">
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700">
           {error}
@@ -176,21 +185,27 @@ export default function AddSaleForm() {
       )}
       
       <div>
-        <label className="block text-sm font-medium mb-1">Sale Title *</label>
+        <label htmlFor="title" className="block text-sm font-medium mb-1">Sale Title *</label>
         <input 
+          id="title"
           name="title" 
           required 
+          type="text"
+          aria-label="Sale Title *"
           placeholder="e.g., Estate Sale - Antiques & Collectibles" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Address *</label>
+        <label htmlFor="address" className="block text-sm font-medium mb-1">Address *</label>
         <input 
+          id="address"
           name="address" 
           ref={addressRef} 
           required
+          type="text"
+          aria-label="Address *"
           value={address}
           onChange={e => handleAddressChange(e.target.value)}
           placeholder="Start typing your address..." 
@@ -202,9 +217,11 @@ export default function AddSaleForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
         <textarea 
+          id="description"
           name="description" 
+          aria-label="Description"
           placeholder="Describe what you're selling..." 
           rows={3}
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -213,16 +230,18 @@ export default function AddSaleForm() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Start Date & Time</label>
+          <label htmlFor="start_at" className="block text-sm font-medium mb-1">Start Date & Time</label>
           <input 
+            id="start_at"
             type="datetime-local" 
             name="start_at" 
             className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">End Date & Time</label>
+          <label htmlFor="end_at" className="block text-sm font-medium mb-1">End Date & Time</label>
           <input 
+            id="end_at"
             type="datetime-local" 
             name="end_at" 
             className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
@@ -232,8 +251,9 @@ export default function AddSaleForm() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Min Price ($)</label>
+          <label htmlFor="price_min" className="block text-sm font-medium mb-1">Min Price ($)</label>
           <input 
+            id="price_min"
             type="number" 
             name="price_min" 
             min="0"
@@ -243,8 +263,9 @@ export default function AddSaleForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Max Price ($)</label>
+          <label htmlFor="price_max" className="block text-sm font-medium mb-1">Max Price ($)</label>
           <input 
+            id="price_max"
             type="number" 
             name="price_max" 
             min="0"
@@ -256,22 +277,28 @@ export default function AddSaleForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Contact Info</label>
+        <label htmlFor="contact" className="block text-sm font-medium mb-1">Contact Info</label>
         <input 
+          id="contact"
           name="contact" 
+          type="text"
+          aria-label="Contact Info"
           placeholder="Phone number or email" 
           className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Tags</label>
+        <label htmlFor="tag-input" className="block text-sm font-medium mb-2">Tags</label>
         <div className="flex gap-2 mb-2">
           <input 
+            id="tag-input"
             value={tagInput}
             onChange={e => setTagInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
+            type="text"
             placeholder="Add a tag..." 
+            aria-label="Add tag"
             className="flex-1 rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
           />
           <button 
@@ -294,6 +321,7 @@ export default function AddSaleForm() {
                   type="button"
                   onClick={() => removeTag(tag)}
                   className="text-amber-600 hover:text-amber-800"
+                  aria-label={`Remove ${tag}`}
                 >
                   ×
                 </button>
@@ -303,12 +331,6 @@ export default function AddSaleForm() {
         )}
       </div>
 
-      <ImageUploader 
-        onUpload={setPhotos}
-        maxImages={5}
-        existingImages={photos}
-      />
-
       <button 
         type="submit"
         disabled={createSale.isPending}
@@ -316,6 +338,12 @@ export default function AddSaleForm() {
       >
         {createSale.isPending ? 'Posting...' : 'Post Sale'}
       </button>
+
+      <ImageUploader 
+        onUpload={setPhotos}
+        maxImages={5}
+        existingImages={photos}
+      />
     </form>
   )
 }
