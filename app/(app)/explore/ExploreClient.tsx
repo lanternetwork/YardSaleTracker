@@ -17,6 +17,7 @@ import OfflineIndicator from '@/components/OfflineIndicator'
 import DebugPanel from '@/components/DebugPanel'
 import DatabaseSchemaCheck from '@/components/DatabaseSchemaCheck'
 import RealDataTest from '@/components/RealDataTest'
+import SimpleDebug from '@/components/SimpleDebug'
 
 const YardSaleMap = nextDynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
@@ -46,9 +47,23 @@ export default function ExploreClient() {
 
       <OfflineIndicator />
       <EnvironmentCheck />
-      <DebugPanel />
-      <DatabaseSchemaCheck />
-      <RealDataTest />
+      
+      {/* Debug Components - Always show for troubleshooting */}
+      <div className="mb-4 p-2 bg-gray-100 rounded">
+        <h3 className="font-bold text-gray-800 mb-2">🔧 Debug Tools</h3>
+        <ErrorBoundary fallback={<div className="text-red-500">Debug component error</div>}>
+          <SimpleDebug />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div className="text-red-500">DebugPanel error</div>}>
+          <DebugPanel />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div className="text-red-500">DatabaseSchemaCheck error</div>}>
+          <DatabaseSchemaCheck />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={<div className="text-red-500">RealDataTest error</div>}>
+          <RealDataTest />
+        </ErrorBoundary>
+      </div>
       
       {error && <ConnectionDiagnostics />}
 
