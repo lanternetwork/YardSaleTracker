@@ -29,10 +29,11 @@ export default function ExploreClient() {
   const tab = (searchParams.get('tab') as 'list' | 'map' | 'add' | 'find') || 'list'
 
   const { data: sales = [], isLoading, error } = useSales(filters)
+  const salesArray = (sales as Sale[]) || []
 
   const mapPoints = useMemo(
-    () => (sales as Sale[]).filter(s => s.lat && s.lng).map(s => ({ id: s.id, title: s.title, lat: s.lat!, lng: s.lng! })),
-    [sales]
+    () => salesArray.filter(s => s.lat && s.lng).map(s => ({ id: s.id, title: s.title, lat: s.lat!, lng: s.lng! })),
+    [salesArray]
   )
 
   return (
@@ -62,9 +63,9 @@ export default function ExploreClient() {
         {tab === 'list' && (
           <div>
             <div className="mb-4 text-sm text-neutral-600">
-              {isLoading ? 'Loading...' : `${sales.length} sales found`}
+              {isLoading ? 'Loading...' : `${salesArray.length} sales found`}
             </div>
-            <VirtualizedSalesList sales={sales} isLoading={isLoading} error={error} />
+            <VirtualizedSalesList sales={salesArray} isLoading={isLoading} error={error} />
           </div>
         )}
         {tab === 'map' && <YardSaleMap points={mapPoints} />}

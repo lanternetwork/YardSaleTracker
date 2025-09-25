@@ -17,7 +17,7 @@ export function useSales(filters?: {
   min?: number
   max?: number
 }) {
-  return useQuery<Sale[]>({
+  return useQuery<Sale[], Error>({
     queryKey: ['sales', filters],
     queryFn: async () => {
       try {
@@ -41,7 +41,8 @@ export function useSales(filters?: {
           throw error
         }
 
-        return (data as unknown as any[]).flat ? (data as unknown as any[]).flat() as Sale[] : (data as unknown as Sale[])
+        const result = (data as unknown as any[]).flat ? (data as unknown as any[]).flat() as Sale[] : (data as unknown as Sale[])
+        return result as Sale[]
       } catch (rpcError) {
         console.warn('RPC function not available, using fallback query')
         
@@ -77,10 +78,10 @@ export function useSales(filters?: {
         
         if (error) {
           console.warn('Direct database query failed, using mock data:', error.message)
-          return getMockSales()
+          return getMockSales() as Sale[]
         }
         
-        return data as Sale[]
+        return (data as Sale[])
       }
     },
     retry: (failureCount, error) => {
