@@ -1,8 +1,11 @@
 'use client'
 import Link from 'next/link'
+import { useAuth } from '@/lib/hooks/useAuth'
 import UserProfile from '@/components/UserProfile'
 
 export function Header() {
+  const { user } = useAuth()
+
   return (
     <nav className="bg-white border-b">
       <div className="max-w-6xl mx-auto px-4 py-3">
@@ -19,16 +22,16 @@ export function Header() {
               Browse Sales
             </Link>
             <Link 
-              href="/favorites" 
+              href={user ? "/favorites" : "/auth?returnTo=/favorites"}
               className="text-neutral-700 hover:text-amber-600 font-medium"
             >
               Favorites
             </Link>
             <Link 
-              href="/explore?tab=add" 
+              href="/sell/new" 
               className="text-neutral-700 hover:text-amber-600 font-medium"
             >
-              Post Sale
+              Create Sale
             </Link>
             <UserProfile />
           </div>

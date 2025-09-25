@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { apiRateLimiter, authRateLimiter, searchRateLimiter, uploadRateLimiter } from '@/lib/rateLimiter'
+import { authMiddleware } from '@/lib/auth/middleware'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Auth gating for protected routes
+  const authResponse = await authMiddleware(request)
+  if (authResponse.status !== 200) {
+    return authResponse
+  }
 
   // Rate limiting
   if (pathname.startsWith('/api/')) {

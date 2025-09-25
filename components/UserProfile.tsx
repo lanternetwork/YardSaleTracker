@@ -45,12 +45,20 @@ export default function UserProfile() {
 
   if (!user) {
     return (
-      <a 
-        href="/signin" 
-        className="text-neutral-700 hover:text-amber-600 font-medium"
-      >
-        Sign In
-      </a>
+      <div className="flex items-center gap-3">
+        <a 
+          href="/auth" 
+          className="text-neutral-700 hover:text-amber-600 font-medium"
+        >
+          Sign In
+        </a>
+        <a 
+          href="/account" 
+          className="text-neutral-700 hover:text-amber-600 font-medium"
+        >
+          Account
+        </a>
+      </div>
     )
   }
 
@@ -138,6 +146,12 @@ export default function UserProfile() {
                   )}
 
                   <div className="pt-2 border-t">
+                    <a
+                      href="/account"
+                      className="block w-full text-left px-2 py-1 text-sm text-neutral-700 hover:bg-neutral-100 rounded"
+                    >
+                      Account Settings
+                    </a>
                     <button
                       onClick={() => setIsEditing(true)}
                       className="w-full text-left px-2 py-1 text-sm text-neutral-700 hover:bg-neutral-100 rounded"
