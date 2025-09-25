@@ -1,34 +1,40 @@
 'use client'
 import Link from 'next/link'
+import { useAuth } from '@/lib/hooks/useAuth'
 import UserProfile from '@/components/UserProfile'
 
 export function Header() {
+  const { user } = useAuth()
+
   return (
-    <nav className="bg-white border-b">
-      <div className="max-w-6xl mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-amber-600">
+    <nav className="sticky top-0 z-50 navbar-backdrop">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <Link 
+            href="/" 
+            className="text-2xl font-bold text-brand-600 hover:text-brand-700 transition-colors"
+          >
             YardSaleFinder
           </Link>
           
-          <div className="flex gap-6 items-center">
+          <div className="flex gap-8 items-center">
             <Link 
               href="/explore" 
-              className="text-neutral-700 hover:text-amber-600 font-medium"
+              className="text-neutral-700 hover:text-brand-600 font-medium transition-colors"
             >
               Browse Sales
             </Link>
             <Link 
-              href="/favorites" 
-              className="text-neutral-700 hover:text-amber-600 font-medium"
+              href={user ? "/favorites" : "/auth?returnTo=/favorites"}
+              className="text-neutral-700 hover:text-brand-600 font-medium transition-colors"
             >
               Favorites
             </Link>
             <Link 
-              href="/explore?tab=add" 
-              className="text-neutral-700 hover:text-amber-600 font-medium"
+              href="/sell/new" 
+              className="btn-primary"
             >
-              Post Sale
+              Create Sale
             </Link>
             <UserProfile />
           </div>

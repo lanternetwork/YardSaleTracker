@@ -145,18 +145,49 @@ describe('Craigslist Normalization', () => {
     expect(normalized.photos).toEqual([])
   })
   
-  it('should create snapshot of normalized items', () => {
+  it('should create normalized items with expected structure', () => {
     const html = readCraigslistFixture('gms_basic.html')
     const parsedItems = parseCraigslistList(html, 3)
     
     const normalized = parsedItems.map(item => normalizeCraigslistItem(item, 'sfbay'))
     
-    // Redact dynamic fields for stable snapshots
-    const snapshot = normalized.map(item => ({
-      ...item,
-      start_at: 'REDACTED_DATE'
-    }))
+    // Verify structure and content
+    expect(normalized).toHaveLength(3)
     
-    expect(snapshot).toMatchSnapshot()
+    normalized.forEach(item => {
+      // Required fields
+      expect(item.title).toBeDefined()
+      expect(typeof item.title).toBe('string')
+      expect(item.title.length).toBeGreaterThan(0)
+      
+      expect(item.description).toBe('Found on Craigslist sfbay')
+      expect(item.source).toBe('craigslist')
+      expect(Array.isArray(item.tags)).toBe(true)
+      expect(item.tags).toContain('craigslist')
+      expect(Array.isArray(item.photos)).toBe(true)
+      expect(item.photos).toEqual([])
+      
+      // start_at should be a valid date string
+      if (item.start_at) {
+        expect(new Date(item.start_at).toString()).not.toBe('Invalid Date')
+      }
+      
+      // Price fields should be numbers if present
+      if (item.price_min !== undefined) {
+        expect(typeof item.price_min).toBe('number')
+      }
+      if (item.price_max !== undefined) {
+        expect(typeof item.price_max).toBe('number')
+      }
+    })
+    
+    // Verify first item has expected content
+    const firstItem = normalized[0]
+    expect(firstItem.title).toBe('Multi-Family Garage Sale - Moving!')
+    expect(firstItem.price_min).toBe(5)
+    expect(firstItem.price_max).toBe(5)
+    expect(firstItem.tags).toContain('multi-family')
+    expect(firstItem.tags).toContain('moving')
+    expect(firstItem.tags).toContain('garage')
   })
 })
