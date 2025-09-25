@@ -42,19 +42,32 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
 
   // Content Security Policy
+  const isPreview = process.env.VERCEL_ENV === 'preview'
+  const scriptSrcBase = [
+    "'self'",
+    "'unsafe-eval'",
+    "'unsafe-inline'",
+    'https://maps.googleapis.com',
+    'https://maps.gstatic.com',
+  ]
+  if (isPreview) {
+    // Allow Vercel Feedback script only on preview
+    scriptSrcBase.push('https://vercel.live')
+  }
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com",
+    `script-src ${scriptSrcBase.join(' ')}`,
+    `script-src-elem ${scriptSrcBase.join(' ')}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.com wss://*.supabase.co",
+    "connect-src 'self' https://*.supabase.co https://*.supabase.com wss://*.supabase.co https://maps.googleapis.com https://maps.gstatic.com",
     "frame-src 'self' https://maps.google.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
+    'upgrade-insecure-requests'
   ].join('; ')
 
   response.headers.set('Content-Security-Policy', csp)
@@ -91,6 +104,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Exclude common public assets and PWA files from middleware
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|site.webmanifest|robots.txt|sitemap.xml|sw.js|icon.*|apple-touch-icon.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

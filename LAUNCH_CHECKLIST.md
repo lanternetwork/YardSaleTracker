@@ -1,4 +1,4 @@
-# YardSaleFinder - Launch Checklist
+# LootAura - Launch Checklist
 
 ## Pre-Launch Checklist
 

@@ -1,10 +1,12 @@
 'use client'
-import { useFavorites } from '@/lib/hooks/useAuth'
+import { useFavorites } from '@/lib/hooks/useFavorites'
+import type { Sale } from '@/lib/types'
 import SalesList from '@/components/SalesList'
 import EmptyState from '@/components/EmptyState'
 
 export default function Favorites() {
-  const { data: favorites = [], isLoading, error } = useFavorites()
+  const { data: favoritesRaw = [], isLoading, error } = useFavorites()
+  const favorites: Sale[] = (favoritesRaw as any[]).flat() as Sale[]
 
   if (isLoading) {
     return (

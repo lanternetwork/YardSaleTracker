@@ -1,3 +1,4 @@
+// @ts-ignore - Deno std types not available during Node tsc
 import { serve } from "https://deno.land/std/http/server.ts"
 
 interface ScrapedSale {
@@ -86,7 +87,7 @@ function parseCraigslistList(html: string, limit: number = 20): ParsedItem[] {
   return results
 }
 
-serve(async (req) => {
+serve(async (req: any) => {
   const correlationId = `deno_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   
   try {
@@ -191,11 +192,12 @@ serve(async (req) => {
     }
     
   } catch (error) {
-    console.log(`[SCRAPER] [ERROR] [${correlationId}] Scraper error: ${error.message}`)
+    const err = error as any
+    console.log(`[SCRAPER] [ERROR] [${correlationId}] Scraper error: ${err?.message}`)
     
     return new Response(JSON.stringify({ 
       error: "Failed to scrape data",
-      message: error.message,
+      message: err?.message,
       results: []
     }), { 
       status: 500,
