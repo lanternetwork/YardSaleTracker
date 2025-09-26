@@ -1,6 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 
+// URL normalization function
+function normalizeUrl(link: string, feedUrl: string): string | null {
+  try {
+    // If link is already absolute, use it directly
+    if (link.startsWith('http://') || link.startsWith('https://')) {
+      const url = new URL(link)
+      // Only accept craigslist.org URLs
+      if (url.hostname.endsWith('.craigslist.org') || url.hostname === 'craigslist.org') {
+        return url.toString()
+      }
+      return null // Reject non-craigslist URLs
+    }
+    
+    // If link is relative, resolve against feed URL
+    const feedUrlObj = new URL(feedUrl)
+    const resolvedUrl = new URL(link, feedUrlObj.origin)
+    
+    // Only accept craigslist.org URLs
+    if (resolvedUrl.hostname.endsWith('.craigslist.org') || resolvedUrl.hostname === 'craigslist.org') {
+      return resolvedUrl.toString()
+    }
+    
+    return null // Reject non-craigslist URLs
+  } catch (error) {
+    return null // Invalid URL
+  }
+}
+
+// Generate stable source_id from item data
+function generateSourceId(item: any): string {
+  // Prefer RSS guid if it's a URL with an ID
+  if (item.guid && item.guid.startsWith('http')) {
+    try {
+      const url = new URL(item.guid)
+      const pathParts = url.pathname.split('/')
+      const id = pathParts[pathParts.length - 1]
+      if (id && id.length > 5) {
+        return id
+      }
+    } catch (error) {
+      // Fall through to hash method
+    }
+  }
+  
+  // Fallback: hash of (link|title|posted_at)
+  const hashInput = `${item.link || ''}|${item.title || ''}|${item.posted_at || ''}`
+  return Buffer.from(hashInput).toString('base64').slice(0, 20)
+}
+
 export async function POST(request: NextRequest) {
   // Check for ingest token in headers
   const ingestToken = request.headers.get('X-INGEST-TOKEN')
@@ -11,65 +60,145 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const supabase = createSupabaseServer()
+  const runId = `run_${Date.now()}`
+  const startTime = new Date()
+
   try {
     const { dryRun = false, site = 'sfbay', limit = 10 } = await request.json()
 
-    // Simulate scraping process with mock data
-    const runId = `run_${Date.now()}`
-    const startTime = new Date()
-    
-    // Simulate some processing time
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Create ingest run record
+    const { data: runRecord, error: runError } = await supabase
+      .from('ingest_runs')
+      .insert({
+        id: runId,
+        source: 'craigslist',
+        dry_run: dryRun,
+        status: 'running'
+      })
+      .select()
+      .single()
 
-    // Generate mock scraped data
-    const mockResults = Array.from({ length: Math.min(limit, 15) }, (_, i) => ({
-      id: `mock_${runId}_${i}`,
+    if (runError) {
+      console.error('Error creating ingest run:', runError)
+    }
+
+    // Simulate RSS feed parsing with mock data
+    const feedUrl = `https://${site}.craigslist.org/search/garage-sale?format=rss`
+    const mockRssItems = Array.from({ length: Math.min(limit, 15) }, (_, i) => ({
       title: `Garage Sale ${i + 1} - ${site.toUpperCase()}`,
-      url: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
-      location_text: `${site} Area`,
+      link: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
+      guid: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
+      description: `Mock garage sale description ${i + 1}`,
       posted_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      price_min: Math.floor(Math.random() * 50) + 10,
-      price_max: Math.floor(Math.random() * 200) + 50
+      location_text: `${site} Area`
     }))
 
-    const fetchedCount = mockResults.length
-    const newCount = dryRun ? 0 : Math.floor(fetchedCount * 0.3) // Simulate 30% new
-    const updatedCount = dryRun ? 0 : Math.floor(fetchedCount * 0.1) // Simulate 10% updated
+    let fetchedCount = 0
+    let newCount = 0
+    let updatedCount = 0
+    let invalidUrlCount = 0
+    const sampleItems: any[] = []
 
-    // If not a dry run, simulate database operations
-    if (!dryRun) {
-      const supabase = createSupabaseServer()
+    // Process each RSS item
+    for (const item of mockRssItems) {
+      fetchedCount++
       
-      // Simulate inserting new sales
-      for (let i = 0; i < newCount; i++) {
-        const sale = mockResults[i]
+      // Normalize URL
+      const normalizedUrl = normalizeUrl(item.link, feedUrl)
+      if (!normalizedUrl) {
+        invalidUrlCount++
+        continue
+      }
+
+      const sourceId = generateSourceId(item)
+      const now = new Date().toISOString()
+
+      if (!dryRun) {
         try {
-          await supabase.from('sales').insert({
-            title: sale.title,
-            url: sale.url,
-            location_text: sale.location_text,
-            posted_at: sale.posted_at,
-            first_seen_at: new Date().toISOString(),
-            last_seen_at: new Date().toISOString(),
-            price_min: sale.price_min,
-            price_max: sale.price_max,
+          // Upsert into sales table
+          const { data: existingSale, error: selectError } = await supabase
+            .from('sales')
+            .select('id, first_seen_at')
+            .eq('source', 'craigslist')
+            .eq('source_id', sourceId)
+            .single()
+
+          if (selectError && selectError.code !== 'PGRST116') { // Not found is OK
+            console.error('Error checking existing sale:', selectError)
+            continue
+          }
+
+          const saleData = {
             source: 'craigslist',
-            status: 'published'
-          })
+            source_id: sourceId,
+            title: item.title,
+            url: normalizedUrl,
+            location_text: item.location_text,
+            posted_at: item.posted_at,
+            last_seen_at: now,
+            status: 'active',
+            source_host: new URL(normalizedUrl).hostname
+          }
+
+          if (existingSale) {
+            // Update existing sale
+            const { error: updateError } = await supabase
+              .from('sales')
+              .update(saleData)
+              .eq('id', existingSale.id)
+
+            if (updateError) {
+              console.error('Error updating sale:', updateError)
+            } else {
+              updatedCount++
+            }
+          } else {
+            // Insert new sale
+            const { error: insertError } = await supabase
+              .from('sales')
+              .insert({
+                ...saleData,
+                first_seen_at: now
+              })
+
+            if (insertError) {
+              console.error('Error inserting sale:', insertError)
+            } else {
+              newCount++
+            }
+          }
         } catch (error) {
-          console.warn('Mock insert failed (expected in dev):', error)
+          console.error('Error processing sale:', error)
         }
+      }
+
+      // Add to sample items (first 5)
+      if (sampleItems.length < 5) {
+        sampleItems.push({
+          title: item.title,
+          posted_at: item.posted_at,
+          url: normalizedUrl
+        })
       }
     }
 
-    // Create sample items from results
-    const sampleItems = mockResults.slice(0, 5).map((item: any) => ({
-      title: item.title,
-      posted_at: item.posted_at,
-      url: item.url
-    }))
-
     const endTime = new Date()
+    const lastError = invalidUrlCount > 0 ? `${invalidUrlCount} items had invalid URLs` : null
+
+    // Update ingest run record
+    await supabase
+      .from('ingest_runs')
+      .update({
+        finished_at: endTime.toISOString(),
+        fetched_count: fetchedCount,
+        new_count: newCount,
+        updated_count: updatedCount,
+        status: 'ok',
+        last_error: lastError
+      })
+      .eq('id', runId)
+
     const runData = {
       id: runId,
       status: 'completed',
@@ -78,12 +207,24 @@ export async function POST(request: NextRequest) {
       updated_count: updatedCount,
       started_at: startTime.toISOString(),
       finished_at: endTime.toISOString(),
-      sample_items: sampleItems
+      sample_items: sampleItems,
+      invalid_url_count: invalidUrlCount
     }
 
     return NextResponse.json(runData)
   } catch (error: any) {
     console.error('Ingest trigger error:', error)
+    
+    // Update run record with error
+    await supabase
+      .from('ingest_runs')
+      .update({
+        finished_at: new Date().toISOString(),
+        status: 'error',
+        last_error: error.message
+      })
+      .eq('id', runId)
+
     return NextResponse.json({ 
       error: 'Failed to trigger ingestion',
       message: error.message 

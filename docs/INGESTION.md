@@ -18,13 +18,14 @@ The ingestion system scrapes yard sale listings from Craigslist and stores them 
   - Link to full diagnostics
 
 ### Full Diagnostics
-- **Location**: `/diagnostics/ingest`
+- **Location**: `/_diag/ingest`
 - **Purpose**: Comprehensive monitoring and data management
 - **Features**:
-  - Recent ingestion runs (last 20)
-  - Paginated scraped sales table
+  - Recent ingestion runs (last 20) from `ingest_runs` table
+  - Paginated scraped sales table from `sales` table where `source='craigslist'`
   - Search and filtering capabilities
-  - Real-time data from database
+  - Real-time data from database using service-role client
+  - External links to original Craigslist posts
 
 ## API Endpoints
 
@@ -48,14 +49,38 @@ The ingestion system scrapes yard sale listings from Craigslist and stores them 
 
 ### Sales Table
 The scraped sales are stored in the `sales` table with the following key fields:
+- `id`: UUID primary key
 - `source`: Set to 'craigslist' for scraped data
+- `source_id`: Stable identifier from RSS item (guid or hash)
 - `title`: Sale title from Craigslist
-- `url`: Original Craigslist URL
+- `url`: Normalized absolute Craigslist URL
 - `location_text`: Location information
+- `lat`/`lng`: Geocoded coordinates (optional)
 - `posted_at`: When the sale was originally posted
 - `first_seen_at`: When we first scraped it
 - `last_seen_at`: When we last saw it
-- `status`: Current status (published/draft/archived)
+- `status`: Current status (active/published/archived)
+- `source_host`: Hostname of the source URL
+- `url_prev`: Previous URL (for tracking changes)
+
+### Ingest Runs Table
+Ingestion execution history stored in `ingest_runs` table:
+- `id`: UUID primary key
+- `started_at`/`finished_at`: Execution timestamps
+- `source`: Data source (e.g., 'craigslist')
+- `dry_run`: Boolean flag for test runs
+- `fetched_count`: Number of items processed
+- `new_count`: Number of new sales inserted
+- `updated_count`: Number of existing sales updated
+- `status`: Execution status (running/ok/error)
+- `last_error`: Error message if failed
+
+### Geocode Cache Table
+Optional caching for location geocoding:
+- `query`: Location text used for geocoding
+- `lat`/`lng`: Cached coordinates
+- `provider`: Geocoding service used
+- `created_at`/`last_used_at`: Cache timestamps
 
 ## Security
 
@@ -69,6 +94,21 @@ The scraped sales are stored in the `sales` table with the following key fields:
 - RLS policies are bypassed for diagnostic purposes
 - No client-side database credentials
 
+## URL Normalization
+
+### Rules
+- **Absolute URLs**: Accepted if they match `*.craigslist.org` or `craigslist.org`
+- **Relative URLs**: Resolved against the RSS feed origin
+- **Rejection**: Non-craigslist URLs are rejected and counted as invalid
+- **Protocol**: Only HTTPS URLs are accepted
+- **Preservation**: Query parameters and fragments are preserved
+
+### Examples
+- ✅ `https://sfbay.craigslist.org/garage-sale/123.html` → Accepted
+- ✅ `/garage-sale/123.html` → Resolved to `https://sfbay.craigslist.org/garage-sale/123.html`
+- ❌ `https://example.com/garage-sale/123` → Rejected
+- ❌ `http://sfbay.craigslist.org/garage-sale/123.html` → Rejected (HTTP)
+
 ## Usage
 
 ### Development
@@ -77,6 +117,11 @@ The scraped sales are stored in the `sales` table with the following key fields:
 3. Click "Full Diagnostics →" for comprehensive view
 4. Use "Dry Run" to test without database writes
 5. Use "Run Now" to execute full ingestion
+
+### Environment Variables
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_SERVICE_ROLE_KEY`: Service role key for database access
+- `CRAIGSLIST_INGEST_TOKEN`: Authentication token for ingestion endpoints
 
 ### Production
 - Set `INGEST_TOKEN` environment variable
