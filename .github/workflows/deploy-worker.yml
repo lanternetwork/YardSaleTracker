@@ -35,13 +35,13 @@ jobs:
           CRON_SCHEDULE: ${{ secrets.CRON_SCHEDULE }}
         run: |
           echo "Setting secrets"
-          echo -n "$POST_URL" | wrangler secret put POST_URL --quiet
-          echo -n "$INGEST_TOKEN" | wrangler secret put INGEST_TOKEN --quiet
-          echo -n "$SITES" | wrangler secret put SITES --quiet
-          echo -n "$USER_AGENT" | wrangler secret put USER_AGENT --quiet
+          printf '%s' "$POST_URL" | wrangler secret put POST_URL
+          printf '%s' "$INGEST_TOKEN" | wrangler secret put INGEST_TOKEN
+          printf '%s' "$SITES" | wrangler secret put SITES
+          printf '%s' "$USER_AGENT" | wrangler secret put USER_AGENT
           if [ -n "$CRON_SCHEDULE" ]; then
             echo "Adding cron to wrangler.toml"
-            echo "\nschedules = [\"$CRON_SCHEDULE\"]" >> wrangler.toml
+            printf '\n[triggers]\ncrons = ["%s"]\n' "$CRON_SCHEDULE" >> wrangler.toml
           fi
 
       - name: Publish Worker
