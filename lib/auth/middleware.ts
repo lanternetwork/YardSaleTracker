@@ -10,6 +10,8 @@ const AUTH_REQUIRED_ROUTES = [
 
 const DIAGNOSTICS_ROUTES = [
   '/diagnostics/ingest',
+  '/diagnostics/ingest/console',
+  '/diagnostics/db-check',
   '/_diag/ingest'
 ]
 

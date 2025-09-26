@@ -1,6 +1,7 @@
 import { adminSupabase } from '@/lib/supabase/admin'
 import IngestRunsSection from './IngestRunsSection'
 import ScrapedSalesSection from './ScrapedSalesSection'
+import Link from 'next/link'
 
 interface IngestRun {
   id: string
@@ -15,6 +16,7 @@ interface IngestRun {
   cache_hits: number
   status: string
   last_error?: string
+  details?: any
 }
 
 interface ScrapedSale {

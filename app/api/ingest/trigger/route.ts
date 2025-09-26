@@ -338,6 +338,45 @@ export async function POST(request: NextRequest) {
       lastError = errorParts.join('; ')
     }
 
+    // Build sanitized details for the run
+    const runDetails = {
+      sites: rssUrls.map(url => {
+        const urlObj = new URL(url)
+        return {
+          hostname: urlObj.hostname,
+          pathname: urlObj.pathname,
+          search: urlObj.search
+        }
+      }),
+      fetch_stats: {
+        total_sites: rssUrls.length,
+        successful_fetches: rssUrls.length - siteErrors.length,
+        failed_fetches: siteErrors.length,
+        site_errors: siteErrors
+      },
+      parse_stats: {
+        raw_items: rssItems.length,
+        sample_titles: rssItems.slice(0, 3).map(item => item.title || 'Untitled')
+      },
+      filter_stats: {
+        kept: fetchedCount - invalidUrlCount,
+        invalid_url: invalidUrlCount,
+        parse_error: 0, // Could be enhanced to track parse errors
+        duplicate_source_id: 0 // Could be enhanced to track duplicates
+      },
+      user_agent: 'Mozilla/5.0 (compatible; LootAuraBot/1.0; +https://lootaura.com)',
+      invalid_samples: rssItems
+        .filter(item => {
+          const normalizedUrl = normalizeUrl(item.link, rssUrls[0] || `https://${site}.craigslist.org/search/garage-sale?format=rss`)
+          return !normalizedUrl
+        })
+        .slice(0, 3)
+        .map(item => ({
+          title: item.title,
+          link: item.link
+        }))
+    }
+
     // Update ingest run record
     await supabase
       .from('ingest_runs')
@@ -347,7 +386,8 @@ export async function POST(request: NextRequest) {
         new_count: newCount,
         updated_count: updatedCount,
         status: fetchedCount > 0 ? 'ok' : 'error',
-        last_error: lastError
+        last_error: lastError,
+        details: runDetails
       })
       .eq('id', runId)
 

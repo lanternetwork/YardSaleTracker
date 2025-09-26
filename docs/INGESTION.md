@@ -153,6 +153,32 @@ This will:
 - **Returns**: `{ hasServiceRoleKey, projectRef, salesCount, lastRun, timestamp }`
 - **Access**: Preview/Development environments only
 
+### Debug Console (Step-by-Step Observability)
+- **Location**: `/diagnostics/ingest/console`
+- **Purpose**: Step-by-step observability for the ingestion pipeline
+- **Steps**:
+  1. **Config Snapshot**: Shows service role key availability, project reference, configured sites, and server time
+  2. **Fetch Test**: Tests each configured site with proper headers, timeout, and retry logic
+  3. **Parse**: Counts RSS items and extracts sample data (title, link, pubDate)
+  4. **Filter & Normalize**: Shows URL validation results with counts by reason (kept, invalid_url, parse_error, duplicate)
+  5. **Upsert Simulation**: Shows what would be inserted/updated without writing to database
+  6. **Run Now**: Executes real upsert and writes to `ingest_runs` with detailed metadata
+- **Features**:
+  - Real-time step progression with status badges
+  - Per-site fetch statistics and error reporting
+  - URL normalization validation
+  - Link validator for checking HTTP status codes
+  - Comprehensive run details stored in `ingest_runs.details`
+
+### Run Details Structure
+The `ingest_runs.details` JSONB column contains:
+- **sites**: Array of site configurations (hostname, pathname, search params)
+- **fetch_stats**: Total sites, successful/failed fetches, site-specific errors
+- **parse_stats**: Raw item count and sample titles
+- **filter_stats**: Counts by filter reason (kept, invalid_url, parse_error, duplicate)
+- **user_agent**: User agent string used for requests
+- **invalid_samples**: Sample items that failed validation (title, link)
+
 ### Production
 - Set `INGEST_TOKEN` environment variable
 - Configure Supabase service role key
