@@ -6,7 +6,9 @@ import {
   filterAndNormalize, 
   simulateUpsert, 
   runNow, 
-  validateLinks 
+  validateLinks,
+  parseXmlSnapshot,
+  runSnapshotUpsert
 } from './actions'
 
 interface DebugConsoleProps {
@@ -71,6 +73,12 @@ export default function IngestDebugConsole({
   const [parseResult, setParseResult] = useState<ParseResult | null>(null)
   const [filterResult, setFilterResult] = useState<FilterResult | null>(null)
   const [upsertResult, setUpsertResult] = useState<UpsertResult | null>(null)
+  
+  // Snapshot functionality
+  const [xmlContent, setXmlContent] = useState('')
+  const [snapshotParseResult, setSnapshotParseResult] = useState<ParseResult | null>(null)
+  const [snapshotFilterResult, setSnapshotFilterResult] = useState<FilterResult | null>(null)
+  const [snapshotUpsertResult, setSnapshotUpsertResult] = useState<UpsertResult | null>(null)
 
   const runDebugPipeline = async () => {
     setIsRunning(true)
@@ -131,6 +139,52 @@ export default function IngestDebugConsole({
     } finally {
       setIsRunning(false)
     }
+  }
+
+  const handleParseSnapshot = async () => {
+    if (!xmlContent.trim()) return
+    
+    setIsRunning(true)
+    try {
+      const result = await parseXmlSnapshot(xmlContent, sites[0] || 'https://louisville.craigslist.org/search/gms?format=rss')
+      setSnapshotParseResult(result)
+      
+      if (!result.skipped) {
+        const filterResult = await filterAndNormalize(result, sites)
+        setSnapshotFilterResult(filterResult)
+      }
+    } catch (error) {
+      console.error('Snapshot parse error:', error)
+    } finally {
+      setIsRunning(false)
+    }
+  }
+
+  const handleSnapshotRunNow = async () => {
+    if (!snapshotParseResult || snapshotParseResult.skipped) return
+    
+    setIsRunning(true)
+    try {
+      const result = await runSnapshotUpsert(snapshotParseResult, sites[0] || 'https://louisville.craigslist.org/search/gms?format=rss')
+      setSnapshotUpsertResult(result)
+    } catch (error) {
+      console.error('Snapshot run error:', error)
+    } finally {
+      setIsRunning(false)
+    }
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      const content = e.target?.result as string
+      setXmlContent(content)
+      await handleParseSnapshot()
+    }
+    reader.readAsText(file)
   }
 
   const getStatusBadge = (success: boolean, status?: number) => {
@@ -383,6 +437,122 @@ export default function IngestDebugConsole({
         >
           {isRunning ? 'Validating...' : 'Validate Links'}
         </button>
+      </div>
+
+      {/* Snapshot Ingestion */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Snapshot Ingestion</h2>
+          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Bypass Network</span>
+        </div>
+        
+        <p className="text-sm text-gray-600 mb-4">
+          Paste RSS XML or upload a file to bypass network fetch (useful when getting 403 errors).
+        </p>
+        
+        <div className="space-y-4">
+          {/* Paste XML */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Paste RSS XML
+            </label>
+            <textarea
+              value={xmlContent}
+              onChange={(e) => setXmlContent(e.target.value)}
+              placeholder="Paste your RSS XML content here..."
+              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleParseSnapshot}
+              disabled={isRunning || !xmlContent.trim()}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isRunning ? 'Parsing...' : 'Parse Snapshot'}
+            </button>
+          </div>
+          
+          {/* Upload File */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload XML File
+            </label>
+            <input
+              type="file"
+              accept=".xml,.rss"
+              onChange={handleFileUpload}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+          
+          {/* Snapshot Parse Results */}
+          {snapshotParseResult && (
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium text-gray-900 mb-2">Snapshot Parse Results</h3>
+              {snapshotParseResult.skipped ? (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <div className="text-sm text-yellow-800">
+                    <strong>Parse skipped:</strong> {snapshotParseResult.skipReason}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="font-medium">Items Found:</span>
+                    <span className="ml-2 text-blue-600">{snapshotParseResult.itemCount}</span>
+                  </div>
+                  
+                  {snapshotParseResult.samples.length > 0 && (
+                    <div>
+                      <span className="font-medium text-sm">Sample Items:</span>
+                      <div className="mt-2 space-y-2">
+                        {snapshotParseResult.samples.map((sample, index) => (
+                          <div key={index} className="border-l-4 border-blue-200 pl-3 text-sm">
+                            <div className="font-medium">{sample.title}</div>
+                            <div className="text-gray-600 font-mono text-xs">{sample.link}</div>
+                            <div className="text-gray-500 text-xs">{sample.pubDate ? new Date(sample.pubDate).toLocaleString() : 'No date'}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {snapshotFilterResult && (
+                    <div className="mt-4">
+                      <h4 className="font-medium text-sm text-gray-900 mb-2">Filter Results</h4>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div>Kept: {snapshotFilterResult.kept}</div>
+                        <div>Invalid URL: {snapshotFilterResult.invalidUrl}</div>
+                        <div>Parse Error: {snapshotFilterResult.parseError}</div>
+                        <div>Duplicate: {snapshotFilterResult.duplicateSourceId}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4">
+                    <button
+                      onClick={handleSnapshotRunNow}
+                      disabled={isRunning || snapshotParseResult.skipped}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {isRunning ? 'Running...' : 'Run Now (Real Upsert)'}
+                    </button>
+                  </div>
+                  
+                  {snapshotUpsertResult && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div className="text-sm text-green-800">
+                        <strong>Upsert Complete:</strong> {snapshotUpsertResult.newCount} new, {snapshotUpsertResult.updatedCount} updated
+                        {snapshotUpsertResult.runId && (
+                          <div className="mt-1 text-xs">Run ID: {snapshotUpsertResult.runId}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
