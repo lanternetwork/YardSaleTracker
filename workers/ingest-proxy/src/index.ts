@@ -87,7 +87,7 @@ export default {
     return new Response(JSON.stringify({ results }), { headers: { 'Content-Type': 'application/json' } })
   },
 
-  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+  async scheduled(_event: any, env: Env): Promise<void> {
     const sites = (env.SITES || '').split(',').map(s => s.trim()).filter(Boolean)
     if (sites.length === 0) return
     const ua = env.USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
