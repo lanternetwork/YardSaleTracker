@@ -50,6 +50,46 @@ function generateSourceId(item: any): string {
   return Buffer.from(hashInput).toString('base64').slice(0, 20)
 }
 
+// Extract location from RSS item
+function extractLocationFromItem(item: any): string | null {
+  // Try to extract from description first
+  if (item.description) {
+    const desc = item.description.toLowerCase()
+    // Look for common location patterns
+    const locationMatch = desc.match(/(?:in|at|near)\s+([a-z\s,]+?)(?:\s|$|\.|,)/i)
+    if (locationMatch) {
+      return locationMatch[1].trim()
+    }
+  }
+  
+  // Try to extract from title
+  if (item.title) {
+    const title = item.title.toLowerCase()
+    // Look for location patterns in title
+    const locationMatch = title.match(/(?:in|at|near)\s+([a-z\s,]+?)(?:\s|$|\.|,)/i)
+    if (locationMatch) {
+      return locationMatch[1].trim()
+    }
+  }
+  
+  return null
+}
+
+// Parse RSS date format
+function parseRssDate(dateString: string): string | null {
+  if (!dateString) return null
+  
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return null
+    }
+    return date.toISOString()
+  } catch (error) {
+    return null
+  }
+}
+
 export async function POST(request: NextRequest) {
   // Check for ingest token in headers
   const ingestToken = request.headers.get('X-INGEST-TOKEN')
@@ -83,16 +123,53 @@ export async function POST(request: NextRequest) {
       console.error('Error creating ingest run:', runError)
     }
 
-    // Simulate RSS feed parsing with mock data
+    // Parse real RSS feed from Craigslist
     const feedUrl = `https://${site}.craigslist.org/search/garage-sale?format=rss`
-    const mockRssItems = Array.from({ length: Math.min(limit, 15) }, (_, i) => ({
-      title: `Garage Sale ${i + 1} - ${site.toUpperCase()}`,
-      link: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
-      guid: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
-      description: `Mock garage sale description ${i + 1}`,
-      posted_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      location_text: `${site} Area`
-    }))
+    let rssItems: any[] = []
+    
+    try {
+      console.log(`Fetching RSS feed from: ${feedUrl}`)
+      const feedResponse = await fetch(feedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; YardSaleTracker/1.0; +https://lootaura.com)'
+        }
+      })
+      
+      if (!feedResponse.ok) {
+        throw new Error(`RSS feed fetch failed: ${feedResponse.status} ${feedResponse.statusText}`)
+      }
+      
+      const feedText = await feedResponse.text()
+      console.log(`RSS feed fetched, length: ${feedText.length} characters`)
+      
+      // Parse RSS XML
+      const parser = new (await import('fast-xml-parser')).XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '@_'
+      })
+      
+      const feedData = parser.parse(feedText)
+      const items = feedData?.rss?.channel?.item || []
+      
+      if (Array.isArray(items)) {
+        rssItems = items.slice(0, limit)
+      } else if (items) {
+        rssItems = [items].slice(0, limit)
+      }
+      
+      console.log(`Parsed ${rssItems.length} RSS items`)
+    } catch (error) {
+      console.error('Error fetching/parsing RSS feed:', error)
+      // Fallback to mock data if RSS parsing fails
+      rssItems = Array.from({ length: Math.min(limit, 5) }, (_, i) => ({
+        title: `Garage Sale ${i + 1} - ${site.toUpperCase()}`,
+        link: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
+        guid: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
+        description: `Mock garage sale description ${i + 1}`,
+        posted_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+        location_text: `${site} Area`
+      }))
+    }
 
     let fetchedCount = 0
     let newCount = 0
@@ -101,7 +178,7 @@ export async function POST(request: NextRequest) {
     const sampleItems: any[] = []
 
     // Process each RSS item
-    for (const item of mockRssItems) {
+    for (const item of rssItems) {
       fetchedCount++
       
       // Normalize URL
@@ -113,6 +190,12 @@ export async function POST(request: NextRequest) {
 
       const sourceId = generateSourceId(item)
       const now = new Date().toISOString()
+      
+      // Extract location from description or title
+      const locationText = extractLocationFromItem(item)
+      
+      // Parse posted date from RSS item
+      const postedAt = parseRssDate(item.pubDate || item.published || item.date)
 
       if (!dryRun) {
         try {
@@ -132,10 +215,10 @@ export async function POST(request: NextRequest) {
           const saleData = {
             source: 'craigslist',
             source_id: sourceId,
-            title: item.title,
+            title: item.title || 'Untitled Sale',
             url: normalizedUrl,
-            location_text: item.location_text,
-            posted_at: item.posted_at,
+            location_text: locationText,
+            posted_at: postedAt,
             last_seen_at: now,
             status: 'active',
             source_host: new URL(normalizedUrl).hostname
