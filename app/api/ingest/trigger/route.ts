@@ -107,12 +107,16 @@ export async function POST(request: NextRequest) {
   try {
     const { dryRun = false, site = 'sfbay', limit = 10 } = await request.json()
 
+    // Get RSS URLs from environment (comma-separated)
+    const craigslistSites = process.env.CRAIGSLIST_SITES || `https://${site}.craigslist.org/search/garage-sale?format=rss`
+    const rssUrls = craigslistSites.split(',').map(url => url.trim())
+
     // Preview-only environment logging (no secrets)
     if (process.env.VERCEL_ENV === 'preview') {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
       const supabaseUrlRef = supabaseUrl.slice(0, 8)
       const hasServiceRoleKey = !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE)
-      console.log(`[PREVIEW] supabaseUrlRef=${supabaseUrlRef}, hasServiceRoleKey=${hasServiceRoleKey}, dryRun=${dryRun}`)
+      console.log(`[PREVIEW] supabaseUrlRef=${supabaseUrlRef}, hasServiceRoleKey=${hasServiceRoleKey}, dryRun=${dryRun}, sitesCount=${rssUrls.length}`)
     }
 
     // Create ingest run record
@@ -131,53 +135,52 @@ export async function POST(request: NextRequest) {
       console.error('Error creating ingest run:', runError)
     }
 
-    // Parse real RSS feed from Craigslist
-    const feedUrl = `https://${site}.craigslist.org/search/garage-sale?format=rss`
+    // Parse RSS feeds from environment URLs
     let rssItems: any[] = []
     
-    try {
-      console.log(`Fetching RSS feed from: ${feedUrl}`)
-      const feedResponse = await fetch(feedUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; YardSaleTracker/1.0; +https://lootaura.com)'
+    for (const feedUrl of rssUrls) {
+      try {
+        console.log(`Fetching RSS feed from: ${feedUrl}`)
+        const feedResponse = await fetch(feedUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; YardSaleTracker/1.0; +https://lootaura.com)'
+          }
+        })
+        
+        if (!feedResponse.ok) {
+          console.error(`RSS feed fetch failed: ${feedResponse.status} ${feedResponse.statusText}`)
+          continue
         }
-      })
-      
-      if (!feedResponse.ok) {
-        throw new Error(`RSS feed fetch failed: ${feedResponse.status} ${feedResponse.statusText}`)
+        
+        const feedText = await feedResponse.text()
+        console.log(`RSS feed fetched, length: ${feedText.length} characters`)
+        
+        // Parse RSS XML
+        const parser = new (await import('fast-xml-parser')).XMLParser({
+          ignoreAttributes: false,
+          attributeNamePrefix: '@_'
+        })
+        
+        const feedData = parser.parse(feedText)
+        const items = feedData?.rss?.channel?.item || []
+        
+        if (Array.isArray(items)) {
+          rssItems.push(...items.slice(0, limit))
+        } else if (items) {
+          rssItems.push(items)
+        }
+        
+        console.log(`Parsed ${items.length} RSS items from ${feedUrl}`)
+      } catch (error) {
+        console.error(`Error fetching/parsing RSS feed from ${feedUrl}:`, error)
+        // Continue to next URL instead of falling back to mock data
+        continue
       }
-      
-      const feedText = await feedResponse.text()
-      console.log(`RSS feed fetched, length: ${feedText.length} characters`)
-      
-      // Parse RSS XML
-      const parser = new (await import('fast-xml-parser')).XMLParser({
-        ignoreAttributes: false,
-        attributeNamePrefix: '@_'
-      })
-      
-      const feedData = parser.parse(feedText)
-      const items = feedData?.rss?.channel?.item || []
-      
-      if (Array.isArray(items)) {
-        rssItems = items.slice(0, limit)
-      } else if (items) {
-        rssItems = [items].slice(0, limit)
-      }
-      
-      console.log(`Parsed ${rssItems.length} RSS items`)
-    } catch (error) {
-      console.error('Error fetching/parsing RSS feed:', error)
-      // Fallback to mock data if RSS parsing fails
-      rssItems = Array.from({ length: Math.min(limit, 5) }, (_, i) => ({
-        title: `Garage Sale ${i + 1} - ${site.toUpperCase()}`,
-        link: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
-        guid: `https://${site}.craigslist.org/garage-sale/mock-${i}`,
-        description: `Mock garage sale description ${i + 1}`,
-        posted_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        location_text: `${site} Area`
-      }))
     }
+    
+    // Limit total items
+    rssItems = rssItems.slice(0, limit)
+    console.log(`Total RSS items collected: ${rssItems.length}`)
 
     let fetchedCount = 0
     let newCount = 0

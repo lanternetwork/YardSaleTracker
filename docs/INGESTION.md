@@ -124,6 +124,7 @@ Optional caching for location geocoding:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase anonymous key (public)
 - `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_ROLE`: Service role key for database access (server-only)
 - `CRAIGSLIST_INGEST_TOKEN`: Authentication token for ingestion endpoints (server-only)
+- `CRAIGSLIST_SITES`: Comma-separated RSS URLs (e.g., `https://louisville.craigslist.org/search/garage-sale?format=rss`)
 
 ### Real Database Persistence
 - **Non-dry run**: Persists real sales data to `public.sales` table using service-role client
@@ -132,6 +133,14 @@ Optional caching for location geocoding:
 - **URL Validation**: Only valid Craigslist URLs are stored
 - **Service Role**: Uses `adminSupabase` client with service role for unrestricted database access
 - **Migrations Required**: Database migrations must be applied in Supabase before ingestion will work
+- **No Mock Data**: All diagnostics show real database data; empty states when no data exists
+- **Environment RSS**: Uses `CRAIGSLIST_SITES` environment variable for RSS feed URLs
+
+### Database Check (Preview Only)
+- **Location**: `/diagnostics/db-check`
+- **Purpose**: Quick verification of database connectivity and service role
+- **Returns**: `{ hasServiceRoleKey, projectRef, salesCount, lastRun, timestamp }`
+- **Access**: Preview/Development environments only
 
 ### Production
 - Set `INGEST_TOKEN` environment variable
