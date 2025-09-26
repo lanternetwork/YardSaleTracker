@@ -76,7 +76,7 @@ export async function findDuplicates(
 /**
  * Check if two sales have overlapping dates
  */
-function hasDateOverlap(sale1: SaleCandidate, sale2: SaleCandidate): boolean {
+export function hasDateOverlap(sale1: SaleCandidate, sale2: SaleCandidate): boolean {
   const start1 = new Date(sale1.date_start)
   const end1 = new Date(sale1.date_end || sale1.date_start)
   const start2 = new Date(sale2.date_start)
@@ -89,7 +89,7 @@ function hasDateOverlap(sale1: SaleCandidate, sale2: SaleCandidate): boolean {
 /**
  * Calculate distance between two points in meters
  */
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000 // Earth's radius in meters
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLon = (lon2 - lon1) * Math.PI / 180
@@ -103,7 +103,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 /**
  * Calculate similarity between two strings using trigram approach
  */
-function calculateSimilarity(str1: string, str2: string): number {
+export function calculateSimilarity(str1: string, str2: string): number {
   const s1 = str1.toLowerCase().trim()
   const s2 = str2.toLowerCase().trim()
   

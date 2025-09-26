@@ -6,12 +6,14 @@ interface EmptyStateProps {
   title?: string
   description?: string
   showDemo?: boolean
+  cta?: React.ReactNode
 }
 
 export default function EmptyState({ 
   title = "No sales found",
   description = "Try adjusting your search filters or check back later for new listings.",
-  showDemo = false
+  showDemo = false,
+  cta
 }: EmptyStateProps) {
   return (
     <div className="text-center py-12">
@@ -21,12 +23,14 @@ export default function EmptyState({
         <p className="text-neutral-600 mb-6">{description}</p>
         
         <div className="space-y-3">
-          <Link
-            href="/explore?tab=add"
-            className="inline-block bg-amber-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-amber-600 transition-colors"
-          >
-            Post Your Sale in 60s
-          </Link>
+          {cta || (
+            <Link
+              href="/explore?tab=add"
+              className="inline-block bg-amber-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-amber-600 transition-colors"
+            >
+              Post Your Sale in 60s
+            </Link>
+          )}
           
           {config.features.demo && showDemo && (
             <div className="mt-4">

@@ -11,6 +11,7 @@ interface OptimizedImageProps {
   priority?: boolean
   placeholder?: 'blur' | 'empty'
   blurDataURL?: string
+  sizes?: string
 }
 
 export default function OptimizedImage({
@@ -21,7 +22,8 @@ export default function OptimizedImage({
   className = '',
   priority = false,
   placeholder = 'empty',
-  blurDataURL
+  blurDataURL,
+  sizes
 }: OptimizedImageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
@@ -68,7 +70,7 @@ export default function OptimizedImage({
         priority={priority}
         placeholder={placeholder}
         blurDataURL={blurDataURL}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        sizes={sizes || "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"}
       />
     </div>
   )

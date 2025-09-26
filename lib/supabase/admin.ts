@@ -30,3 +30,6 @@ export const adminSupabase = createClient(
     }
   }
 )
+
+// Alias for compatibility
+export const getAdminSupabase = () => adminSupabase

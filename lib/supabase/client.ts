@@ -6,3 +6,6 @@ export const createSupabaseBrowser = () =>
     ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL,
     ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
+
+// Alias for compatibility
+export const createSupabaseClient = createSupabaseBrowser
