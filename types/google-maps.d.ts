@@ -61,6 +61,7 @@ declare namespace google {
       mapTypeControl?: boolean
       streetViewControl?: boolean
       fullscreenControl?: boolean
+      zoomControl?: boolean
     }
 
     enum MapTypeId {
@@ -112,7 +113,7 @@ declare namespace google {
     class InfoWindow {
       constructor(opts?: InfoWindowOptions)
       setContent(content: string | Element): void
-      open(map?: Map, anchor?: Marker): void
+      open(options?: { map?: Map; anchor?: Marker }): void
       close(): void
     }
 
@@ -141,6 +142,52 @@ declare namespace google {
       constructor(width: number, height: number, widthUnit?: string, heightUnit?: string)
       width: number
       height: number
+    }
+
+    namespace places {
+      class Autocomplete {
+        constructor(input: HTMLInputElement, options?: AutocompleteOptions)
+        addListener(eventName: string, handler: Function): MapsEventListener
+        getPlace(): PlaceResult
+        setBounds(bounds: LatLngBounds): void
+        setTypes(types: string[]): void
+      }
+
+      interface AutocompleteOptions {
+        bounds?: LatLngBounds
+        componentRestrictions?: ComponentRestrictions
+        fields?: string[]
+        strictBounds?: boolean
+        types?: string[]
+      }
+
+      interface ComponentRestrictions {
+        country?: string | string[]
+      }
+
+      interface PlaceResult {
+        address_components?: AddressComponent[]
+        formatted_address?: string
+        geometry?: PlaceGeometry
+        name?: string
+        place_id?: string
+        types?: string[]
+        url?: string
+        utc_offset?: number
+        vicinity?: string
+        website?: string
+      }
+
+      interface AddressComponent {
+        long_name: string
+        short_name: string
+        types: string[]
+      }
+
+      interface PlaceGeometry {
+        location?: LatLng
+        viewport?: LatLngBounds
+      }
     }
   }
 }
