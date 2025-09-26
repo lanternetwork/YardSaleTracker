@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  ingest:
+  backup:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Ingest from Craigslist
+      - name: Fetch RSS and Post Snapshots
         env:
           POST_URL: ${{ secrets.POST_URL }}
           INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
@@ -23,6 +23,10 @@ jobs:
           IFS=',' read -ra SITE_ARRAY <<< "$SITES"
           SUCCESS_COUNT=0
           TOTAL_SITES=${#SITE_ARRAY[@]}
+          FETCHED_200=0
+          POSTED_SUCCESS=0
+          
+          echo "Processing $TOTAL_SITES sites..."
           
           for site_url in "${SITE_ARRAY[@]}"; do
             site_url=$(echo "$site_url" | xargs) # trim whitespace
@@ -37,11 +41,11 @@ jobs:
             
             # Fetch RSS with curl
             response=$(curl -s -w "\n%{http_code}" \
-              -H "User-Agent: $USER_AGENT" \
+              -A "$USER_AGENT" \
               -H "Accept: application/rss+xml, text/xml;q=0.9, */*;q=0.8" \
               -H "Accept-Language: en-US,en;q=0.9" \
               -L \
-              --max-time 30 \
+              --max-time 20 \
               "$site_url" 2>/dev/null)
             
             # Extract body and status code
@@ -50,13 +54,17 @@ jobs:
             
             if [ "$status_code" = "200" ] && [ -n "$body" ]; then
               echo "✓ $hostname: HTTP $status_code, body length: ${#body}"
+              FETCHED_200=$((FETCHED_200 + 1))
+              
+              # JSON-escape the XML using jq
+              json_xml=$(echo "$body" | jq -Rs .)
               
               # POST to our snapshot endpoint
               post_response=$(curl -s -w "\n%{http_code}" \
                 -X POST \
                 -H "Content-Type: application/json" \
                 -H "X-INGEST-TOKEN: $INGEST_TOKEN" \
-                -d "{\"source\":\"craigslist\",\"site\":\"$site_url\",\"xml\":$(echo "$body" | jq -R -s .)}" \
+                -d "{\"source\":\"craigslist\",\"site\":\"$site_url\",\"xml\":$json_xml}" \
                 "$POST_URL" 2>/dev/null)
               
               post_status=$(echo "$post_response" | tail -n 1)
@@ -64,6 +72,7 @@ jobs:
               
               if [ "$post_status" = "200" ]; then
                 echo "✓ $hostname: Successfully posted to snapshot endpoint"
+                POSTED_SUCCESS=$((POSTED_SUCCESS + 1))
                 SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
               else
                 echo "✗ $hostname: Failed to post to snapshot endpoint (HTTP $post_status)"
@@ -74,7 +83,15 @@ jobs:
             fi
           done
           
+          # Write job summary
+          echo "## Backup Ingestion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Sites**: $TOTAL_SITES" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fetched (200)**: $FETCHED_200" >> $GITHUB_STEP_SUMMARY
+          echo "- **Posted Successfully**: $POSTED_SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Overall Success**: $SUCCESS_COUNT/$TOTAL_SITES" >> $GITHUB_STEP_SUMMARY
+          
           echo "Summary: $SUCCESS_COUNT/$TOTAL_SITES sites processed successfully"
+          echo "Fetched 200: $FETCHED_200, Posted: $POSTED_SUCCESS"
           
           # Fail if no sites were successful
           if [ $SUCCESS_COUNT -eq 0 ]; then
