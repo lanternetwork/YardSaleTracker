@@ -59,7 +59,7 @@ export default async function IngestDiagnosticsContent() {
             geocode_calls: 0,
             cache_hits: 0,
             status: 'ok',
-            last_error: null
+            last_error: undefined
           }
         ]
       }
@@ -81,7 +81,7 @@ export default async function IngestDiagnosticsContent() {
             geocode_calls: 0,
             cache_hits: 0,
             status: 'ok',
-            last_error: null
+            last_error: undefined
           }
         ]
       }
