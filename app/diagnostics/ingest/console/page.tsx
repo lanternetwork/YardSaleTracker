@@ -1,6 +1,7 @@
 import { getAdminSupabase } from '@/lib/supabase/admin'
 import IngestDebugConsole from './IngestDebugConsole'
 
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic' // Ensure page is not statically cached
 
 export default async function IngestDebugConsolePage() {

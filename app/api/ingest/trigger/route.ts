@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 // URL normalization function
 function normalizeUrl(link: string, feedUrl: string): string | null {
   try {
@@ -161,9 +164,11 @@ export async function POST(request: NextRequest) {
           try {
             const response = await fetch(url, {
               cache: 'no-store',
+              redirect: 'follow',
               headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; LootAuraBot/1.0; +https://lootaura.com)',
-                'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8'
+                'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9'
               },
               signal: controller.signal
             })

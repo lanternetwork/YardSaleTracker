@@ -1,5 +1,13 @@
 'use client'
 import { useState } from 'react'
+import { 
+  fetchSites, 
+  parseFeeds, 
+  filterAndNormalize, 
+  simulateUpsert, 
+  runNow, 
+  validateLinks 
+} from './actions'
 
 interface DebugConsoleProps {
   hasServiceRoleKey: boolean
@@ -71,7 +79,7 @@ export default function IngestDebugConsole({
       
       // Step 2: Fetch test per site
       setFetchStep(true)
-      const fetchResults = await fetchSites()
+      const fetchResults = await fetchSites(sites)
       setFetchResults(fetchResults)
       
       // Step 3: Parse
@@ -81,7 +89,7 @@ export default function IngestDebugConsole({
       
       // Step 4: Filter/normalize
       setFilterStep(true)
-      const filterResult = await filterAndNormalize(parseResult)
+      const filterResult = await filterAndNormalize(parseResult, sites)
       setFilterResult(filterResult)
       
       // Step 5: Upsert simulation
@@ -96,29 +104,11 @@ export default function IngestDebugConsole({
     }
   }
 
-  const runNow = async () => {
+  const handleRunNow = async () => {
     setIsRunning(true)
     try {
-      const response = await fetch('/api/ingest/trigger', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-INGEST-TOKEN': 'dev-token' // For development
-        },
-        body: JSON.stringify({ dryRun: false, limit: 50 })
-      })
-      
-      const result = await response.json()
-      
-      if (result.runId) {
-        setUpsertResult({
-          wouldInsert: result.new_count || 0,
-          wouldUpdate: result.updated_count || 0,
-          newCount: result.new_count || 0,
-          updatedCount: result.updated_count || 0,
-          runId: result.runId
-        })
-      }
+      const result = await runNow()
+      setUpsertResult(result)
     } catch (error) {
       console.error('Run Now error:', error)
     } finally {
@@ -126,83 +116,18 @@ export default function IngestDebugConsole({
     }
   }
 
-  const fetchSites = async (): Promise<FetchResult[]> => {
-    const results: FetchResult[] = []
+  const handleValidateLinks = async () => {
+    if (!filterResult?.normalizedUrls) return
     
-    for (const site of sites) {
-      const startTime = Date.now()
-      try {
-        const response = await fetch(site, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; LootAuraBot/0.1; +https://lootaura.com)',
-            'Accept': 'application/rss+xml, text/xml;q=0.9, */*;q=0.8'
-          }
-        })
-        
-        const text = await response.text()
-        const elapsedMs = Date.now() - startTime
-        
-        results.push({
-          url: site,
-          status: response.status,
-          contentType: response.headers.get('content-type') || 'unknown',
-          bytes: text.length,
-          elapsedMs,
-          success: response.ok
-        })
-      } catch (error) {
-        const elapsedMs = Date.now() - startTime
-        results.push({
-          url: site,
-          status: 0,
-          contentType: 'error',
-          bytes: 0,
-          elapsedMs,
-          success: false
-        })
-      }
-    }
-    
-    return results
-  }
-
-  const parseFeeds = async (fetchResults: FetchResult[]): Promise<ParseResult> => {
-    // This would be implemented with actual RSS parsing
-    // For now, return mock data
-    return {
-      itemCount: 15,
-      samples: [
-        { title: 'Garage Sale - Furniture', link: 'https://louisville.craigslist.org/gms/d/garage-sale/123.html', pubDate: '2024-01-01T00:00:00Z' },
-        { title: 'Estate Sale - Antiques', link: 'https://louisville.craigslist.org/gms/d/estate-sale/456.html', pubDate: '2024-01-01T00:00:00Z' },
-        { title: 'Moving Sale - Everything', link: 'https://louisville.craigslist.org/gms/d/moving-sale/789.html', pubDate: '2024-01-01T00:00:00Z' }
-      ]
-    }
-  }
-
-  const filterAndNormalize = async (parseResult: ParseResult): Promise<FilterResult> => {
-    // This would implement actual URL normalization
-    return {
-      kept: 12,
-      invalidUrl: 2,
-      parseError: 1,
-      duplicateSourceId: 0,
-      normalizedUrls: [
-        'https://louisville.craigslist.org/gms/d/garage-sale/123.html',
-        'https://louisville.craigslist.org/gms/d/estate-sale/456.html',
-        'https://louisville.craigslist.org/gms/d/moving-sale/789.html',
-        'https://louisville.craigslist.org/gms/d/yard-sale/101.html',
-        'https://louisville.craigslist.org/gms/d/garage-sale/202.html'
-      ]
-    }
-  }
-
-  const simulateUpsert = async (filterResult: FilterResult): Promise<UpsertResult> => {
-    // This would simulate database upsert operations
-    return {
-      wouldInsert: 8,
-      wouldUpdate: 4,
-      newCount: 0,
-      updatedCount: 0
+    setIsRunning(true)
+    try {
+      const result = await validateLinks(filterResult.normalizedUrls)
+      // You could add state to display validation results
+      console.log('Link validation result:', result)
+    } catch (error) {
+      console.error('Link validation error:', error)
+    } finally {
+      setIsRunning(false)
     }
   }
 
@@ -251,9 +176,13 @@ export default function IngestDebugConsole({
                 return (
                   <div key={index} className="text-sm text-gray-600 font-mono">
                     {url.hostname}{url.pathname}
+                    {url.search && <span className="text-gray-400">...</span>}
                   </div>
                 )
               })}
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              (fetch uses full URL incl. query)
             </div>
           </div>
         )}
@@ -304,23 +233,33 @@ export default function IngestDebugConsole({
           
           {parseResult && (
             <div className="space-y-4">
-              <div className="text-sm">
-                <span className="font-medium">Items Found:</span>
-                <span className="ml-2 text-blue-600">{parseResult.itemCount}</span>
-              </div>
-              
-              <div>
-                <span className="font-medium text-sm">Sample Items:</span>
-                <div className="mt-2 space-y-2">
-                  {parseResult.samples.map((sample, index) => (
-                    <div key={index} className="border-l-4 border-blue-200 pl-3 text-sm">
-                      <div className="font-medium">{sample.title}</div>
-                      <div className="text-gray-600 font-mono text-xs">{sample.link}</div>
-                      <div className="text-gray-500 text-xs">{new Date(sample.pubDate).toLocaleString()}</div>
-                    </div>
-                  ))}
+              {parseResult.skipped ? (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <div className="text-sm text-yellow-800">
+                    <strong>Parse skipped:</strong> {parseResult.skipReason}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="text-sm">
+                    <span className="font-medium">Items Found:</span>
+                    <span className="ml-2 text-blue-600">{parseResult.itemCount}</span>
+                  </div>
+                  
+                  <div>
+                    <span className="font-medium text-sm">Sample Items:</span>
+                    <div className="mt-2 space-y-2">
+                      {parseResult.samples.map((sample, index) => (
+                        <div key={index} className="border-l-4 border-blue-200 pl-3 text-sm">
+                          <div className="font-medium">{sample.title}</div>
+                          <div className="text-gray-600 font-mono text-xs">{sample.link}</div>
+                          <div className="text-gray-500 text-xs">{sample.pubDate ? new Date(sample.pubDate).toLocaleString() : 'No date'}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -414,7 +353,7 @@ export default function IngestDebugConsole({
           
           <div className="mt-6 flex space-x-4">
             <button
-              onClick={runNow}
+              onClick={handleRunNow}
               disabled={isRunning}
               className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
             >
@@ -436,10 +375,11 @@ export default function IngestDebugConsole({
         </p>
         
         <button
-          onClick={() => {/* Implement link validation */}}
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          onClick={handleValidateLinks}
+          disabled={isRunning || !filterResult?.normalizedUrls?.length}
+          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
         >
-          Validate Links
+          {isRunning ? 'Validating...' : 'Validate Links'}
         </button>
       </div>
     </div>
