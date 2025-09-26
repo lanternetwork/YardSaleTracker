@@ -36,11 +36,11 @@ declare namespace google {
     }
 
     interface ControlPosition {
-      push(position: ControlPosition): void
+      push(element: HTMLElement): void
     }
 
     class ControlPosition {
-      push(position: ControlPosition): void
+      push(element: HTMLElement): void
     }
 
     class LatLng {
@@ -62,6 +62,7 @@ declare namespace google {
       streetViewControl?: boolean
       fullscreenControl?: boolean
       zoomControl?: boolean
+      styles?: MapTypeStyle[]
     }
 
     enum MapTypeId {
@@ -69,6 +70,23 @@ declare namespace google {
       SATELLITE = 'satellite',
       HYBRID = 'hybrid',
       TERRAIN = 'terrain'
+    }
+
+    interface MapTypeStyle {
+      elementType?: string
+      featureType?: string
+      stylers?: MapTypeStyler[]
+    }
+
+    interface MapTypeStyler {
+      color?: string
+      gamma?: number
+      hue?: string
+      invert_lightness?: boolean
+      lightness?: number
+      saturation?: number
+      visibility?: string
+      weight?: number
     }
 
     class Marker {
