@@ -42,7 +42,11 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     start_at: item.postedAt,
     price_min,
     price_max,
-    tags,
+    // Ensure deterministic tag ordering for snapshots (keep 'craigslist' last)
+    tags: (() => {
+      const withoutSource = tags.filter(t => t !== 'craigslist').sort()
+      return [...withoutSource, 'craigslist']
+    })(),
     photos: [],
     source: 'craigslist'
   }
@@ -52,12 +56,12 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
   
   Object.entries(normalized).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      if (Array.isArray(value) && value.length === 0) {
-        // Include empty arrays
-        result[key as keyof SaleMinimal] = value
-      } else if (!Array.isArray(value) && value !== '') {
-        // Include non-empty strings and other values
-        result[key as keyof SaleMinimal] = value
+      if (Array.isArray(value)) {
+        // Always include arrays (even if empty)
+        ;(result as any)[key] = value
+      } else if (value !== '') {
+        // Include non-empty strings and other scalar values
+        ;(result as any)[key] = value
       }
     }
   })
@@ -115,7 +119,7 @@ export function validateNormalizedSale(sale: SaleMinimal): { valid: boolean; err
     SaleSchema.parse(sale)
     return { valid: true, errors: [] }
   } catch (error: any) {
-    const errors = error.errors?.map((e: any) => `${e.path.join('.')}: ${e.message}`) || ['Unknown validation error']
+    const errors = (error as any).errors?.map((e: any) => `${e.path.join('.')}: ${e.message}`) || ['Unknown validation error']
     return { valid: false, errors }
   }
 }

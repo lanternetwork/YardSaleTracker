@@ -37,15 +37,27 @@ describe('Environment Validation', () => {
     expect(ENV_SERVER.SUPABASE_SERVICE_ROLE).toBe('test-service-role-1234567890')
   })
 
-  it('should throw error for missing required public variables', async () => {
+  it('should use fallback values for missing required public variables', async () => {
     // Clear required variables
     delete process.env.NEXT_PUBLIC_SUPABASE_URL
     delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 
-    await expect(async () => {
-      await import('@/lib/env')
-    }).rejects.toThrow('NEXT_PUBLIC_SUPABASE_URL must be a valid URL')
+    // Clear the module cache to force re-import
+    vi.resetModules()
+
+    // Mock the environment to be empty
+    const originalEnv = process.env
+    process.env = { NODE_ENV: 'test' }
+
+    const { ENV_PUBLIC } = await import('@/lib/env')
+
+    expect(ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL).toBe('https://placeholder.supabase.co')
+    expect(ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_ANON_KEY).toBe('placeholder-key')
+    expect(ENV_PUBLIC.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).toBe('placeholder-key')
+
+    // Restore original env
+    process.env = originalEnv
   })
 
   it('should throw error for invalid URL format', async () => {

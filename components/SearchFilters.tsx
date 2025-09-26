@@ -71,7 +71,7 @@ export default function SearchFilters({
 
       {/* Advanced filters */}
       {showMore && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-neutral-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-neutral-50 rounded-lg">
           {/* Distance filter */}
           <div>
             <label className="block text-sm font-medium mb-1">Max Distance</label>
@@ -108,27 +108,6 @@ export default function SearchFilters({
             />
           </div>
 
-          {/* Price range */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Price Range</label>
-            <div className="flex gap-1">
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="Min" 
-                value={f.min || ''}
-                onChange={e => set('min', e.target.value ? Number(e.target.value) : undefined)} 
-              />
-              <span className="text-sm text-neutral-600 self-center">-</span>
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="Max" 
-                value={f.max || ''}
-                onChange={e => set('max', e.target.value ? Number(e.target.value) : undefined)} 
-              />
-            </div>
-          </div>
         </div>
       )}
 

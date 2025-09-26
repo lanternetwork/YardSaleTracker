@@ -21,11 +21,11 @@ async function checkStorage() {
       return false
     }
 
-    const salePhotosBucket = buckets.find(bucket => bucket.name === 'sale-photos')
+    const salePhotosBucket = buckets.find((bucket: any) => bucket.name === 'sale-photos')
     
     if (!salePhotosBucket) {
       console.error('❌ sale-photos bucket not found')
-      console.log('Available buckets:', buckets.map(b => b.name))
+      console.log('Available buckets:', buckets.map((b: any) => b.name))
       return false
     }
 
