@@ -200,7 +200,7 @@ export default function IngestRunsSection({ runs }: IngestRunsSectionProps) {
                 </button>
               </div>
               
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                 <div>
                   <div className="text-gray-500">Fetched</div>
                   <div className="font-medium">{run.fetched_count}</div>
@@ -216,6 +216,16 @@ export default function IngestRunsSection({ runs }: IngestRunsSectionProps) {
                 <div>
                   <div className="text-gray-500">Geocode Calls</div>
                   <div className="font-medium">{run.geocode_calls}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Via</div>
+                  <div className="font-medium">
+                    {run.details?.via ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {String(run.details.via)}
+                      </span>
+                    ) : '-'}
+                  </div>
                 </div>
               </div>
               

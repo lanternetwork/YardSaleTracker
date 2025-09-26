@@ -1,0 +1,43 @@
+name: Ingest Craigslist (backup)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  run-backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Split SITES
+        id: split
+        run: |
+          SITES="${{ secrets.SITES }}"
+          echo "sites<<EOF" >> $GITHUB_OUTPUT
+          echo "$SITES" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | sed '/^$/d' >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Fetch and post snapshots
+        env:
+          POST_URL: ${{ secrets.POST_URL }}
+          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          USER_AGENT: ${{ secrets.USER_AGENT }}
+        run: |
+          set -e
+          SUCCESS=0
+          TOTAL=0
+          while IFS= read -r SITE; do
+            TOTAL=$((TOTAL+1))
+            echo "Fetching: $SITE"
+            BODY=$(curl -sS -L -A "$USER_AGENT" -H 'Accept: application/rss+xml, text/xml;q=0.9, */*;q=0.8' -H 'Accept-Language: en-US,en;q=0.9' "$SITE" || true)
+            if [ -n "$BODY" ]; then
+              echo "Posting snapshot for $SITE"
+              CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$POST_URL" -H "Content-Type: application/json" -H "X-INGEST-TOKEN: $INGEST_TOKEN" --data "{\"source\":\"craigslist\",\"site\":\"$SITE\",\"xml\":$(jq -R -s '.' <<< "$BODY")}")
+              echo "POST responded $CODE"
+              if [ "$CODE" = "200" ]; then SUCCESS=$((SUCCESS+1)); fi
+            else
+              echo "Empty body for $SITE"
+            fi
+          done <<< "${{ steps.split.outputs.sites }}"
+          echo "Success $SUCCESS / $TOTAL"
+          if [ "$SUCCESS" -eq 0 ]; then exit 1; fi
+
+

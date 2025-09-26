@@ -265,6 +265,11 @@ export default function IngestDebugConsole({
                   <div>Bytes: {result.bytes.toLocaleString()}</div>
                   <div>Time: {result.elapsedMs}ms</div>
                 </div>
+                {!result.success && (
+                  <div className="mt-2 text-xs text-yellow-700">
+                    Live fetch blocked. Worker or Action will deliver snapshots automatically.
+                  </div>
+                )}
               </div>
             ))}
           </div>
