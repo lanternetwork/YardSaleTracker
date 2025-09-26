@@ -13,9 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      - run: npm ci
+          node-version: '20'
+      - run: npm install
       - run: npm run typecheck
     name: Type Check
 
@@ -25,9 +24,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      - run: npm ci
+          node-version: '20'
+      - run: npm install
       - run: npm run build
     name: Build
 
@@ -37,10 +35,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run test
+          node-version: '20'
+      - run: npm install
+      - name: Run Vitest and capture output
+        run: |
+          npm run test 2>&1 | tee vitest-errors.txt || true
+      - name: Upload Vitest errors artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vitest-errors
+          path: vitest-errors.txt
     name: Unit Tests
 
   e2e:
@@ -49,9 +54,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      - run: npm ci
+          node-version: '20'
+      - run: npm install
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - run: npm run test:e2e

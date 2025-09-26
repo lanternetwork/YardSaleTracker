@@ -83,9 +83,13 @@ describe('Craigslist Parser', () => {
     expect(results.length).toBeLessThanOrEqual(3)
   })
   
-  it('should generate stable IDs for testing', () => {
+  it('should generate stable IDs for testing', async () => {
     const html = readCraigslistFixture('gms_basic.html')
     const results1 = parseCraigslistList(html, 5)
+    
+    // Add small delay to ensure different timestamps
+    await new Promise(resolve => setTimeout(resolve, 10))
+    
     const results2 = parseCraigslistList(html, 5)
     
     // IDs should be different between calls (time-based)
@@ -109,16 +113,43 @@ describe('Craigslist Parser', () => {
     expect(results.length).toBeGreaterThanOrEqual(0)
   })
   
-  it('should create snapshot of first 3 normalized items', () => {
+  it('should create first 3 items with expected structure', () => {
     const html = readCraigslistFixture('gms_basic.html')
     const results = parseCraigslistList(html, 3)
     
-    // Redact IDs for stable snapshots
-    const normalized = results.map(item => ({
-      ...item,
-      id: 'REDACTED_ID'
-    }))
+    // Verify structure and content
+    expect(results).toHaveLength(3)
     
-    expect(normalized).toMatchSnapshot()
+    results.forEach((item, index) => {
+      // Required fields
+      expect(item.id).toBeDefined()
+      expect(typeof item.id).toBe('string')
+      expect(item.id).toMatch(/^cl_\d+_\d+$/)
+      
+      expect(item.title).toBeDefined()
+      expect(typeof item.title).toBe('string')
+      expect(item.title.length).toBeGreaterThan(0)
+      
+      expect(item.url).toBeDefined()
+      expect(typeof item.url).toBe('string')
+      expect(item.url).toContain('craigslist.org')
+      
+      // postedAt should be a valid date string
+      if (item.postedAt) {
+        expect(new Date(item.postedAt).toString()).not.toBe('Invalid Date')
+      }
+      
+      // Price should be number or null
+      expect([null, 'number']).toContain(typeof item.price)
+      
+      // City should be null (not set by parser)
+      expect(item.city).toBeNull()
+    })
+    
+    // Verify specific content of first item
+    const firstItem = results[0]
+    expect(firstItem.title).toBe('Multi-Family Garage Sale - Moving!')
+    expect(firstItem.price).toBe(5)
+    expect(firstItem.postedAt).toBe('2025-01-27T10:30:00-0800')
   })
 })
