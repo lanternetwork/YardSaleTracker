@@ -1,16 +1,20 @@
-import { Redis } from 'upstash'
-
 // In-memory store for development
 const memoryStore = new Map<string, { count: number; resetTime: number }>()
 
-// Redis client for production
-let redis: Redis | null = null
+// Redis client for production (optional)
+let redis: any = null
 
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  })
+// Try to import Redis, but don't fail if it's not available
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const { Redis } = require('upstash')
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  }
+} catch (error) {
+  console.warn('Upstash Redis not available, using in-memory store')
 }
 
 export interface RateLimitOptions {
