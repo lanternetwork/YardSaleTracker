@@ -109,6 +109,26 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Wizard Debug */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-3">Wizard Debug</h2>
+            <p className="text-sm text-neutral-600 mb-4">Monitor posting wizard usage and dedupe effectiveness.</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Drafts (last 7 days):</span>
+                <span className="font-medium">-</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Published (last 7 days):</span>
+                <span className="font-medium">-</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Negative matches:</span>
+                <span className="font-medium">-</span>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>

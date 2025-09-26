@@ -2,12 +2,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
 import { logger } from '@/lib/log'
+import { maskLocation, MaskedLocation } from '@/lib/privacy'
 
 type Marker = { 
   id: string
   title: string
   lat: number
-  lng: number 
+  lng: number
+  address: string
+  privacy_mode: 'exact' | 'block_until_24h'
+  date_start: string
+  time_start?: string
 }
 
 export default function YardSaleMap({ points }: { points: Marker[] }) {
@@ -20,7 +25,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const loader = useMemo(() => 
     new Loader({ 
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!, 
-      libraries: ['places'],
+      libraries: ['places', 'geometry'],
       version: 'weekly'
     }), 
     []
@@ -76,42 +81,137 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
     const bounds = new google.maps.LatLngBounds()
     
-    points.forEach(point => {
-      const marker = new google.maps.Marker({ 
-        position: { lat: point.lat, lng: point.lng }, 
-        title: point.title, 
-        map,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-          scaledSize: new google.maps.Size(32, 32)
+    // Apply privacy masking
+    const maskedPoints = points.map(point => {
+      const masked = maskLocation({
+        lat: point.lat,
+        lng: point.lng,
+        address: point.address,
+        privacy_mode: point.privacy_mode,
+        date_start: point.date_start,
+        time_start: point.time_start
+      })
+      
+      return {
+        ...point,
+        lat: masked.lat,
+        lng: masked.lng,
+        address: masked.address,
+        is_masked: masked.is_masked,
+        reveal_time: masked.reveal_time
+      }
+    })
+    
+    // Simple clustering logic
+    const clusters: { center: { lat: number; lng: number }; points: typeof maskedPoints }[] = []
+    const clusterRadius = 0.01 // ~1km in degrees
+    
+    maskedPoints.forEach(point => {
+      let addedToCluster = false
+      
+      for (const cluster of clusters) {
+        const distance = Math.sqrt(
+          Math.pow(point.lat - cluster.center.lat, 2) + 
+          Math.pow(point.lng - cluster.center.lng, 2)
+        )
+        
+        if (distance < clusterRadius) {
+          cluster.points.push(point)
+          // Update cluster center
+          cluster.center.lat = cluster.points.reduce((sum, p) => sum + p.lat, 0) / cluster.points.length
+          cluster.center.lng = cluster.points.reduce((sum, p) => sum + p.lng, 0) / cluster.points.length
+          addedToCluster = true
+          break
         }
-      })
+      }
       
-      const infoWindow = new google.maps.InfoWindow({ 
-        content: `
-          <div class="p-2">
-            <h3 class="font-semibold text-lg">${point.title}</h3>
-            <a 
-              href="/sale/${point.id}" 
-              class="text-amber-600 hover:text-amber-700 font-medium"
-            >
-              View Details →
-            </a>
-          </div>
-        `
-      })
-      
-      marker.addListener('click', () => {
-        // Close other info windows
-        markers.forEach(m => {
-          const iw = new google.maps.InfoWindow()
-          iw.close()
+      if (!addedToCluster) {
+        clusters.push({
+          center: { lat: point.lat, lng: point.lng },
+          points: [point]
         })
-        infoWindow.open({ map, anchor: marker })
-      })
-      
-      newMarkers.push(marker)
-      bounds.extend(marker.getPosition()!)
+      }
+    })
+    
+    // Create markers for clusters
+    clusters.forEach(cluster => {
+      if (cluster.points.length === 1) {
+        // Single marker
+        const point = cluster.points[0]
+        const marker = new google.maps.Marker({ 
+          position: { lat: point.lat, lng: point.lng }, 
+          title: point.title, 
+          map,
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+            scaledSize: new google.maps.Size(32, 32)
+          }
+        })
+        
+        const infoWindow = new google.maps.InfoWindow({ 
+          content: `
+            <div class="p-2">
+              <h3 class="font-semibold text-lg">${point.title}</h3>
+              <p class="text-sm text-neutral-600">${point.address}</p>
+              ${point.is_masked ? '<p class="text-xs text-blue-600">🔒 Privacy mode active</p>' : ''}
+              <a 
+                href="/sale/${point.id}" 
+                class="text-amber-600 hover:text-amber-700 font-medium"
+              >
+                View Details →
+              </a>
+            </div>
+          `
+        })
+        
+        marker.addListener('click', () => {
+          infoWindow.open({ map, anchor: marker })
+        })
+        
+        newMarkers.push(marker)
+        bounds.extend(marker.getPosition()!)
+      } else {
+        // Cluster marker
+        const marker = new google.maps.Marker({ 
+          position: { lat: cluster.center.lat, lng: cluster.center.lng }, 
+          title: `${cluster.points.length} sales in this area`, 
+          map,
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png',
+            scaledSize: new google.maps.Size(40, 40)
+          },
+          label: {
+            text: cluster.points.length.toString(),
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }
+        })
+        
+        const infoWindow = new google.maps.InfoWindow({ 
+          content: `
+            <div class="p-2">
+              <h3 class="font-semibold text-lg">${cluster.points.length} Sales in This Area</h3>
+              <div class="space-y-1">
+                ${cluster.points.map(point => `
+                  <div class="text-sm">
+                    <a href="/sale/${point.id}" class="text-amber-600 hover:text-amber-700">
+                      ${point.title}
+                    </a>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `
+        })
+        
+        marker.addListener('click', () => {
+          infoWindow.open({ map, anchor: marker })
+        })
+        
+        newMarkers.push(marker)
+        bounds.extend(marker.getPosition()!)
+      }
     })
 
     setMarkers(newMarkers)
@@ -120,6 +220,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       component: 'YardSaleMap',
       operation: 'render_markers',
       markerCount: newMarkers.length,
+      clusterCount: clusters.length,
       hasBounds: !bounds.isEmpty()
     })
 
