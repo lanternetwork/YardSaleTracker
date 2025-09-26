@@ -3,4 +3,7 @@ description:
 globs:
 alwaysApply: true
 ---
-no local code runs. cloud only
+ABSOLUTE RULE: No local command execution whatsoever
+- No npm, tsc, git, or any terminal commands
+- Cloud-only workflow: make changes → commit → push → let CI validate
+- Never run typecheck, build, test, or any local validation commands

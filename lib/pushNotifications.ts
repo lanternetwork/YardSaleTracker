@@ -51,8 +51,8 @@ export class PushNotificationService {
 
       return {
         endpoint: subscription.endpoint,
-        p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')!),
-        auth: this.arrayBufferToBase64(subscription.getKey('auth')!)
+        p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')! as ArrayBuffer),
+        auth: this.arrayBufferToBase64(subscription.getKey('auth')! as ArrayBuffer)
       }
     } catch (error) {
       console.error('Error subscribing to push notifications:', error)

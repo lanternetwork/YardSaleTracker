@@ -54,23 +54,7 @@ export async function GET(request: NextRequest) {
 
     // Additional table checks are now handled above
 
-    // Add feature flags (masked)
-    health.features = {
-      admin: config.features.admin,
-      diagnostics: config.features.diagnostics,
-      demo: config.features.demo,
-    }
-
-    // Add service availability (masked)
-    health.available_services = {
-      maps: config.services.maps,
-      redis: config.services.redis,
-      push: config.services.push,
-      sentry: config.services.sentry,
-    }
-
     const responseTime = Date.now() - startTime
-    health.response_time_ms = responseTime
 
     return NextResponse.json(health, {
       status: health.ok ? 200 : 503,
