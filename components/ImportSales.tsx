@@ -1,8 +1,9 @@
 'use client'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useCreateSale } from '@/lib/hooks/useSales'
 import { geocodeAddress } from '@/lib/geocode'
 import CSVImportExport from './CSVImportExport'
+import { config } from '@/lib/config/env'
 
 interface ScrapedSale {
   id: string
@@ -28,6 +29,18 @@ export default function ImportSales() {
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'craigslist' | 'csv'>('craigslist')
+
+  // Check if admin features are enabled
+  if (!config.features.admin) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-xl font-semibold mb-2">Import Features Disabled</h2>
+        <p className="text-neutral-600">
+          Import features are currently disabled. Contact an administrator for access.
+        </p>
+      </div>
+    )
+  }
 
   const cities = [
     { value: 'sfbay', label: 'San Francisco Bay Area' },
@@ -180,7 +193,7 @@ export default function ImportSales() {
       {activeTab === 'csv' && <CSVImportExport />}
 
       {activeTab === 'craigslist' && (
-        <>
+        <div>
           <div>
             <h3 className="text-lg font-semibold mb-2">Import Sales from Craigslist</h3>
             <p className="text-neutral-600 mb-4">
@@ -188,10 +201,10 @@ export default function ImportSales() {
             </p>
           </div>
 
-      {/* Search form */}
-      <div className="bg-neutral-50 p-4 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+          {/* Search form */}
+          <div className="bg-neutral-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
             <label className="block text-sm font-medium mb-1">City</label>
             <select
               value={city}
@@ -310,7 +323,7 @@ export default function ImportSales() {
             ))}
           </div>
         </div>
-        </>
+        </div>
       )}
     </div>
   )

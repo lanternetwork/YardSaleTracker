@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { defaultFilters, Filters } from '@/state/filters'
 
 const COMMON_TAGS = [
@@ -14,13 +15,44 @@ export default function SearchFilters({
   onChange: (f: Filters) => void
   showAdvanced?: boolean
 }) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const [f, setF] = useState<Filters>(defaultFilters)
   const [showMore, setShowMore] = useState(showAdvanced)
+
+  // Initialize filters from URL params
+  useEffect(() => {
+    const urlFilters: Filters = {
+      q: searchParams.get('q') || '',
+      maxKm: searchParams.get('maxKm') ? Number(searchParams.get('maxKm')) : 25,
+      dateFrom: searchParams.get('dateFrom') || undefined,
+      dateTo: searchParams.get('dateTo') || undefined,
+      min: searchParams.get('min') ? Number(searchParams.get('min')) : undefined,
+      max: searchParams.get('max') ? Number(searchParams.get('max')) : undefined,
+      tags: searchParams.get('tags') ? searchParams.get('tags')!.split(',') : []
+    }
+    setF(urlFilters)
+    onChange(urlFilters)
+  }, [searchParams, onChange])
 
   function set<K extends keyof Filters>(k: K, v: any) { 
     const n = { ...f, [k]: v }
     setF(n)
-    onChange(n) 
+    onChange(n)
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams.toString())
+    if (v === '' || v === undefined || v === null || (Array.isArray(v) && v.length === 0)) {
+      params.delete(k)
+    } else if (Array.isArray(v)) {
+      params.set(k, v.join(','))
+    } else {
+      params.set(k, String(v))
+    }
+    
+    const newUrl = `${pathname}?${params.toString()}`
+    router.replace(newUrl, { scroll: false })
   }
 
   const toggleTag = (tag: string) => {
@@ -34,6 +66,7 @@ export default function SearchFilters({
   const clearFilters = () => {
     setF(defaultFilters)
     onChange(defaultFilters)
+    router.replace(pathname, { scroll: false })
   }
 
   const hasActiveFilters = f.q || f.maxKm !== 25 || f.dateFrom || f.dateTo || (f.tags && f.tags.length > 0)
