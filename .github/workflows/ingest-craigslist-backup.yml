@@ -1,4 +1,4 @@
-name: Ingest Craigslist (Backup)
+name: Ingest Craigslist (backup)
 
 on:
   workflow_dispatch:
@@ -7,94 +7,64 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Fetch RSS and Post Snapshots
+      - uses: actions/checkout@v4
+      - name: Fetch & post snapshots
         env:
-          POST_URL: ${{ secrets.POST_URL }}
-          INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
           SITES: ${{ secrets.SITES }}
-          USER_AGENT: ${{ secrets.USER_AGENT }}
+          UA: ${{ secrets.USER_AGENT }}
+          POST_URL: ${{ secrets.POST_URL }}
+          TOKEN: ${{ secrets.INGEST_TOKEN }}
         run: |
-          echo "Starting backup ingestion from Craigslist..."
-          
-          # Split sites by comma and process each
-          IFS=',' read -ra SITE_ARRAY <<< "$SITES"
-          SUCCESS_COUNT=0
-          TOTAL_SITES=${#SITE_ARRAY[@]}
-          FETCHED_200=0
-          POSTED_SUCCESS=0
-          
-          echo "Processing $TOTAL_SITES sites..."
-          
-          for site_url in "${SITE_ARRAY[@]}"; do
-            site_url=$(echo "$site_url" | xargs) # trim whitespace
-            if [ -z "$site_url" ]; then
-              continue
-            fi
-            
-            echo "Processing site: $site_url"
-            
-            # Extract hostname for logging
-            hostname=$(echo "$site_url" | sed 's|https\?://||' | cut -d'/' -f1)
-            
-            # Fetch RSS with curl
-            response=$(curl -s -w "\n%{http_code}" \
-              -A "$USER_AGENT" \
+          set -euo pipefail
+          if [ -z "${SITES:-}" ]; then
+            echo "No SITES secret set"; exit 1
+          fi
+
+          IFS=',' read -r -a arr <<< "$SITES"
+          posted_any=0
+          fetched_any=0
+
+          echo "## Backup ingest summary" >> "$GITHUB_STEP_SUMMARY"
+          for raw in "${arr[@]}"; do
+            url="$(echo "$raw" | xargs)"   # trim
+            [ -z "$url" ] && continue
+            echo "- Site: $url" >> "$GITHUB_STEP_SUMMARY"
+
+            http_code=$(curl -sS -w "%{http_code}" -o /tmp/rss.xml \
+              -A "$UA" \
               -H "Accept: application/rss+xml, text/xml;q=0.9, */*;q=0.8" \
-              -H "Accept-Language: en-US,en;q=0.9" \
-              -L \
-              --max-time 20 \
-              "$site_url" 2>/dev/null)
-            
-            # Extract body and status code
-            body=$(echo "$response" | head -n -1)
-            status_code=$(echo "$response" | tail -n 1)
-            
-            if [ "$status_code" = "200" ] && [ -n "$body" ]; then
-              echo "✓ $hostname: HTTP $status_code, body length: ${#body}"
-              FETCHED_200=$((FETCHED_200 + 1))
-              
-              # JSON-escape the XML using jq
-              json_xml=$(echo "$body" | jq -Rs .)
-              
-              # POST to our snapshot endpoint
-              post_response=$(curl -s -w "\n%{http_code}" \
-                -X POST \
+              --location --max-time 20 "$url") || true
+
+            bytes=$(wc -c </tmp/rss.xml | xargs)
+            echo "  Fetch: code=$http_code bytes=$bytes" >> "$GITHUB_STEP_SUMMARY"
+
+            if [ "$http_code" = "200" ] && [ "$bytes" -gt 0 ]; then
+              fetched_any=1
+              payload=$(jq -Rs . </tmp/rss.xml)
+              body=$(jq -n --arg src "craigslist" --arg site "$url" --argxml xml "$payload" \
+                '{source:$src, site:$site, xml:$xml}')
+
+              post_code=$(curl -sS -w "%{http_code}" -o /tmp/post.out \
                 -H "Content-Type: application/json" \
-                -H "X-INGEST-TOKEN: $INGEST_TOKEN" \
-                -d "{\"source\":\"craigslist\",\"site\":\"$site_url\",\"xml\":$json_xml}" \
-                "$POST_URL" 2>/dev/null)
-              
-              post_status=$(echo "$post_response" | tail -n 1)
-              post_body=$(echo "$post_response" | head -n -1)
-              
-              if [ "$post_status" = "200" ]; then
-                echo "✓ $hostname: Successfully posted to snapshot endpoint"
-                POSTED_SUCCESS=$((POSTED_SUCCESS + 1))
-                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              else
-                echo "✗ $hostname: Failed to post to snapshot endpoint (HTTP $post_status)"
-                echo "Response: $post_body"
+                -H "X-INGEST-TOKEN: '"'"'$TOKEN'"'"'" \
+                -X POST "$POST_URL" \
+                --data "$body") || true
+
+              echo "  POST: code=$post_code" >> "$GITHUB_STEP_SUMMARY"
+              if [ "$post_code" = "200" ]; then
+                posted_any=1
               fi
-            else
-              echo "✗ $hostname: Failed to fetch RSS (HTTP $status_code)"
             fi
           done
-          
-          # Write job summary
-          echo "## Backup Ingestion Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Sites**: $TOTAL_SITES" >> $GITHUB_STEP_SUMMARY
-          echo "- **Fetched (200)**: $FETCHED_200" >> $GITHUB_STEP_SUMMARY
-          echo "- **Posted Successfully**: $POSTED_SUCCESS" >> $GITHUB_STEP_SUMMARY
-          echo "- **Overall Success**: $SUCCESS_COUNT/$TOTAL_SITES" >> $GITHUB_STEP_SUMMARY
-          
-          echo "Summary: $SUCCESS_COUNT/$TOTAL_SITES sites processed successfully"
-          echo "Fetched 200: $FETCHED_200, Posted: $POSTED_SUCCESS"
-          
-          # Fail if no sites were successful
-          if [ $SUCCESS_COUNT -eq 0 ]; then
-            echo "All sites failed - marking job as failed"
-            exit 1
+
+          if [ "$posted_any" -eq 1 ]; then
+            echo "Result: posted at least one snapshot ✅" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+
+          if [ "$fetched_any" -eq 1 ]; then
+            echo "Result: fetched ok but POST failed ❌" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Result: all fetches failed ❌" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit 1
