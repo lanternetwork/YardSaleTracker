@@ -9,12 +9,14 @@ declare namespace google {
       addListener(eventName: string, handler: Function): MapsEventListener
       fitBounds(bounds: LatLngBounds): void
       controls: ControlPosition[]
+      map: Map
     }
 
     class LatLngBounds {
       constructor(sw?: LatLng, ne?: LatLng)
       extend(point: LatLng): LatLngBounds
       contains(point: LatLng): boolean
+      isEmpty(): boolean
     }
 
     enum ControlPosition {
@@ -30,6 +32,10 @@ declare namespace google {
       BOTTOM_LEFT = 10,
       BOTTOM_CENTER = 11,
       BOTTOM_RIGHT = 12
+    }
+
+    interface ControlPosition {
+      push(position: ControlPosition): void
     }
 
     class LatLng {
@@ -48,6 +54,7 @@ declare namespace google {
       zoom?: number
       mapTypeId?: MapTypeId
       mapTypeControl?: boolean
+      streetViewControl?: boolean
     }
 
     enum MapTypeId {

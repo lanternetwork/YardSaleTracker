@@ -29,9 +29,9 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
           title: sale.title, 
           lat: sale.lat, 
           lng: sale.lng,
-          address: sale.address,
-          privacy_mode: sale.privacy_mode,
-          date_start: sale.date_start
+          address: sale.address || '',
+          privacy_mode: sale.privacy_mode || 'exact',
+          date_start: sale.date_start || ''
         }]
       : []
   , [sale])
