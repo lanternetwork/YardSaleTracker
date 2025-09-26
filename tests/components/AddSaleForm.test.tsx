@@ -4,10 +4,10 @@ import AddSaleForm from '@/components/AddSaleForm'
 
 // Mock the hooks
 vi.mock('@/lib/hooks/useSales', () => ({
-  useCreateSale: () => ({
+  useCreateSale: vi.fn(() => ({
     mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
     isPending: false
-  })
+  }))
 }))
 
 // Mock the geocoding function
@@ -38,10 +38,10 @@ describe('AddSaleForm', () => {
   it('renders form fields', () => {
     render(<AddSaleForm />)
     
-    expect(screen.getByPlaceholderText('Sale title')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Address')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Description')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Contact info')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('e.g., Estate Sale - Antiques & Collectibles')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Start typing your address...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Describe what you\'re selling...')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Phone number or email')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /post sale/i })).toBeInTheDocument()
   })
 
@@ -59,24 +59,40 @@ describe('AddSaleForm', () => {
   it('submits form with valid data', async () => {
     const { useCreateSale } = await import('@/lib/hooks/useSales')
     const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
+    
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: mockMutateAsync,
-      isPending: false
+      isPending: false,
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isSuccess: false,
+      isIdle: true,
+      mutate: vi.fn(),
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'idle' as const,
+      submittedAt: 0
     })
-
+    
     render(<AddSaleForm />)
     
     // Fill in required fields
-    fireEvent.change(screen.getByPlaceholderText('Sale title'), {
+    fireEvent.change(screen.getByPlaceholderText('e.g., Estate Sale - Antiques & Collectibles'), {
       target: { value: 'Test Sale' }
     })
-    fireEvent.change(screen.getByPlaceholderText('Address'), {
+    fireEvent.change(screen.getByPlaceholderText('Start typing your address...'), {
       target: { value: '123 Test St' }
     })
 
     const submitButton = screen.getByRole('button', { name: /post sale/i })
     fireEvent.click(submitButton)
 
+    // Wait for the form submission to complete
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -84,7 +100,7 @@ describe('AddSaleForm', () => {
           address: '123 Test St'
         })
       )
-    })
+    }, { timeout: 2000 })
   })
 
   it('handles geocoding on address change', async () => {
@@ -92,7 +108,7 @@ describe('AddSaleForm', () => {
     
     render(<AddSaleForm />)
     
-    const addressInput = screen.getByPlaceholderText('Address')
+    const addressInput = screen.getByPlaceholderText('Start typing your address...')
     fireEvent.change(addressInput, {
       target: { value: '123 Test St, New York, NY' }
     })
@@ -103,27 +119,39 @@ describe('AddSaleForm', () => {
     })
   })
 
-  it('adds and removes tags', () => {
+  it('adds and removes tags', async () => {
     render(<AddSaleForm />)
     
-    const tagInput = screen.getByPlaceholderText('Add tags (press Enter)')
+    const tagInput = screen.getByPlaceholderText('Add a tag...')
     fireEvent.change(tagInput, { target: { value: 'furniture' } })
     fireEvent.keyDown(tagInput, { key: 'Enter' })
 
-    expect(screen.getByText('furniture')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('furniture')).toBeInTheDocument()
+    })
 
     // Remove tag
     const removeButton = screen.getByRole('button', { name: /remove furniture/i })
     fireEvent.click(removeButton)
 
-    expect(screen.queryByText('furniture')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText('furniture')).not.toBeInTheDocument()
+    })
   })
 
   it('validates price range', async () => {
     render(<AddSaleForm />)
     
-    const minPriceInput = screen.getByPlaceholderText('Min price')
-    const maxPriceInput = screen.getByPlaceholderText('Max price')
+    // Fill in required fields first
+    fireEvent.change(screen.getByPlaceholderText('e.g., Estate Sale - Antiques & Collectibles'), {
+      target: { value: 'Test Sale' }
+    })
+    fireEvent.change(screen.getByPlaceholderText('Start typing your address...'), {
+      target: { value: '123 Test St' }
+    })
+    
+    const minPriceInput = screen.getByPlaceholderText('0.00')
+    const maxPriceInput = screen.getByPlaceholderText('100.00')
 
     fireEvent.change(minPriceInput, { target: { value: '100' } })
     fireEvent.change(maxPriceInput, { target: { value: '50' } })
@@ -136,15 +164,30 @@ describe('AddSaleForm', () => {
     })
   })
 
-  it('shows loading state during submission', () => {
-    const { useCreateSale } = vi.mocked(await import('@/lib/hooks/useSales'))
-    useCreateSale.mockReturnValue({
+  it('shows loading state during submission', async () => {
+    const { useCreateSale } = await import('@/lib/hooks/useSales')
+    vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: vi.fn(),
-      isPending: true
+      isPending: true,
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isSuccess: false,
+      isIdle: false,
+      mutate: vi.fn(),
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'pending' as const,
+      submittedAt: Date.now()
     })
-
+    
     render(<AddSaleForm />)
     
+    // Check that the button shows "Posting..." and is disabled
     expect(screen.getByText('Posting...')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /posting.../i })).toBeDisabled()
   })

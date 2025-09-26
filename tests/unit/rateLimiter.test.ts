@@ -22,6 +22,9 @@ describe('RateLimiter', () => {
   let mockRequest: Request
 
   beforeEach(() => {
+    // Clear the memory store between tests
+    RateLimiter.clearMemoryStore()
+    
     rateLimiter = new RateLimiter({
       windowMs: 60000, // 1 minute
       maxRequests: 5
@@ -74,7 +77,7 @@ describe('RateLimiter', () => {
     expect(result.success).toBe(false)
 
     // Wait for window to expire
-    await new Promise(resolve => setTimeout(resolve, 150))
+    await new Promise(resolve => setTimeout(resolve, 200))
 
     // Should be allowed again
     result = await shortWindowLimiter.checkLimit(mockRequest)
