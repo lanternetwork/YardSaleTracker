@@ -9,11 +9,13 @@ export default function WebVitals() {
 
     // Import web-vitals dynamically
     import('web-vitals').then((vitals) => {
-      if (vitals.getCLS) vitals.getCLS(analytics.trackWebVitals)
-      if (vitals.getFID) vitals.getFID(analytics.trackWebVitals)
-      if (vitals.getFCP) vitals.getFCP(analytics.trackWebVitals)
-      if (vitals.getLCP) vitals.getLCP(analytics.trackWebVitals)
-      if (vitals.getTTFB) vitals.getTTFB(analytics.trackWebVitals)
+      // Use the default export which contains all the functions
+      const { getCLS, getFID, getFCP, getLCP, getTTFB } = vitals
+      if (getCLS) getCLS(analytics.trackWebVitals)
+      if (getFID) getFID(analytics.trackWebVitals)
+      if (getFCP) getFCP(analytics.trackWebVitals)
+      if (getLCP) getLCP(analytics.trackWebVitals)
+      if (getTTFB) getTTFB(analytics.trackWebVitals)
     }).catch((error) => {
       console.error('Error loading web-vitals:', error)
     })

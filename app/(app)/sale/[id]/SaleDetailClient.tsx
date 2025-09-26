@@ -24,7 +24,15 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
 
   const mapPoints = useMemo(() => 
     sale.lat && sale.lng 
-      ? [{ id: sale.id, title: sale.title, lat: sale.lat, lng: sale.lng }]
+      ? [{ 
+          id: sale.id, 
+          title: sale.title, 
+          lat: sale.lat, 
+          lng: sale.lng,
+          address: sale.address,
+          privacy_mode: sale.privacy_mode,
+          date_start: sale.date_start
+        }]
       : []
   , [sale])
 
