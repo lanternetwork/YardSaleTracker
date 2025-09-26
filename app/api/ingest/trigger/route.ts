@@ -192,8 +192,8 @@ export async function POST(request: NextRequest) {
     for (const item of rssItems) {
       fetchedCount++
       
-      // Normalize URL
-      const normalizedUrl = normalizeUrl(item.link, feedUrl)
+      // Normalize URL (use the first RSS URL as fallback for relative links)
+      const normalizedUrl = normalizeUrl(item.link, rssUrls[0] || `https://${site}.craigslist.org/search/garage-sale?format=rss`)
       if (!normalizedUrl) {
         invalidUrlCount++
         continue
