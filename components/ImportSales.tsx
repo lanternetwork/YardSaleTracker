@@ -193,7 +193,7 @@ export default function ImportSales() {
       {activeTab === 'csv' && <CSVImportExport />}
 
       {activeTab === 'craigslist' && (
-        <>
+        <div>
           <div>
             <h3 className="text-lg font-semibold mb-2">Import Sales from Craigslist</h3>
             <p className="text-neutral-600 mb-4">
@@ -323,7 +323,7 @@ export default function ImportSales() {
             ))}
           </div>
         </div>
-        </>
+        </div>
       )}
     </div>
   )
