@@ -107,6 +107,14 @@ export async function POST(request: NextRequest) {
   try {
     const { dryRun = false, site = 'sfbay', limit = 10 } = await request.json()
 
+    // Preview-only environment logging (no secrets)
+    if (process.env.VERCEL_ENV === 'preview') {
+      const supabaseUrl = process.env.SUPABASE_URL || ''
+      const supabaseUrlRef = supabaseUrl.slice(0, 8)
+      const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      console.log(`[PREVIEW] supabaseUrlRef=${supabaseUrlRef}, hasServiceRoleKey=${hasServiceRoleKey}, dryRun=${dryRun}`)
+    }
+
     // Create ingest run record
     const { data: runRecord, error: runError } = await supabase
       .from('ingest_runs')

@@ -43,68 +43,11 @@ export default async function IngestDiagnosticsContent() {
 
     if (runsError) {
       console.error('Error fetching ingest runs:', runsError)
-      // If table doesn't exist, provide mock data
-      if (runsError.code === '42P01' || runsError.message.includes('relation "ingest_runs" does not exist')) {
-        console.log('ingest_runs table does not exist, using mock data')
-        runs = [
-          {
-            id: 'mock_run_1',
-            started_at: new Date(Date.now() - 3600000).toISOString(),
-            finished_at: new Date(Date.now() - 3500000).toISOString(),
-            source: 'craigslist',
-            dry_run: false,
-            fetched_count: 15,
-            new_count: 3,
-            updated_count: 2,
-            geocode_calls: 0,
-            cache_hits: 0,
-            status: 'ok',
-            last_error: undefined
-          }
-        ]
-      }
     } else {
       runs = runsData || []
-      
-      // If no runs found, provide mock data
-      if (runs.length === 0) {
-        runs = [
-          {
-            id: 'mock_run_1',
-            started_at: new Date(Date.now() - 3600000).toISOString(),
-            finished_at: new Date(Date.now() - 3500000).toISOString(),
-            source: 'craigslist',
-            dry_run: false,
-            fetched_count: 15,
-            new_count: 3,
-            updated_count: 2,
-            geocode_calls: 0,
-            cache_hits: 0,
-            status: 'ok',
-            last_error: undefined
-          }
-        ]
-      }
     }
   } catch (error) {
     console.error('Error in diagnostics runs fetch:', error)
-    // Provide mock data on any error
-    runs = [
-      {
-        id: 'mock_run_1',
-        started_at: new Date(Date.now() - 3600000).toISOString(),
-        finished_at: new Date(Date.now() - 3500000).toISOString(),
-        source: 'craigslist',
-        dry_run: false,
-        fetched_count: 15,
-        new_count: 3,
-        updated_count: 2,
-        geocode_calls: 0,
-        cache_hits: 0,
-        status: 'ok',
-        last_error: undefined
-      }
-    ]
   }
 
   // Fetch scraped sales from Craigslist
@@ -121,70 +64,12 @@ export default async function IngestDiagnosticsContent() {
 
     if (error) {
       console.error('Error fetching scraped sales:', error)
-      // If table doesn't exist or no data, provide mock data
-      if (error.code === '42P01' || error.message.includes('relation "sales" does not exist') || !sales || sales.length === 0) {
-        console.log('sales table does not exist or is empty, using mock data')
-        scrapedSales = [
-          {
-            id: 'mock_sale_1',
-            title: 'Garage Sale - Furniture & Electronics',
-            url: 'https://sfbay.craigslist.org/garage-sale/123.html',
-            location_text: 'San Francisco Bay Area',
-            posted_at: new Date(Date.now() - 3600000).toISOString(),
-            first_seen_at: new Date(Date.now() - 3600000).toISOString(),
-            last_seen_at: new Date(Date.now() - 1800000).toISOString(),
-            status: 'active'
-          },
-          {
-            id: 'mock_sale_2',
-            title: 'Moving Sale - Everything Must Go!',
-            url: 'https://sfbay.craigslist.org/garage-sale/456.html',
-            location_text: 'Oakland, CA',
-            posted_at: new Date(Date.now() - 7200000).toISOString(),
-            first_seen_at: new Date(Date.now() - 7200000).toISOString(),
-            last_seen_at: new Date(Date.now() - 3600000).toISOString(),
-            status: 'active'
-          }
-        ]
-        totalCount = 2
-      }
     } else {
       scrapedSales = sales || []
       totalCount = count || 0
-      
-      // If no sales found, provide mock data
-      if (scrapedSales.length === 0) {
-        scrapedSales = [
-          {
-            id: 'mock_sale_1',
-            title: 'Garage Sale - Furniture & Electronics',
-            url: 'https://sfbay.craigslist.org/garage-sale/123.html',
-            location_text: 'San Francisco Bay Area',
-            posted_at: new Date(Date.now() - 3600000).toISOString(),
-            first_seen_at: new Date(Date.now() - 3600000).toISOString(),
-            last_seen_at: new Date(Date.now() - 1800000).toISOString(),
-            status: 'active'
-          }
-        ]
-        totalCount = 1
-      }
     }
   } catch (error) {
     console.error('Error in diagnostics sales fetch:', error)
-    // Provide mock data on any error
-    scrapedSales = [
-      {
-        id: 'mock_sale_1',
-        title: 'Garage Sale - Furniture & Electronics',
-        url: 'https://sfbay.craigslist.org/garage-sale/123.html',
-        location_text: 'San Francisco Bay Area',
-        posted_at: new Date(Date.now() - 3600000).toISOString(),
-        first_seen_at: new Date(Date.now() - 3600000).toISOString(),
-        last_seen_at: new Date(Date.now() - 1800000).toISOString(),
-        status: 'active'
-      }
-    ]
-    totalCount = 1
   }
 
   return (

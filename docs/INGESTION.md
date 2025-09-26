@@ -98,10 +98,11 @@ Optional caching for location geocoding:
 
 ### Rules
 - **Absolute URLs**: Accepted if they match `*.craigslist.org` or `craigslist.org`
-- **Relative URLs**: Resolved against the RSS feed origin
+- **Relative URLs**: Resolved against the RSS feed origin using `new URL(link, feedUrl).toString()`
 - **Rejection**: Non-craigslist URLs are rejected and counted as invalid
-- **Protocol**: Only HTTPS URLs are accepted
+- **Protocol**: Only HTTPS URLs are accepted (HTTP URLs are rejected)
 - **Preservation**: Query parameters and fragments are preserved
+- **No Mock Data**: Full Diagnostics page reads real data from database only
 
 ### Examples
 - ✅ `https://sfbay.craigslist.org/garage-sale/123.html` → Accepted
@@ -122,6 +123,13 @@ Optional caching for location geocoding:
 - `SUPABASE_URL`: Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY`: Service role key for database access
 - `CRAIGSLIST_INGEST_TOKEN`: Authentication token for ingestion endpoints
+
+### Real Database Persistence
+- **Non-dry run**: Persists real sales data to `public.sales` table
+- **Upsert Logic**: Updates existing sales or inserts new ones based on `source_id`
+- **Run Tracking**: Records execution details in `public.ingest_runs` table
+- **URL Validation**: Only valid Craigslist URLs are stored
+- **Service Role**: Uses server-side Supabase client with service role for writes
 
 ### Production
 - Set `INGEST_TOKEN` environment variable
