@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { adminSupabase } from '@/lib/supabase/admin'
 
 // URL normalization function
 function normalizeUrl(link: string, feedUrl: string): string | null {
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = createSupabaseServer()
+  const supabase = adminSupabase
   const runId = `run_${Date.now()}`
   const startTime = new Date()
 
@@ -109,9 +109,9 @@ export async function POST(request: NextRequest) {
 
     // Preview-only environment logging (no secrets)
     if (process.env.VERCEL_ENV === 'preview') {
-      const supabaseUrl = process.env.SUPABASE_URL || ''
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
       const supabaseUrlRef = supabaseUrl.slice(0, 8)
-      const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      const hasServiceRoleKey = !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE)
       console.log(`[PREVIEW] supabaseUrlRef=${supabaseUrlRef}, hasServiceRoleKey=${hasServiceRoleKey}, dryRun=${dryRun}`)
     }
 

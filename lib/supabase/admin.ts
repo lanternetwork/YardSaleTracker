@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Use environment variables directly to avoid validation issues
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE
 
 if (!supabaseUrl || !serviceRoleKey) {
   throw new Error('Missing Supabase environment variables for admin client')

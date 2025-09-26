@@ -1,4 +1,4 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { adminSupabase } from '@/lib/supabase/admin'
 import IngestRunsSection from './IngestRunsSection'
 import ScrapedSalesSection from './ScrapedSalesSection'
 
@@ -29,7 +29,7 @@ interface ScrapedSale {
 }
 
 export default async function IngestDiagnosticsContent() {
-  const supabase = createSupabaseServer()
+  const supabase = adminSupabase
 
   // Fetch ingestion runs from database
   let runs: IngestRun[] = []

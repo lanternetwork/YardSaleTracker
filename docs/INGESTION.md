@@ -120,16 +120,18 @@ Optional caching for location geocoding:
 5. Use "Run Now" to execute full ingestion
 
 ### Environment Variables
-- `SUPABASE_URL`: Supabase project URL
-- `SUPABASE_SERVICE_ROLE_KEY`: Service role key for database access
-- `CRAIGSLIST_INGEST_TOKEN`: Authentication token for ingestion endpoints
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL (public)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase anonymous key (public)
+- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_ROLE`: Service role key for database access (server-only)
+- `CRAIGSLIST_INGEST_TOKEN`: Authentication token for ingestion endpoints (server-only)
 
 ### Real Database Persistence
-- **Non-dry run**: Persists real sales data to `public.sales` table
+- **Non-dry run**: Persists real sales data to `public.sales` table using service-role client
 - **Upsert Logic**: Updates existing sales or inserts new ones based on `source_id`
 - **Run Tracking**: Records execution details in `public.ingest_runs` table
 - **URL Validation**: Only valid Craigslist URLs are stored
-- **Service Role**: Uses server-side Supabase client with service role for writes
+- **Service Role**: Uses `adminSupabase` client with service role for unrestricted database access
+- **Migrations Required**: Database migrations must be applied in Supabase before ingestion will work
 
 ### Production
 - Set `INGEST_TOKEN` environment variable

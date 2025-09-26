@@ -8,6 +8,11 @@ const AUTH_REQUIRED_ROUTES = [
   '/account'
 ]
 
+const DIAGNOSTICS_ROUTES = [
+  '/diagnostics/ingest',
+  '/_diag/ingest'
+]
+
 const STATIC_ASSETS = [
   'manifest.json',
   'favicon.ico',
@@ -22,6 +27,11 @@ export async function authMiddleware(request: NextRequest) {
   // Skip auth checks for static assets
   if (STATIC_ASSETS.some(asset => pathname.includes(asset)) || 
       pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico)$/)) {
+    return NextResponse.next()
+  }
+  
+  // Skip auth checks for diagnostics routes
+  if (DIAGNOSTICS_ROUTES.some(route => pathname.startsWith(route))) {
     return NextResponse.next()
   }
   
