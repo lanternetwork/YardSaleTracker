@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           return { success: true, endpoint: sub.endpoint }
         } catch (error) {
           console.error('Error sending notification:', error)
-          return { success: false, endpoint: sub.endpoint, error: error.message }
+          return { success: false, endpoint: sub.endpoint, error: (error as Error).message }
         }
       })
     )

@@ -10,7 +10,7 @@ export default function WebVitals() {
     // Import web-vitals dynamically
     import('web-vitals').then((vitals) => {
       // Use the default export which contains all the functions
-      const { getCLS, getFID, getFCP, getLCP, getTTFB } = vitals.default || vitals
+      const { getCLS, getFID, getFCP, getLCP, getTTFB } = vitals as any
       if (getCLS) getCLS(analytics.trackWebVitals)
       if (getFID) getFID(analytics.trackWebVitals)
       if (getFCP) getFCP(analytics.trackWebVitals)

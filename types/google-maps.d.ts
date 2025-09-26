@@ -10,6 +10,7 @@ declare namespace google {
       fitBounds(bounds: LatLngBounds): void
       controls: ControlPosition[]
       map: Map
+      anchor: any
     }
 
     class LatLngBounds {
@@ -38,6 +39,10 @@ declare namespace google {
       push(position: ControlPosition): void
     }
 
+    class ControlPosition {
+      push(position: ControlPosition): void
+    }
+
     class LatLng {
       constructor(lat: number, lng: number)
       lat(): number
@@ -55,6 +60,7 @@ declare namespace google {
       mapTypeId?: MapTypeId
       mapTypeControl?: boolean
       streetViewControl?: boolean
+      fullscreenControl?: boolean
     }
 
     enum MapTypeId {
