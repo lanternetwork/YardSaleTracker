@@ -25,7 +25,7 @@ async function checkStorage() {
     
     if (!salePhotosBucket) {
       console.error('❌ sale-photos bucket not found')
-      console.log('Available buckets:', buckets.map(b => b.name))
+      console.log('Available buckets:', buckets.map((b: any) => b.name))
       return false
     }
 
