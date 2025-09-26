@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 import { Sale } from '@/lib/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
-const siteName = 'YardSaleFinder'
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'
+const siteName = (process.env.NEXT_PUBLIC_SITE_NAME as string) || 'YardSaleFinder'
 const description = 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!'
 
 export function createPageMetadata({
@@ -66,7 +66,8 @@ export function createPageMetadata({
 
 export function createSaleMetadata(sale: Sale): Metadata {
   const title = sale.title
-  const description = sale.description || `Yard sale at ${sale.address || sale.city || 'your area'}. ${sale.start_at ? `Starts ${new Date(sale.start_at).toLocaleDateString()}` : ''}`
+  const locationPart = [sale.address, sale.city].filter(Boolean).join(', ')
+  const description = sale.description || `Yard sale at ${locationPart || 'your area'}. ${sale.start_at ? `Starts ${new Date(sale.start_at).toLocaleDateString()}` : ''}`
   const image = sale.photos?.[0] || '/og-sale.jpg'
   const path = `/sale/${sale.id}`
 
@@ -106,7 +107,7 @@ export function createAddSaleMetadata(): Metadata {
 export function createSignInMetadata(): Metadata {
   return createPageMetadata({
     title: 'Sign In',
-    description: 'Sign in to your YardSaleFinder account to save favorites and manage your sales.',
+    description: 'Sign in to your LootAura account to save favorites and manage your sales.',
     path: '/signin'
   })
 }

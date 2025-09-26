@@ -36,7 +36,7 @@ describe('createPageMetadata', () => {
       image: 'https://example.com/image.jpg'
     })
 
-    expect(metadata.openGraph?.images?.[0]?.url).toBe('https://example.com/image.jpg')
+    expect((metadata.openGraph as any)?.images?.[0]?.url).toBe('https://example.com/image.jpg')
   })
 
   it('should handle relative image path', () => {
@@ -46,7 +46,7 @@ describe('createPageMetadata', () => {
       image: '/image.jpg'
     })
 
-    expect(metadata.openGraph?.images?.[0]?.url).toBe('https://yardsalefinder.com/image.jpg')
+    expect((metadata.openGraph as any)?.images?.[0]?.url).toBe('https://yardsalefinder.com/image.jpg')
   })
 })
 
@@ -77,8 +77,8 @@ describe('createSaleMetadata', () => {
 
     expect(metadata.title).toBe('Test Sale | YardSaleFinder')
     expect(metadata.description).toContain('Test description')
-    expect(metadata.openGraph?.type).toBe('article')
-    expect(metadata.openGraph?.images?.[0]?.url).toBe('https://example.com/photo.jpg')
+    expect((metadata.openGraph as any)?.type).toBe('article')
+    expect(((metadata.openGraph as any)?.images as any[])[0]?.url).toBe('https://example.com/photo.jpg')
   })
 
   it('should handle sale without description', () => {

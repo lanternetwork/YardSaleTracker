@@ -103,7 +103,7 @@ Run these migrations in order:
 2. **Import Project**
    - Click "New Project"
    - Select "Import Git Repository"
-   - Choose `lanternetwork/YardSaleTracker` repository
+   - Choose `<owner>/LootAura` repository (renamed)
    - Click "Import"
 
 3. **Configure Project Settings**
@@ -299,7 +299,7 @@ curl https://lootaura.com/api/health
 
 1. **Build Failures**
    - Check environment variables
-   - Verify Node.js version (18.x)
+   - Verify Node.js version (20.x)
    - Check for TypeScript errors
 
 2. **Runtime Errors**

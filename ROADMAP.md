@@ -1,4 +1,4 @@
-# YardSaleFinder - Production Launch Roadmap
+# LootAura - Production Launch Roadmap
 
 ## Executive Summary
 
@@ -93,7 +93,7 @@ YardSaleFinder is **95% production-ready** with all core features implemented, c
 - [ ] Production branch set to `main`
 - [ ] Build command: `npm run build`
 - [ ] Output directory: `.next`
-- [ ] Node.js version: 18.x
+- [ ] Node.js version: 20.x
 - [ ] All environment variables configured
 - [ ] Custom domain configured (if applicable)
 

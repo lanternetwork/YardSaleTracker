@@ -37,5 +37,8 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    env: {
+      NODE_VERSION: '20.18.0',
+    },
   },
 })
