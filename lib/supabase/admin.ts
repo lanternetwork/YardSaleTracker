@@ -13,20 +13,41 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { ENV_PUBLIC, ENV_SERVER } from '../env'
 
-if (!ENV_SERVER.SUPABASE_SERVICE_ROLE) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE for admin client')
+// Lazy initialization to avoid build-time errors
+let _adminSupabase: any = null
+
+export function getAdminSupabase() {
+  if (_adminSupabase) {
+    return _adminSupabase
+  }
+
+  // Use environment variables directly to avoid validation issues
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Missing Supabase environment variables for admin client')
+  }
+
+  _adminSupabase = createClient(
+    supabaseUrl,
+    serviceRoleKey,
+    { 
+      auth: { 
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  )
+
+  return _adminSupabase
 }
 
-export const adminSupabase = createClient(
-  ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL,
-  ENV_SERVER.SUPABASE_SERVICE_ROLE,
-  { 
-    auth: { 
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
+// For backward compatibility
+export const adminSupabase = new Proxy({} as any, {
+  get(target, prop) {
+    return getAdminSupabase()[prop]
   }
-)
+})

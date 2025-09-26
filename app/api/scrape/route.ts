@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { scraperLogger } from '@/lib/scraper/logger'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(req: Request) {
   const correlationId = `api_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   
@@ -72,8 +76,7 @@ export async function POST(req: Request) {
         correlationId, 
         city: body.city, 
         query: body.query,
-        operation: 'api_proxy',
-        resultCount: data.results?.length || 0
+        operation: 'api_proxy'
       })
       
       return NextResponse.json(data)
