@@ -1,11 +1,10 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
 
 interface ScrapedSale {
   id: string
   title: string
-  url?: string
+  url: string
   location_text?: string
   posted_at?: string
   first_seen_at?: string
@@ -29,8 +28,8 @@ export default function ScrapedSalesSection({ sales, totalCount }: ScrapedSalesS
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'published': return 'text-green-600 bg-green-100'
-      case 'draft': return 'text-yellow-600 bg-yellow-100'
+      case 'active': return 'text-green-600 bg-green-100'
+      case 'published': return 'text-blue-600 bg-blue-100'
       case 'archived': return 'text-gray-600 bg-gray-100'
       default: return 'text-gray-600 bg-gray-100'
     }
@@ -107,18 +106,14 @@ export default function ScrapedSalesSection({ sales, totalCount }: ScrapedSalesS
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      {sale.url ? (
-                        <Link 
-                          href={sale.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                          {sale.title}
-                        </Link>
-                      ) : (
-                        <span className="text-gray-900 font-medium">{sale.title}</span>
-                      )}
+                      <a 
+                        href={sale.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {sale.title}
+                      </a>
                     </div>
                   </div>
                 </td>

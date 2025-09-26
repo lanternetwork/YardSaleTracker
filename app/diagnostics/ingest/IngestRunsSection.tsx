@@ -1,12 +1,16 @@
 interface IngestRun {
   id: string
-  status: string
+  started_at: string
+  finished_at?: string
+  source: string
+  dry_run: boolean
   fetched_count: number
   new_count: number
   updated_count: number
-  started_at: string
-  finished_at?: string
-  error_message?: string
+  geocode_calls: number
+  cache_hits: number
+  status: string
+  last_error?: string
 }
 
 interface IngestRunsSectionProps {
@@ -20,8 +24,8 @@ export default function IngestRunsSection({ runs }: IngestRunsSectionProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'text-green-600 bg-green-100'
-      case 'failed': return 'text-red-600 bg-red-100'
+      case 'ok': return 'text-green-600 bg-green-100'
+      case 'error': return 'text-red-600 bg-red-100'
       case 'running': return 'text-blue-600 bg-blue-100'
       default: return 'text-gray-600 bg-gray-100'
     }
@@ -66,6 +70,9 @@ export default function IngestRunsSection({ runs }: IngestRunsSectionProps) {
                 Updated
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Dry Run
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Error
               </th>
             </tr>
@@ -93,8 +100,11 @@ export default function IngestRunsSection({ runs }: IngestRunsSectionProps) {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
                   {run.updated_count}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {run.dry_run ? 'Yes' : 'No'}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                  {run.error_message || '-'}
+                  {run.last_error || '-'}
                 </td>
               </tr>
             ))}

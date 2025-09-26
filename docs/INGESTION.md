@@ -18,7 +18,7 @@ The ingestion system scrapes yard sale listings from Craigslist and stores them 
   - Link to full diagnostics
 
 ### Full Diagnostics
-- **Location**: `/_diag/ingest`
+- **Location**: `/diagnostics/ingest`
 - **Purpose**: Comprehensive monitoring and data management
 - **Features**:
   - Recent ingestion runs (last 20) from `ingest_runs` table

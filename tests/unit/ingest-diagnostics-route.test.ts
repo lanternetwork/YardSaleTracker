@@ -36,8 +36,8 @@ vi.mock('@/lib/supabase/server', () => ({
 describe('Ingest Diagnostics Route', () => {
   it('should render the diagnostics page without errors', () => {
     // Test that the route path is valid
-    const routePath = '/_diag/ingest'
-    expect(routePath).toBe('/_diag/ingest')
+    const routePath = '/diagnostics/ingest'
+    expect(routePath).toBe('/diagnostics/ingest')
     
     // Test that the path doesn't require authentication
     const authRequiredRoutes = [
