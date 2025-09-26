@@ -19,49 +19,36 @@ jobs:
           if [ -z "${SITES:-}" ]; then
             echo "No SITES secret set"; exit 1
           fi
-
           IFS=',' read -r -a arr <<< "$SITES"
           posted_any=0
           fetched_any=0
-
           echo "## Backup ingest summary" >> "$GITHUB_STEP_SUMMARY"
           for raw in "${arr[@]}"; do
-            url="$(echo "$raw" | xargs)"   # trim
-            [ -z "$url" ] && continue
+            url="$(echo "$raw" | xargs)"; [ -z "$url" ] && continue
             echo "- Site: $url" >> "$GITHUB_STEP_SUMMARY"
-
             http_code=$(curl -sS -w "%{http_code}" -o /tmp/rss.xml \
               -A "$UA" \
               -H "Accept: application/rss+xml, text/xml;q=0.9, */*;q=0.8" \
               --location --max-time 20 "$url") || true
-
             bytes=$(wc -c </tmp/rss.xml | xargs)
             echo "  Fetch: code=$http_code bytes=$bytes" >> "$GITHUB_STEP_SUMMARY"
-
             if [ "$http_code" = "200" ] && [ "$bytes" -gt 0 ]; then
               fetched_any=1
               payload=$(jq -Rs . </tmp/rss.xml)
               body=$(jq -n --arg src "craigslist" --arg site "$url" --argxml xml "$payload" \
                 '{source:$src, site:$site, xml:$xml}')
-
               post_code=$(curl -sS -w "%{http_code}" -o /tmp/post.out \
                 -H "Content-Type: application/json" \
                 -H "X-INGEST-TOKEN: '"'"'$TOKEN'"'"'" \
                 -X POST "$POST_URL" \
                 --data "$body") || true
-
               echo "  POST: code=$post_code" >> "$GITHUB_STEP_SUMMARY"
-              if [ "$post_code" = "200" ]; then
-                posted_any=1
-              fi
+              if [ "$post_code" = "200" ]; then posted_any=1; fi
             fi
           done
-
           if [ "$posted_any" -eq 1 ]; then
-            echo "Result: posted at least one snapshot ✅" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo "Result: posted at least one snapshot ✅" >> "$GITHUB_STEP_SUMMARY"; exit 0
           fi
-
           if [ "$fetched_any" -eq 1 ]; then
             echo "Result: fetched ok but POST failed ❌" >> "$GITHUB_STEP_SUMMARY"
           else
