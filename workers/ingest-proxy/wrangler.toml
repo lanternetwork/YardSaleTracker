@@ -1,0 +1,8 @@
+name = "lootaura"
+main = "src/index.ts"
+compatibility_date = "2025-01-27"
+
+# Cron can be configured via secrets.CRON_SCHEDULE or in Cloudflare UI
+# schedules = ["0 */6 * * *"]
+
+

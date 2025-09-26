@@ -1,5 +1,5 @@
 'use client'
-import { useFavorites, useToggleFavorite } from '@/lib/hooks/useAuth'
+import { useFavorites, useToggleFavorite } from '@/lib/hooks/useFavorites'
 
 export default function FavoriteButton({ 
   saleId, 
@@ -9,18 +9,19 @@ export default function FavoriteButton({
   initial?: boolean 
 }) {
   const { data: favorites = [] } = useFavorites()
-  const toggleFavorite = useToggleFavorite()
+  const { mutate, isPending } = useToggleFavorite()
   
-  const isFavorited = favorites.some(fav => fav.id === saleId)
+  const list = (favorites as any[])
+  const isFavorited = list.some((fav: any) => fav && fav.id === saleId)
 
   const handleToggle = () => {
-    toggleFavorite.mutate({ saleId, isFavorited })
+    mutate({ saleId, isFavorited })
   }
 
   return (
     <button 
       aria-pressed={isFavorited} 
-      disabled={toggleFavorite.isPending}
+      disabled={isPending}
       className={`rounded px-2 py-1 text-sm font-medium transition-colors ${
         isFavorited 
           ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' 
