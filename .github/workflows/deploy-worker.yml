@@ -26,8 +26,8 @@ jobs:
       - name: Configure Worker Secrets
         working-directory: workers/ingest-proxy
         env:
-          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           POST_URL: ${{ secrets.POST_URL }}
           INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
           SITES: ${{ secrets.SITES }}
@@ -35,10 +35,10 @@ jobs:
           CRON_SCHEDULE: ${{ secrets.CRON_SCHEDULE }}
         run: |
           echo "Setting secrets"
-          wrangler secret put POST_URL --binding=POST_URL --raw <<< "$POST_URL"
-          wrangler secret put INGEST_TOKEN --binding=INGEST_TOKEN --raw <<< "$INGEST_TOKEN"
-          wrangler secret put SITES --binding=SITES --raw <<< "$SITES"
-          wrangler secret put USER_AGENT --binding=USER_AGENT --raw <<< "$USER_AGENT"
+          echo -n "$POST_URL" | wrangler secret put POST_URL --quiet
+          echo -n "$INGEST_TOKEN" | wrangler secret put INGEST_TOKEN --quiet
+          echo -n "$SITES" | wrangler secret put SITES --quiet
+          echo -n "$USER_AGENT" | wrangler secret put USER_AGENT --quiet
           if [ -n "$CRON_SCHEDULE" ]; then
             echo "Adding cron to wrangler.toml"
             echo "\nschedules = [\"$CRON_SCHEDULE\"]" >> wrangler.toml
