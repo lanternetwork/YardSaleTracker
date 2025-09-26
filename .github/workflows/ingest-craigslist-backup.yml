@@ -1,43 +1,83 @@
-name: Ingest Craigslist (backup)
+name: Ingest Craigslist (Backup)
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 jobs:
-  run-backup:
+  ingest:
     runs-on: ubuntu-latest
     steps:
-      - name: Split SITES
-        id: split
-        run: |
-          SITES="${{ secrets.SITES }}"
-          echo "sites<<EOF" >> $GITHUB_OUTPUT
-          echo "$SITES" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | sed '/^$/d' >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Fetch and post snapshots
+      - name: Ingest from Craigslist
         env:
           POST_URL: ${{ secrets.POST_URL }}
           INGEST_TOKEN: ${{ secrets.INGEST_TOKEN }}
+          SITES: ${{ secrets.SITES }}
           USER_AGENT: ${{ secrets.USER_AGENT }}
         run: |
-          set -e
-          SUCCESS=0
-          TOTAL=0
-          while IFS= read -r SITE; do
-            TOTAL=$((TOTAL+1))
-            echo "Fetching: $SITE"
-            BODY=$(curl -sS -L -A "$USER_AGENT" -H 'Accept: application/rss+xml, text/xml;q=0.9, */*;q=0.8' -H 'Accept-Language: en-US,en;q=0.9' "$SITE" || true)
-            if [ -n "$BODY" ]; then
-              echo "Posting snapshot for $SITE"
-              CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X POST "$POST_URL" -H "Content-Type: application/json" -H "X-INGEST-TOKEN: $INGEST_TOKEN" --data "{\"source\":\"craigslist\",\"site\":\"$SITE\",\"xml\":$(jq -R -s '.' <<< "$BODY")}")
-              echo "POST responded $CODE"
-              if [ "$CODE" = "200" ]; then SUCCESS=$((SUCCESS+1)); fi
-            else
-              echo "Empty body for $SITE"
+          echo "Starting backup ingestion from Craigslist..."
+          
+          # Split sites by comma and process each
+          IFS=',' read -ra SITE_ARRAY <<< "$SITES"
+          SUCCESS_COUNT=0
+          TOTAL_SITES=${#SITE_ARRAY[@]}
+          
+          for site_url in "${SITE_ARRAY[@]}"; do
+            site_url=$(echo "$site_url" | xargs) # trim whitespace
+            if [ -z "$site_url" ]; then
+              continue
             fi
-          done <<< "${{ steps.split.outputs.sites }}"
-          echo "Success $SUCCESS / $TOTAL"
-          if [ "$SUCCESS" -eq 0 ]; then exit 1; fi
-
-
+            
+            echo "Processing site: $site_url"
+            
+            # Extract hostname for logging
+            hostname=$(echo "$site_url" | sed 's|https\?://||' | cut -d'/' -f1)
+            
+            # Fetch RSS with curl
+            response=$(curl -s -w "\n%{http_code}" \
+              -H "User-Agent: $USER_AGENT" \
+              -H "Accept: application/rss+xml, text/xml;q=0.9, */*;q=0.8" \
+              -H "Accept-Language: en-US,en;q=0.9" \
+              -L \
+              --max-time 30 \
+              "$site_url" 2>/dev/null)
+            
+            # Extract body and status code
+            body=$(echo "$response" | head -n -1)
+            status_code=$(echo "$response" | tail -n 1)
+            
+            if [ "$status_code" = "200" ] && [ -n "$body" ]; then
+              echo "✓ $hostname: HTTP $status_code, body length: ${#body}"
+              
+              # POST to our snapshot endpoint
+              post_response=$(curl -s -w "\n%{http_code}" \
+                -X POST \
+                -H "Content-Type: application/json" \
+                -H "X-INGEST-TOKEN: $INGEST_TOKEN" \
+                -d "{\"source\":\"craigslist\",\"site\":\"$site_url\",\"xml\":$(echo "$body" | jq -R -s .)}" \
+                "$POST_URL" 2>/dev/null)
+              
+              post_status=$(echo "$post_response" | tail -n 1)
+              post_body=$(echo "$post_response" | head -n -1)
+              
+              if [ "$post_status" = "200" ]; then
+                echo "✓ $hostname: Successfully posted to snapshot endpoint"
+                SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+              else
+                echo "✗ $hostname: Failed to post to snapshot endpoint (HTTP $post_status)"
+                echo "Response: $post_body"
+              fi
+            else
+              echo "✗ $hostname: Failed to fetch RSS (HTTP $status_code)"
+            fi
+          done
+          
+          echo "Summary: $SUCCESS_COUNT/$TOTAL_SITES sites processed successfully"
+          
+          # Fail if no sites were successful
+          if [ $SUCCESS_COUNT -eq 0 ]; then
+            echo "All sites failed - marking job as failed"
+            exit 1
+          fi
