@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
-import { Profile } from '@/lib/types'
+import { Profile, Sale } from '@/lib/types'
 import { ProfileSchema } from '@/lib/zodSchemas'
 
 const sb = createSupabaseBrowser()
@@ -156,7 +156,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) || []
+      return data?.map(fav => fav.yard_sales).filter(Boolean) as Sale[] || []
     },
     enabled: !!user,
   })
