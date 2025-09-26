@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useCreateSale } from '@/lib/hooks/useSales'
 import { geocodeAddress } from '@/lib/geocode'
 import CSVImportExport from './CSVImportExport'
+import { config } from '@/lib/config/env'
 
 interface ScrapedSale {
   id: string
@@ -28,6 +29,18 @@ export default function ImportSales() {
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'craigslist' | 'csv'>('craigslist')
+
+  // Check if admin features are enabled
+  if (!config.features.admin) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-xl font-semibold mb-2">Import Features Disabled</h2>
+        <p className="text-neutral-600">
+          Import features are currently disabled. Contact an administrator for access.
+        </p>
+      </div>
+    )
+  }
 
   const cities = [
     { value: 'sfbay', label: 'San Francisco Bay Area' },
