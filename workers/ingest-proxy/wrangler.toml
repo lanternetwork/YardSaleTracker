@@ -1,7 +1,6 @@
-name = "lootaura-ingest-proxy"
+name = "lootaura"
 main = "src/index.ts"
-account_id = "064c6c721b9e45dbb4bc2cf325aca042"
-compatibility_date = "2025-09-26"
+compatibility_date = "2025-01-27"
 
 # Cron can be configured via secrets.CRON_SCHEDULE or in Cloudflare UI
 # schedules = ["0 */6 * * *"]
