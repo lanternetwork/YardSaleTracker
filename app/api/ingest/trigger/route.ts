@@ -108,8 +108,18 @@ export async function POST(request: NextRequest) {
     const { dryRun = false, site = 'sfbay', limit = 10 } = await request.json()
 
     // Get RSS URLs from environment (comma-separated)
-    const craigslistSites = process.env.CRAIGSLIST_SITES || `https://${site}.craigslist.org/search/garage-sale?format=rss`
-    const rssUrls = craigslistSites.split(',').map(url => url.trim())
+    const craigslistSites = process.env.CRAIGSLIST_SITES || ''
+    const rssUrls = craigslistSites.split(',').map(url => url.trim()).filter(url => url.length > 0)
+
+    // If no sources configured, return early
+    if (rssUrls.length === 0) {
+      return NextResponse.json({
+        fetched_count: 0,
+        new_count: 0,
+        updated_count: 0,
+        message: "No sources configured"
+      })
+    }
 
     // Preview-only environment logging (no secrets)
     if (process.env.VERCEL_ENV === 'preview') {
@@ -135,20 +145,55 @@ export async function POST(request: NextRequest) {
       console.error('Error creating ingest run:', runError)
     }
 
-    // Parse RSS feeds from environment URLs
+    // Parse RSS feeds from environment URLs with hardened fetching
     let rssItems: any[] = []
+    const siteErrors: string[] = []
     
     for (const feedUrl of rssUrls) {
       try {
         console.log(`Fetching RSS feed from: ${feedUrl}`)
-        const feedResponse = await fetch(feedUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; YardSaleTracker/1.0; +https://lootaura.com)'
+        
+        // Hardened fetch with proper headers, timeout, and retry
+        const fetchWithRetry = async (url: string, retries = 1): Promise<Response> => {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
+          
+          try {
+            const response = await fetch(url, {
+              cache: 'no-store',
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; LootAuraBot/1.0; +https://lootaura.com)',
+                'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8'
+              },
+              signal: controller.signal
+            })
+            clearTimeout(timeoutId)
+            return response
+          } catch (error) {
+            clearTimeout(timeoutId)
+            if (retries > 0 && (error as Error).name === 'AbortError') {
+              console.log(`Retrying ${url} after timeout...`)
+              await new Promise(resolve => setTimeout(resolve, 1000)) // 1s backoff
+              return fetchWithRetry(url, retries - 1)
+            }
+            throw error
           }
-        })
+        }
+        
+        const feedResponse = await fetchWithRetry(feedUrl)
+        
+        // Preview-only probe logging
+        if (process.env.VERCEL_ENV === 'preview') {
+          const urlRef = feedUrl.replace(/^https?:\/\//, '').slice(0, 20)
+          const contentType = feedResponse.headers.get('content-type') || 'unknown'
+          const bodyPrefix = (await feedResponse.clone().text()).slice(0, 80).replace(/\s+/g, ' ')
+          console.log(`[PROBE] ${urlRef} status=${feedResponse.status} contentType=${contentType} bodyPrefix="${bodyPrefix}"`)
+        }
         
         if (!feedResponse.ok) {
-          console.error(`RSS feed fetch failed: ${feedResponse.status} ${feedResponse.statusText}`)
+          const errorMsg = `${feedUrl.split('/')[2]}: ${feedResponse.status} ${feedResponse.statusText}`
+          siteErrors.push(errorMsg)
+          console.error(`RSS feed fetch failed: ${errorMsg}`)
           continue
         }
         
@@ -172,8 +217,9 @@ export async function POST(request: NextRequest) {
         
         console.log(`Parsed ${items.length} RSS items from ${feedUrl}`)
       } catch (error) {
+        const errorMsg = `${feedUrl.split('/')[2]}: ${(error as Error).message}`
+        siteErrors.push(errorMsg)
         console.error(`Error fetching/parsing RSS feed from ${feedUrl}:`, error)
-        // Continue to next URL instead of falling back to mock data
         continue
       }
     }
@@ -278,7 +324,19 @@ export async function POST(request: NextRequest) {
     }
 
     const endTime = new Date()
-    const lastError = invalidUrlCount > 0 ? `${invalidUrlCount} items had invalid URLs` : null
+    let lastError = null
+    
+    // Build comprehensive error message
+    const errorParts = []
+    if (invalidUrlCount > 0) {
+      errorParts.push(`invalid_url=${invalidUrlCount}`)
+    }
+    if (siteErrors.length > 0) {
+      errorParts.push(...siteErrors)
+    }
+    if (errorParts.length > 0) {
+      lastError = errorParts.join('; ')
+    }
 
     // Update ingest run record
     await supabase
@@ -288,7 +346,7 @@ export async function POST(request: NextRequest) {
         fetched_count: fetchedCount,
         new_count: newCount,
         updated_count: updatedCount,
-        status: 'ok',
+        status: fetchedCount > 0 ? 'ok' : 'error',
         last_error: lastError
       })
       .eq('id', runId)

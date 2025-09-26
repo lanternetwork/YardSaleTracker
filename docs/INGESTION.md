@@ -124,7 +124,18 @@ Optional caching for location geocoding:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase anonymous key (public)
 - `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SERVICE_ROLE`: Service role key for database access (server-only)
 - `CRAIGSLIST_INGEST_TOKEN`: Authentication token for ingestion endpoints (server-only)
-- `CRAIGSLIST_SITES`: Comma-separated RSS URLs (e.g., `https://louisville.craigslist.org/search/garage-sale?format=rss`)
+- `CRAIGSLIST_SITES`: Comma-separated RSS URLs (e.g., `https://louisville.craigslist.org/search/gms?format=rss`)
+
+### Single-City Setup (Louisville)
+For testing with a single city, set:
+```bash
+CRAIGSLIST_SITES="https://louisville.craigslist.org/search/gms?format=rss"
+```
+
+This will:
+- Fetch RSS from Louisville Craigslist garage sales
+- Log per-site probe information in Preview deployments
+- Show detailed fetch status, content type, and response preview
 
 ### Real Database Persistence
 - **Non-dry run**: Persists real sales data to `public.sales` table using service-role client
