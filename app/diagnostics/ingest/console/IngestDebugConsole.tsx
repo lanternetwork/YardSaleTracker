@@ -33,6 +33,8 @@ interface ParseResult {
     link: string
     pubDate: string
   }>
+  skipped: boolean
+  skipReason?: string
 }
 
 interface FilterResult {
