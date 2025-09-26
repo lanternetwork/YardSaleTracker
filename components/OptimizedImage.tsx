@@ -1,95 +1,75 @@
 'use client'
-import Image from 'next/image'
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface OptimizedImageProps {
   src: string
   alt: string
-  width?: number
-  height?: number
+  width: number
+  height: number
   className?: string
   priority?: boolean
-  fill?: boolean
-  sizes?: string
+  placeholder?: 'blur' | 'empty'
+  blurDataURL?: string
 }
 
 export default function OptimizedImage({
   src,
   alt,
-  width = 300,
-  height = 200,
+  width,
+  height,
   className = '',
   priority = false,
-  fill = false,
-  sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+  placeholder = 'empty',
+  blurDataURL
 }: OptimizedImageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
 
-  // Check if it's a Supabase storage URL
-  const isSupabaseUrl = src.includes('supabase') || src.includes('storage.googleapis.com')
-  
-  // Generate blur placeholder for Supabase URLs
-  const blurDataURL = isSupabaseUrl 
-    ? `data:image/svg+xml;base64,${Buffer.from(
-        `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100%" height="100%" fill="#f3f4f6"/>
-          <text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#9ca3af" font-family="system-ui">Loading...</text>
-        </svg>`
-      ).toString('base64')}`
-    : undefined
+  const handleLoad = () => {
+    setIsLoading(false)
+  }
+
+  const handleError = () => {
+    setHasError(true)
+    setIsLoading(false)
+  }
 
   if (hasError) {
     return (
       <div 
         className={`bg-neutral-200 flex items-center justify-center ${className}`}
-        style={fill ? {} : { width, height }}
+        style={{ width, height }}
       >
-        <div className="text-neutral-400 text-sm">Image unavailable</div>
+        <div className="text-center text-neutral-500">
+          <div className="text-2xl mb-1">📷</div>
+          <div className="text-xs">Image unavailable</div>
+        </div>
       </div>
     )
   }
 
-  if (fill) {
-    return (
+  return (
+    <div className={`relative overflow-hidden ${className}`} style={{ width, height }}>
+      {isLoading && (
+        <div className="absolute inset-0 bg-neutral-200 animate-pulse flex items-center justify-center">
+          <div className="text-neutral-400">Loading...</div>
+        </div>
+      )}
+      
       <Image
         src={src}
         alt={alt}
-        fill
-        className={`object-cover transition-opacity duration-300 ${
-          isLoading ? 'opacity-0' : 'opacity-100'
-        } ${className}`}
+        width={width}
+        height={height}
+        className={`transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        onLoad={handleLoad}
+        onError={handleError}
         priority={priority}
-        sizes={sizes}
-        placeholder={blurDataURL ? 'blur' : 'empty'}
+        placeholder={placeholder}
         blurDataURL={blurDataURL}
-        onLoad={() => setIsLoading(false)}
-        onError={() => {
-          setIsLoading(false)
-          setHasError(true)
-        }}
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       />
-    )
-  }
-
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      width={width}
-      height={height}
-      className={`transition-opacity duration-300 ${
-        isLoading ? 'opacity-0' : 'opacity-100'
-      } ${className}`}
-      priority={priority}
-      sizes={sizes}
-      placeholder={blurDataURL ? 'blur' : 'empty'}
-      blurDataURL={blurDataURL}
-      onLoad={() => setIsLoading(false)}
-      onError={() => {
-        setIsLoading(false)
-        setHasError(true)
-      }}
-    />
+    </div>
   )
 }

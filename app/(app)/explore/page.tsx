@@ -29,7 +29,16 @@ export default function Explore() {
   const mapPoints = useMemo(() => 
     sales
       .filter(s => s.lat && s.lng)
-      .map(s => ({ id: s.id, title: s.title, lat: s.lat!, lng: s.lng! }))
+      .map(s => ({ 
+        id: s.id, 
+        title: s.title, 
+        lat: s.lat!, 
+        lng: s.lng!,
+        address: s.address || '',
+        privacy_mode: s.privacy_mode || 'exact',
+        date_start: s.date_start || '',
+        time_start: s.time_start
+      }))
   , [sales])
 
   return (

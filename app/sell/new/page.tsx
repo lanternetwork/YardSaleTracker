@@ -3,6 +3,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { config } from '@/lib/config/env'
+import WizardWeekendPicker from '@/components/WizardWeekendPicker'
+import WizardPrivacyPreview from '@/components/WizardPrivacyPreview'
+import WizardDedupePrompt from '@/components/WizardDedupePrompt'
+import { DuplicateCandidate } from '@/lib/dedupe'
 
 interface WizardData {
   title: string
@@ -29,6 +33,10 @@ export default function NewSaleWizard() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [draftId, setDraftId] = useState<string | null>(null)
+  const [duplicates, setDuplicates] = useState<DuplicateCandidate[]>([])
+  const [showDedupePrompt, setShowDedupePrompt] = useState(false)
+  const [lat, setLat] = useState<number | null>(null)
+  const [lng, setLng] = useState<number | null>(null)
   
   const [data, setData] = useState<WizardData>({
     title: '',
@@ -46,6 +54,26 @@ export default function NewSaleWizard() {
 
   const updateData = (updates: Partial<WizardData>) => {
     setData(prev => ({ ...prev, ...updates }))
+  }
+
+  const geocodeAddress = async (address: string) => {
+    try {
+      const response = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address })
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        setLat(result.lat)
+        setLng(result.lng)
+        return result
+      }
+    } catch (error) {
+      console.error('Geocoding failed:', error)
+    }
+    return null
   }
 
   const createDraft = async () => {
@@ -108,6 +136,28 @@ export default function NewSaleWizard() {
       // Create draft if not exists
       const id = await createDraft()
       
+      // Check for duplicates
+      if (lat && lng) {
+        const response = await fetch(`/api/sales/${id}/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+        
+        if (response.status === 409) {
+          // Duplicates found
+          const result = await response.json()
+          setDuplicates(result.duplicates)
+          setShowDedupePrompt(true)
+          setLoading(false)
+          return
+        }
+        
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.message || 'Failed to publish sale')
+        }
+      }
+      
       // Redirect to auth if not authenticated
       const supabase = createSupabaseClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -137,6 +187,30 @@ export default function NewSaleWizard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleMarkNotDuplicate = async (saleId: string) => {
+    if (!draftId) return
+    
+    try {
+      await fetch(`/api/sales/${draftId}/negative-match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sale_id_b: saleId })
+      })
+    } catch (error) {
+      console.error('Failed to mark as not duplicate:', error)
+    }
+  }
+
+  const handleContinueWithDuplicates = async () => {
+    setShowDedupePrompt(false)
+    await handlePublish()
+  }
+
+  const handleCancelDedupe = () => {
+    setShowDedupePrompt(false)
+    setDuplicates([])
   }
 
   const renderStep = () => {
@@ -196,57 +270,15 @@ export default function NewSaleWizard() {
         
       case 2:
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">When is your sale?</h2>
-              <p className="text-neutral-600">Pick your weekend dates and times</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date *</label>
-                <input
-                  type="date"
-                  className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  value={data.date_start}
-                  onChange={e => updateData({ date_start: e.target.value })}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">End Date</label>
-                <input
-                  type="date"
-                  className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  value={data.date_end}
-                  onChange={e => updateData({ date_end: e.target.value })}
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Time</label>
-                <input
-                  type="time"
-                  className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  value={data.time_start}
-                  onChange={e => updateData({ time_start: e.target.value })}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">End Time</label>
-                <input
-                  type="time"
-                  className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  value={data.time_end}
-                  onChange={e => updateData({ time_end: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
+          <WizardWeekendPicker
+            value={{
+              date_start: data.date_start,
+              date_end: data.date_end,
+              time_start: data.time_start,
+              time_end: data.time_end
+            }}
+            onChange={(value) => updateData(value)}
+          />
         )
         
       case 3:
@@ -263,11 +295,27 @@ export default function NewSaleWizard() {
                 type="text"
                 className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 value={data.address}
-                onChange={e => updateData({ address: e.target.value })}
+                onChange={async (e) => {
+                  updateData({ address: e.target.value })
+                  if (e.target.value.length > 10) {
+                    await geocodeAddress(e.target.value)
+                  }
+                }}
                 placeholder="123 Main St, City, State 12345"
                 required
               />
             </div>
+            
+            {lat && lng && (
+              <WizardPrivacyPreview
+                address={data.address}
+                lat={lat}
+                lng={lng}
+                privacy_mode={data.privacy_mode}
+                date_start={data.date_start}
+                time_start={data.time_start}
+              />
+            )}
             
             <div>
               <label className="block text-sm font-medium mb-2">Privacy Mode</label>
@@ -442,6 +490,15 @@ export default function NewSaleWizard() {
           </button>
         </div>
       </div>
+      
+      {showDedupePrompt && (
+        <WizardDedupePrompt
+          duplicates={duplicates}
+          onMarkNotDuplicate={handleMarkNotDuplicate}
+          onContinue={handleContinueWithDuplicates}
+          onCancel={handleCancelDedupe}
+        />
+      )}
     </div>
   )
 }
