@@ -2,9 +2,6 @@
 
 import { getAdminSupabase } from '@/lib/supabase/admin'
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-
 interface FetchResult {
   url: string
   status: number
