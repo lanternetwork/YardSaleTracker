@@ -10,30 +10,35 @@ export interface GeocodeResult {
 }
 
 // Simple in-memory cache (in production, use Redis or database)
+// Cache is scoped by provider to avoid cross-provider pollution in tests
 const geocodeCache = new Map<string, GeocodeResult>()
 
-export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  // Check cache first
-  const cached = geocodeCache.get(address.toLowerCase())
-  if (cached) {
-    return cached
-  }
+function cacheKey(provider: 'google' | 'nominatim', address: string): string {
+  return `${provider}:${address.toLowerCase()}`
+}
 
+export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
   try {
-    // Try Google Geocoding API first
-    if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-      const result = await geocodeWithGoogle(address)
-      if (result) {
-        geocodeCache.set(address.toLowerCase(), result)
-        return result
+    const hasGoogle = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
+    if (hasGoogle) {
+      const cachedGoogle = geocodeCache.get(cacheKey('google', address))
+      if (cachedGoogle) return cachedGoogle
+
+      const googleResult = await geocodeWithGoogle(address)
+      if (googleResult) {
+        geocodeCache.set(cacheKey('google', address), googleResult)
+        return googleResult
       }
     }
 
-    // Fallback to Nominatim (free)
-    const result = await geocodeWithNominatim(address)
-    if (result) {
-      geocodeCache.set(address.toLowerCase(), result)
-      return result
+    const cachedNominatim = geocodeCache.get(cacheKey('nominatim', address))
+    if (cachedNominatim) return cachedNominatim
+
+    const nominatimResult = await geocodeWithNominatim(address)
+    if (nominatimResult) {
+      geocodeCache.set(cacheKey('nominatim', address), nominatimResult)
+      return nominatimResult
     }
 
     return null
@@ -43,7 +48,7 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   }
 }
 
-async function geocodeWithGoogle(address: string): Promise<GeocodeResult | null> {
+export async function geocodeWithGoogle(address: string): Promise<GeocodeResult | null> {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
   if (!apiKey) return null
 
@@ -76,11 +81,18 @@ async function geocodeWithGoogle(address: string): Promise<GeocodeResult | null>
   return null
 }
 
-async function geocodeWithNominatim(address: string): Promise<GeocodeResult | null> {
+export async function geocodeWithNominatim(address: string): Promise<GeocodeResult | null> {
   const email = process.env.NOMINATIM_APP_EMAIL || 'noreply@yardsalefinder.com'
   
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&email=${email}&limit=1`
+    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&email=${encodeURIComponent(email)}&limit=1`,
+    {
+      headers: {
+        'User-Agent': 'LootAura Test Suite',
+        'Accept': 'application/json',
+        'Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com',
+      },
+    }
   )
   
   const data = await response.json()
