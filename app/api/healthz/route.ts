@@ -34,30 +34,25 @@ export async function GET(request: NextRequest) {
       const supabase = getAdminSupabase()
       health.services.supabase = true
       
-      // Check database connectivity
-      const { data: dbCheck } = await supabase
-        .from('sales')
-        .select('id')
-        .limit(1)
-      
-      health.services.database = true
-      health.services.tables.sales = true
+    // Check database connectivity and table existence
+    const { data: salesCheck } = await supabase
+      .from('sales')
+      .select('id')
+      .limit(1)
+    
+    const { data: ingestCheck } = await supabase
+      .from('ingest_runs')
+      .select('id')
+      .limit(1)
+    
+    health.services.database = true
+    health.services.tables.sales = !!salesCheck
+    health.services.tables.ingest_runs = !!ingestCheck
     } catch (error) {
       console.error('Database health check failed:', error)
     }
 
-    // Check ingest_runs table
-    try {
-      const supabase = getAdminSupabase()
-      const { data: ingestCheck } = await supabase
-        .from('ingest_runs')
-        .select('id')
-        .limit(1)
-      
-      health.services.tables.ingest_runs = true
-    } catch (error) {
-      console.error('Ingest runs table check failed:', error)
-    }
+    // Additional table checks are now handled above
 
     // Add feature flags (masked)
     health.features = {
