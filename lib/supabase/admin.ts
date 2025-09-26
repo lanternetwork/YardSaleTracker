@@ -14,22 +14,40 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// Use environment variables directly to avoid validation issues
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE
+// Lazy initialization to avoid build-time errors
+let _adminSupabase: any = null
 
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error('Missing Supabase environment variables for admin client')
+export function getAdminSupabase() {
+  if (_adminSupabase) {
+    return _adminSupabase
+  }
+
+  // Use environment variables directly to avoid validation issues
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Missing Supabase environment variables for admin client')
+  }
+
+  _adminSupabase = createClient(
+    supabaseUrl,
+    serviceRoleKey,
+    { 
+      auth: { 
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
+    }
+  )
+
+  return _adminSupabase
 }
 
-export const adminSupabase = createClient(
-  supabaseUrl,
-  serviceRoleKey,
-  { 
-    auth: { 
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
+// For backward compatibility
+export const adminSupabase = new Proxy({} as any, {
+  get(target, prop) {
+    return getAdminSupabase()[prop]
   }
-)
+})
