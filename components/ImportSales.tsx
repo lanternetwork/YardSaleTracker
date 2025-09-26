@@ -201,10 +201,10 @@ export default function ImportSales() {
             </p>
           </div>
 
-      {/* Search form */}
-      <div className="bg-neutral-50 p-4 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+          {/* Search form */}
+          <div className="bg-neutral-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
             <label className="block text-sm font-medium mb-1">City</label>
             <select
               value={city}
