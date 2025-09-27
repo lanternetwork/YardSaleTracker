@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import NavTabs from '@/components/NavTabs'
 import SearchFilters from '@/components/SearchFilters'
@@ -17,7 +17,7 @@ import DiagnosticsCard from '@/components/DiagnosticsCard'
 import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
 
-export default function Explore() {
+function ExploreContent() {
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<Filters>({ q: '', maxKm: 25, tags: [] })
   
@@ -75,5 +75,13 @@ export default function Explore() {
       )}
       {tab === 'find' && <ImportSales />}
     </main>
+  )
+}
+
+export default function Explore() {
+  return (
+    <Suspense fallback={<div className="max-w-6xl mx-auto p-4"><div className="h-8 bg-neutral-200 rounded animate-pulse"></div></div>}>
+      <ExploreContent />
+    </Suspense>
   )
 }

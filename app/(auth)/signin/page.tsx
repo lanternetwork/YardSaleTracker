@@ -1,11 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSignIn, useSignUp } from '@/lib/hooks/useAuth'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
-export default function SignIn() {
+function SignInContent() {
   const signIn = useSignIn()
   const signUp = useSignUp()
   const [email, setEmail] = useState('')
@@ -179,5 +179,13 @@ export default function SignIn() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-neutral-50"><div className="h-8 bg-neutral-200 rounded animate-pulse w-64"></div></div>}>
+      <SignInContent />
+    </Suspense>
   )
 }
