@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
-import { MarkerClusterer } from '@googlemaps/markerclusterer'
 import ClusterPreview from './ClusterPreview'
 import ClusterAllModal from './ClusterAllModal'
 
@@ -141,24 +140,35 @@ export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
   useEffect(() => {
     if (!map) return
 
-    const newClusterer = new MarkerClusterer({
-      map,
-      algorithm: new MarkerClusterer.SuperClusterAlgorithm({
-        radius: 80,
-        maxZoom: 17,
-        minPoints: 2
-      })
-    })
+    const initializeClusterer = async () => {
+      try {
+        const { MarkerClusterer } = await import('@googlemaps/markerclusterer')
+        
+        const newClusterer = new MarkerClusterer({
+          map,
+          algorithm: new MarkerClusterer.SuperClusterAlgorithm({
+            radius: 80,
+            maxZoom: 17,
+            minPoints: 2
+          })
+        })
 
-    setClusterer(newClusterer)
-    console.log('Clusterer initialized')
-
-    return () => {
-      if (newClusterer) {
-        newClusterer.clearMarkers()
+        setClusterer(newClusterer)
+        console.log('Clusterer initialized')
+      } catch (error) {
+        console.error('Failed to load MarkerClusterer:', error)
+        setError('Failed to load clustering library')
       }
     }
-  }, [map])
+
+    initializeClusterer()
+
+    return () => {
+      if (clusterer) {
+        clusterer.clearMarkers()
+      }
+    }
+  }, [map, clusterer])
 
   // Update markers when points change
   useEffect(() => {
