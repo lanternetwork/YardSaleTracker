@@ -79,20 +79,26 @@ export default function AdminPage() {
     setSeedResult(null)
     
     try {
-      const supabase = createSupabaseBrowser()
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        setSeedResult('Error: Not authenticated')
-        return
+      let headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      }
+
+      // Only add auth header if not in public admin mode
+      if (!isPublicAdminMode) {
+        const supabase = createSupabaseBrowser()
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          setSeedResult('Error: Not authenticated')
+          return
+        }
+        
+        headers['Authorization'] = `Bearer ${session.access_token}`
       }
 
       const response = await fetch('/api/admin/seed/test-sales', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+        headers
       })
 
       const result = await response.json()
