@@ -11,6 +11,10 @@ export default function AdminPage() {
   const [publishedCount, setPublishedCount] = useState<number | null>(null)
   const [seedResult, setSeedResult] = useState<string | null>(null)
   const [isSeeding, setIsSeeding] = useState(false)
+  const [cleanupResult, setCleanupResult] = useState<string | null>(null)
+  const [isCleaning, setIsCleaning] = useState(false)
+  const [debugResult, setDebugResult] = useState<string | null>(null)
+  const [isDebugging, setIsDebugging] = useState(false)
 
   useEffect(() => {
     // Check if admin features are enabled (client-side only)
@@ -125,6 +129,71 @@ export default function AdminPage() {
       setSeedResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsSeeding(false)
+    }
+  }
+
+  const handleCleanupDatabase = async () => {
+    setIsCleaning(true)
+    setCleanupResult(null)
+    
+    try {
+      let headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      }
+
+      // Only add auth header if not in public admin mode
+      if (!isPublicAdminMode) {
+        const supabase = createSupabaseBrowser()
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          setCleanupResult('Error: Not authenticated')
+          return
+        }
+        
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const response = await fetch('/api/admin/cleanup', {
+        method: 'POST',
+        headers
+      })
+
+      const result = await response.json()
+      
+      if (response.ok) {
+        setCleanupResult(`✅ ${result.message}`)
+        // Refresh published count
+        setPublishedCount(0)
+      } else {
+        setCleanupResult(`❌ Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Cleanup error:', error)
+      setCleanupResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsCleaning(false)
+    }
+  }
+
+  const handleDebugMapData = async () => {
+    setIsDebugging(true)
+    setDebugResult(null)
+    
+    try {
+      const response = await fetch('/api/debug/map-data')
+      const result = await response.json()
+      
+      if (response.ok) {
+        setDebugResult(`✅ Found ${result.totalSales} sales. Distance: ${result.distance ? result.distance.toFixed(4) : 'N/A'} degrees. Should cluster: ${result.clustering.shouldCluster}`)
+      } else {
+        setDebugResult(`❌ Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Debug error:', error)
+      setDebugResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsDebugging(false)
     }
   }
 
@@ -257,20 +326,52 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Seed Test Sales */}
+          {/* Database Management */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-3">Seed Test Sales</h2>
-            <p className="text-sm text-neutral-600 mb-4">Add 2 test sales (Louisville + Oakland) for development.</p>
-            <button
-              onClick={handleSeedTestSales}
-              disabled={isSeeding}
-              className="w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSeeding ? 'Seeding...' : 'Seed Test Sales'}
-            </button>
+            <h2 className="text-lg font-semibold mb-3">Database Management</h2>
+            <p className="text-sm text-neutral-600 mb-4">Clean and seed database for testing.</p>
+            <div className="space-y-3">
+              <button
+                onClick={handleCleanupDatabase}
+                disabled={isCleaning}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCleaning ? 'Cleaning...' : 'Clean Database'}
+              </button>
+              <button
+                onClick={handleSeedTestSales}
+                disabled={isSeeding}
+                className="w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSeeding ? 'Seeding...' : 'Seed Test Sales'}
+              </button>
+            </div>
+            {cleanupResult && (
+              <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
+                {cleanupResult}
+              </div>
+            )}
             {seedResult && (
               <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
                 {seedResult}
+              </div>
+            )}
+          </div>
+
+          {/* Map Debug */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-3">Map Debug</h2>
+            <p className="text-sm text-neutral-600 mb-4">Debug map data and clustering.</p>
+            <button
+              onClick={handleDebugMapData}
+              disabled={isDebugging}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDebugging ? 'Debugging...' : 'Debug Map Data'}
+            </button>
+            {debugResult && (
+              <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
+                {debugResult}
               </div>
             )}
           </div>
