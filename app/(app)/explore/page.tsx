@@ -2,8 +2,6 @@
 import { useMemo, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-// Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
 import NavTabs from '@/components/NavTabs'
 import SearchFilters from '@/components/SearchFilters'
 import SearchResults from '@/components/SearchResults'
@@ -103,3 +101,6 @@ export default function Explore() {
     </Suspense>
   )
 }
+
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
