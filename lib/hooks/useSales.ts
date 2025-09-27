@@ -60,10 +60,10 @@ export function useSales(filters?: {
         console.warn('RPC function not available, using fallback query:', rpcError)
         
         let query = sb
-          .from('sales')
+          .from('yard_sales')
           .select('*')
-          .eq('status', 'published')
-          .order('last_seen_at', { ascending: false })
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
           .limit(100)
 
         // Apply text search filter
@@ -71,12 +71,12 @@ export function useSales(filters?: {
           query = query.or(`title.ilike.%${filters.q}%,description.ilike.%${filters.q}%`)
         }
 
-        // Apply date filters
+        // Apply date filters (using existing start_at column until migration is applied)
         if (dateFrom) {
-          query = query.gte('date_start', dateFrom)
+          query = query.gte('start_at', dateFrom + 'T00:00:00Z')
         }
         if (dateTo) {
-          query = query.lte('date_start', dateTo)
+          query = query.lte('start_at', dateTo + 'T23:59:59Z')
         }
 
         // Apply price filters
