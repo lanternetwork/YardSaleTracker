@@ -81,6 +81,33 @@ export async function POST(request: NextRequest) {
         owner_id: defaultUserId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
+        },
+        {
+          title: 'Neighborhood Garage Sale',
+          description: 'Join us for a neighborhood-wide garage sale! Multiple homes participating with furniture, clothing, electronics, and household items.',
+          address: 'San Francisco, CA',
+          city: 'San Francisco',
+          state: 'CA',
+        lat: 37.7749,
+        lng: -122.4194,
+        start_at: dateStr + 'T09:00:00Z',
+        end_at: dateStr + 'T15:00:00Z',
+        date_start: dateStr,
+        date_end: dateStr,
+        time_start: '09:00:00',
+        time_end: '15:00:00',
+        privacy_mode: 'exact',
+        geocode_precision: 'exact',
+        tags: ['neighborhood', 'furniture', 'clothing', 'electronics'],
+        price_min: 1,
+        price_max: 75,
+        photos: [],
+        contact: 'Call for details',
+        status: 'active',
+        source: 'seed',
+        owner_id: defaultUserId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
         }
       ]
 

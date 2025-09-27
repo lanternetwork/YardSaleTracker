@@ -150,9 +150,9 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       }
     })
     
-    // Simple clustering - group points that are very close together
+    // Enhanced clustering - group points that are reasonably close together
     const clusters: { center: { lat: number; lng: number }; points: typeof maskedPoints }[] = []
-    const clusterRadius = 0.01 // ~1km in degrees - smaller radius for tighter clustering
+    const clusterRadius = 0.05 // ~5km in degrees - larger radius for better clustering
     
     maskedPoints.forEach(point => {
       let addedToCluster = false
@@ -278,6 +278,17 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     })
 
     setMarkers(newMarkers)
+
+    // Debug clustering
+    console.log('Clustering debug:', {
+      totalPoints: maskedPoints.length,
+      clusters: clusters.length,
+      clusterDetails: clusters.map(c => ({
+        pointCount: c.points.length,
+        center: c.center,
+        titles: c.points.map(p => p.title)
+      }))
+    })
 
     logger.info('Map markers rendered', {
       component: 'YardSaleMap',
