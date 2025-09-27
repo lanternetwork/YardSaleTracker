@@ -46,6 +46,12 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   // Initialize map
   useEffect(() => {
+    console.log('Google Maps API Key check:', {
+      hasKey: !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+      keyLength: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.length || 0,
+      keyPrefix: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY?.substring(0, 10) || 'none'
+    })
+    
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
       setError('Google Maps API key not configured')
       setLoading(false)
@@ -53,6 +59,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     }
 
     loader.load().then(() => {
+      console.log('Google Maps loader loaded successfully')
       // Wait for DOM to be ready and retry if ref is not available
       let retryCount = 0
       const maxRetries = 50 // 5 seconds max
@@ -115,7 +122,12 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       initializeMap()
     }).catch(err => {
       console.error('Error loading Google Maps:', err)
-      setError('Failed to load map')
+      console.error('Google Maps error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name
+      })
+      setError(`Failed to load map: ${err.message}`)
       setLoading(false)
     })
   }, [loader])

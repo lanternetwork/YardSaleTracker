@@ -17,6 +17,8 @@ export default function AdminPage() {
   const [isDebugging, setIsDebugging] = useState(false)
   const [forceSeedResult, setForceSeedResult] = useState<string | null>(null)
   const [isForceSeeding, setIsForceSeeding] = useState(false)
+  const [envCheckResult, setEnvCheckResult] = useState<string | null>(null)
+  const [isCheckingEnv, setIsCheckingEnv] = useState(false)
 
   useEffect(() => {
     // Check if admin features are enabled (client-side only)
@@ -234,6 +236,28 @@ export default function AdminPage() {
     }
   }
 
+  const handleEnvCheck = async () => {
+    setIsCheckingEnv(true)
+    setEnvCheckResult(null)
+    
+    try {
+      const response = await fetch('/api/debug/env-check')
+      const result = await response.json()
+      
+      if (response.ok) {
+        const env = result.environment
+        setEnvCheckResult(`✅ Maps API: ${env.googleMapsApiKey.exists ? 'EXISTS' : 'MISSING'} (${env.googleMapsApiKey.length} chars, valid: ${env.googleMapsApiKey.isValid})`)
+      } else {
+        setEnvCheckResult(`❌ Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Env check error:', error)
+      setEnvCheckResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsCheckingEnv(false)
+    }
+  }
+
   useEffect(() => {
     if (!isLoading && !isAdminEnabled) {
       router.push('/')
@@ -414,6 +438,13 @@ export default function AdminPage() {
               >
                 {isForceSeeding ? 'Force Seeding...' : 'Force Seed (Bypass RLS)'}
               </button>
+              <button
+                onClick={handleEnvCheck}
+                disabled={isCheckingEnv}
+                className="w-full bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCheckingEnv ? 'Checking...' : 'Check Environment'}
+              </button>
             </div>
             {debugResult && (
               <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
@@ -423,6 +454,11 @@ export default function AdminPage() {
             {forceSeedResult && (
               <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
                 {forceSeedResult}
+              </div>
+            )}
+            {envCheckResult && (
+              <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
+                {envCheckResult}
               </div>
             )}
           </div>
