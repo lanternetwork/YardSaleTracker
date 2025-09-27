@@ -3,8 +3,6 @@ import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { Sale, SaleItem } from '@/lib/types'
 import { SaleSchema } from '@/lib/zodSchemas'
 
-const sb = createSupabaseBrowser()
-
 export function useSales(filters?: {
   q?: string
   maxKm?: number
@@ -13,32 +11,86 @@ export function useSales(filters?: {
   dateFrom?: string
   dateTo?: string
   tags?: string[]
-  min?: number
-  max?: number
 }) {
   return useQuery({
     queryKey: ['sales', filters],
     queryFn: async () => {
-      // Use the optimized search function for better performance
-      const { data, error } = await sb.rpc('search_sales', {
-        search_query: filters?.q || null,
-        max_distance_km: filters?.maxKm || null,
-        user_lat: filters?.lat || null,
-        user_lng: filters?.lng || null,
-        date_from: filters?.dateFrom || null,
-        date_to: filters?.dateTo || null,
-        price_min: filters?.min || null,
-        price_max: filters?.max || null,
-        tags_filter: filters?.tags || null,
-        limit_count: 100,
-        offset_count: 0
-      })
-
-      if (error) {
-        throw new Error(error.message)
+      const sb = createSupabaseBrowser()
+      
+      // Default date filter: current week ± 7 days if no date filter present
+      let dateFrom = filters?.dateFrom
+      let dateTo = filters?.dateTo
+      
+      if (!dateFrom && !dateTo) {
+        const today = new Date()
+        const sevenDaysAgo = new Date(today)
+        sevenDaysAgo.setDate(today.getDate() - 7)
+        const sevenDaysFromNow = new Date(today)
+        sevenDaysFromNow.setDate(today.getDate() + 7)
+        
+        dateFrom = sevenDaysAgo.toISOString().split('T')[0]
+        dateTo = sevenDaysFromNow.toISOString().split('T')[0]
       }
+      
+      // Try the optimized RPC function first
+      try {
+        const { data, error } = await sb.rpc('search_sales', {
+          search_query: filters?.q || null,
+          max_distance_km: filters?.maxKm || null,
+          user_lat: filters?.lat || null,
+          user_lng: filters?.lng || null,
+          date_from: dateFrom,
+          date_to: dateTo,
+          min_price_param: null,
+          max_price_param: null,
+          tags_filter: filters?.tags || null,
+          limit_count: 100,
+          offset_count: 0
+        })
 
-      return data as Sale[]
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        return data as Sale[]
+      } catch (rpcError) {
+        // Fallback to regular query if RPC function is not available
+        console.warn('RPC function not available, using fallback query:', rpcError)
+        
+        let query = sb
+          .from('yard_sales')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(100)
+
+        // Apply text search filter
+        if (filters?.q) {
+          query = query.or(`title.ilike.%${filters.q}%,description.ilike.%${filters.q}%`)
+        }
+
+        // Apply date filters (using existing start_at column until migration is applied)
+        if (dateFrom) {
+          query = query.gte('start_at', dateFrom + 'T00:00:00Z')
+        }
+        if (dateTo) {
+          query = query.lte('start_at', dateTo + 'T23:59:59Z')
+        }
+
+
+        // Apply tags filter
+        if (filters?.tags && filters.tags.length > 0) {
+          query = query.overlaps('tags', filters.tags)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        return data as Sale[]
+      }
     },
   })
 }
@@ -47,6 +99,7 @@ export function useSale(id: string) {
   return useQuery({
     queryKey: ['sale', id],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('yard_sales')
         .select('*')
@@ -73,6 +126,7 @@ export function useCreateSale() {
         throw new Error('Invalid sale data')
       }
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('yard_sales')
         .insert([parsed.data])
@@ -101,6 +155,7 @@ export function useUpdateSale() {
         throw new Error('Invalid sale data')
       }
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('yard_sales')
         .update(parsed.data)
@@ -126,6 +181,7 @@ export function useDeleteSale() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const sb = createSupabaseBrowser()
       const { error } = await sb
         .from('yard_sales')
         .delete()
@@ -145,6 +201,7 @@ export function useSaleItems(saleId: string) {
   return useQuery({
     queryKey: ['sale-items', saleId],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('sale_items')
         .select('*')
@@ -165,6 +222,7 @@ export function useFavorites() {
   return useQuery({
     queryKey: ['favorites'],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data: { user } } = await sb.auth.getUser()
       if (!user) return []
 
@@ -180,7 +238,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) as Sale[]
+      return data?.map(fav => fav.yard_sales).filter(Boolean) as unknown as Sale[]
     },
   })
 }

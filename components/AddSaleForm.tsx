@@ -25,7 +25,8 @@ export default function AddSaleForm() {
 
     const loader = new Loader({
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-      libraries: ['places']
+      libraries: ['places', 'geometry'],
+      version: 'weekly'
     })
 
     loader.load().then(() => {

@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { vi } from 'vitest'
 
 // Load address fixtures
 const addresses = JSON.parse(
@@ -33,13 +34,15 @@ export class MockGoogleMapsLoader {
         maps: {
           places: {
             Autocomplete: class MockAutocomplete {
-              private input: HTMLInputElement
               private fields: string[]
               private listeners: { [key: string]: Function[] } = {}
+              public input: HTMLInputElement
+              public options: any
 
               constructor(input: HTMLInputElement, options: { fields: string[] }) {
                 this.input = input
                 this.fields = options.fields
+                this.options = options
               }
 
               addListener(event: string, callback: Function) {
@@ -213,7 +216,7 @@ export function createMockSupabaseClient() {
       if (table === 'yard_sales') {
         return {
           select: vi.fn().mockReturnThis(),
-          insert: vi.fn().mockImplementation((data) => {
+          insert: vi.fn().mockImplementation((data: any) => {
             const newSale = {
               id: `sale-${nextId++}`,
               ...data[0],

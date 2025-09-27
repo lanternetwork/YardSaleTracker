@@ -26,11 +26,12 @@ const nextConfig = {
     optimizePackageImports: ['react-virtuoso'],
   },
   // Enable static optimization for better performance
-  output: 'standalone',
+  // output: 'standalone', // Commented out to fix static generation issues
   // Compress responses
   compress: true,
   // Enable SWC minification
   swcMinify: true,
+  // Content Security Policy is handled in middleware.ts
 }
 
 module.exports = nextConfig

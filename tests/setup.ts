@@ -1,4 +1,4 @@
-import { expect, afterEach, beforeAll, afterAll } from 'vitest'
+import { expect, afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { setupServer } from 'msw/node'
@@ -6,6 +6,13 @@ import { http, HttpResponse } from 'msw'
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers)
+
+// Make matchers available globally
+declare global {
+  namespace Vi {
+    interface Assertion<T = any> extends jest.Matchers<void, T> {}
+  }
+}
 
 // Cleanup after each test
 afterEach(() => {

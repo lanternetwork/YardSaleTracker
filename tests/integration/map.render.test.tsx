@@ -84,13 +84,19 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: addresses[0].lat,
-        lng: addresses[0].lng
+        lng: addresses[0].lng,
+        address: addresses[0].address,
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       },
       {
         id: 'sale-2',
         title: 'Test Sale 2',
         lat: addresses[1].lat,
-        lng: addresses[1].lng
+        lng: addresses[1].lng,
+        address: addresses[1].address,
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       }
     ]
 
@@ -130,7 +136,10 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: 37.7749,
-        lng: -122.4194
+        lng: -122.4194,
+        address: '123 Test St',
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       }
     ]
 
@@ -158,7 +167,10 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: 37.7749,
-        lng: -122.4194
+        lng: -122.4194,
+        address: '123 Test St',
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       }
     ]
 
@@ -180,7 +192,10 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: 37.7749,
-        lng: -122.4194
+        lng: -122.4194,
+        address: '123 Test St',
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       }
     ]
 
@@ -198,13 +213,19 @@ describe('Map Render Integration', () => {
         id: 'sale-1',
         title: 'Test Sale 1',
         lat: 37.7749,
-        lng: -122.4194
+        lng: -122.4194,
+        address: '123 Test St',
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       },
       {
         id: 'sale-2',
         title: 'Test Sale 2',
         lat: 37.7849,
-        lng: -122.4094
+        lng: -122.4094,
+        address: '456 Test Ave',
+        privacy_mode: 'exact' as const,
+        date_start: '2023-12-01'
       }
     ]
 

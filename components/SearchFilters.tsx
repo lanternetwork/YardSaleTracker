@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { defaultFilters, Filters } from '@/state/filters'
 
 const COMMON_TAGS = [
@@ -14,13 +15,42 @@ export default function SearchFilters({
   onChange: (f: Filters) => void
   showAdvanced?: boolean
 }) {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const [f, setF] = useState<Filters>(defaultFilters)
   const [showMore, setShowMore] = useState(showAdvanced)
+
+  // Initialize filters from URL params
+  useEffect(() => {
+    const urlFilters: Filters = {
+      q: searchParams.get('q') || '',
+      maxKm: searchParams.get('maxKm') ? Number(searchParams.get('maxKm')) : 25,
+      dateFrom: searchParams.get('dateFrom') || defaultFilters.dateFrom,
+      dateTo: searchParams.get('dateTo') || defaultFilters.dateTo,
+      tags: searchParams.get('tags') ? searchParams.get('tags')!.split(',') : []
+    }
+    setF(urlFilters)
+    onChange(urlFilters)
+  }, [searchParams, onChange])
 
   function set<K extends keyof Filters>(k: K, v: any) { 
     const n = { ...f, [k]: v }
     setF(n)
-    onChange(n) 
+    onChange(n)
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams.toString())
+    if (v === '' || v === undefined || v === null || (Array.isArray(v) && v.length === 0)) {
+      params.delete(k)
+    } else if (Array.isArray(v)) {
+      params.set(k, v.join(','))
+    } else {
+      params.set(k, String(v))
+    }
+    
+    const newUrl = `${pathname}?${params.toString()}`
+    router.replace(newUrl, { scroll: false })
   }
 
   const toggleTag = (tag: string) => {
@@ -34,6 +64,7 @@ export default function SearchFilters({
   const clearFilters = () => {
     setF(defaultFilters)
     onChange(defaultFilters)
+    router.replace(pathname, { scroll: false })
   }
 
   const hasActiveFilters = f.q || f.maxKm !== 25 || f.dateFrom || f.dateTo || (f.tags && f.tags.length > 0)
@@ -75,16 +106,18 @@ export default function SearchFilters({
           {/* Distance filter */}
           <div>
             <label className="block text-sm font-medium mb-1">Max Distance</label>
-            <div className="flex items-center gap-2">
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="25" 
-                value={f.maxKm ? Math.round(f.maxKm * 0.621371) : ''}
-                onChange={e => set('maxKm', Number(e.target.value) * 1.609)} 
-              />
-              <span className="text-sm text-neutral-600">miles</span>
-            </div>
+            <select 
+              className="w-full px-2 py-1 rounded border text-sm" 
+              value={f.maxKm || 25}
+              onChange={e => set('maxKm', Number(e.target.value))}
+            >
+              <option value={5}>5 km (3 miles)</option>
+              <option value={10}>10 km (6 miles)</option>
+              <option value={25}>25 km (15 miles)</option>
+              <option value={50}>50 km (30 miles)</option>
+              <option value={100}>100 km (60 miles)</option>
+              <option value={250}>250 km (150 miles)</option>
+            </select>
           </div>
 
           {/* Date range */}
@@ -108,27 +141,6 @@ export default function SearchFilters({
             />
           </div>
 
-          {/* Price range */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Price Range</label>
-            <div className="flex gap-1">
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="Min" 
-                value={f.min || ''}
-                onChange={e => set('min', e.target.value ? Number(e.target.value) : undefined)} 
-              />
-              <span className="text-sm text-neutral-600 self-center">-</span>
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="Max" 
-                value={f.max || ''}
-                onChange={e => set('max', e.target.value ? Number(e.target.value) : undefined)} 
-              />
-            </div>
-          </div>
         </div>
       )}
 

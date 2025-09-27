@@ -150,6 +150,11 @@ describe('ReviewsSection', () => {
             })
           }))
         }))
+      })),
+      rpc: vi.fn(() => ({
+        then: vi.fn((callback) => {
+          callback({ data: null, error: null })
+        })
       }))
     })
 
@@ -191,6 +196,11 @@ describe('ReviewsSection', () => {
             })
           }))
         }))
+      })),
+      rpc: vi.fn(() => ({
+        then: vi.fn((callback) => {
+          callback({ data: null, error: null })
+        })
       }))
     })
 

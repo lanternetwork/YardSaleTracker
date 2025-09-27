@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { adminSupabase } from '@/lib/supabase/admin'
 
 export async function GET() {
   try {
     // Test environment variables are loaded
-    const supabase = createSupabaseServer()
+    const supabase = adminSupabase
     
     // Test database connection with a simple query
     const { data, error } = await supabase

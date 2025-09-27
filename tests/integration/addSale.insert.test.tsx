@@ -1,8 +1,9 @@
+import React from 'react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMockSupabaseClient } from '@/tests/utils/mocks'
-import { useCreateSale } from '@/lib/hooks/useSales'
+import { useCreateSale, useSales } from '@/lib/hooks/useSales'
 import Explore from '@/app/(app)/explore/page'
 import { getAddressFixtures } from '@/tests/utils/mocks'
 
@@ -82,7 +83,10 @@ describe('Add Sale Integration', () => {
       lat: testAddress.lat,
       lng: testAddress.lng,
       owner_id: 'test-user-id',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      tags: [],
+      photos: [],
+      status: 'active' as const
     }
 
     mockCreateSale.mutateAsync.mockResolvedValue(createdSale)
@@ -91,8 +95,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [createdSale],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -122,8 +140,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -143,8 +175,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -166,8 +212,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -186,8 +246,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -245,7 +319,10 @@ describe('Add Sale Integration', () => {
       lat: testAddress.lat,
       lng: testAddress.lng,
       owner_id: 'test-user-id',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      tags: [],
+      photos: [],
+      status: 'active' as const
     }
 
     mockCreateSale.mutateAsync.mockResolvedValue(createdSale)
@@ -254,8 +331,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [createdSale],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>

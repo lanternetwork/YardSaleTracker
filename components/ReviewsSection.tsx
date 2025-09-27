@@ -24,7 +24,7 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
-  const { user } = useAuth()
+  const { data: user } = useAuth()
   const supabase = createSupabaseBrowser()
 
   useEffect(() => {

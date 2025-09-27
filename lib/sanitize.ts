@@ -1,9 +1,19 @@
 import DOMPurify from 'dompurify'
-import { JSDOM } from 'jsdom'
 
-// Create a JSDOM window for server-side sanitization
-const window = new JSDOM('').window
-const purify = DOMPurify(window as any)
+// Create a JSDOM window for server-side sanitization (optional)
+let purify: any = null
+
+try {
+  const { JSDOM } = require('jsdom')
+  const window = new JSDOM('').window
+  purify = DOMPurify(window as any)
+} catch (error) {
+  console.warn('JSDOM not available, using basic HTML sanitization')
+  // Fallback to basic HTML sanitization
+  purify = {
+    sanitize: (html: string) => html.replace(/<[^>]*>/g, '')
+  }
+}
 
 export interface SanitizeOptions {
   allowedTags?: string[]

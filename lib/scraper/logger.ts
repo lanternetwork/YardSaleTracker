@@ -8,6 +8,7 @@ export interface ScraperLogContext {
   city?: string
   query?: string
   operation?: string
+  resultCount?: number
 }
 
 class ScraperLogger {

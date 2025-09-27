@@ -30,7 +30,7 @@ export default function VirtualizedSalesList({ sales, isLoading, error }: Virtua
   }
 
   if (!sales?.length) {
-    return <EmptyState />
+    return <EmptyState showDemo={true} />
   }
 
   return (
