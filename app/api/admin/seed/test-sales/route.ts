@@ -77,32 +77,45 @@ export async function POST(request: NextRequest) {
       const rowIds: string[] = []
 
       for (const sale of seedSales) {
-        const { data, error } = await adminSupabase
+        // First check if sale already exists
+        const { data: existing } = await adminSupabase
           .from('yard_sales')
-          .upsert(sale, { 
-            onConflict: 'title,address',
-            ignoreDuplicates: false 
-          })
           .select('id')
+          .eq('title', sale.title)
+          .eq('address', sale.address)
+          .single()
 
-        if (error) {
-          console.error('Error upserting sale:', error)
-          continue
-        }
-
-        if (data && data.length > 0) {
-          rowIds.push(data[0].id)
-          // Check if this was an insert or update by checking if the sale existed before
-          const { data: existing } = await adminSupabase
+        if (existing) {
+          // Update existing sale
+          const { data, error } = await adminSupabase
             .from('yard_sales')
+            .update(sale)
+            .eq('id', existing.id)
             .select('id')
-            .eq('title', sale.title)
-            .eq('address', sale.address)
-            .single()
 
-          if (existing) {
+          if (error) {
+            console.error('Error updating sale:', error)
+            continue
+          }
+
+          if (data && data.length > 0) {
+            rowIds.push(data[0].id)
             updated++
-          } else {
+          }
+        } else {
+          // Insert new sale
+          const { data, error } = await adminSupabase
+            .from('yard_sales')
+            .insert(sale)
+            .select('id')
+
+          if (error) {
+            console.error('Error inserting sale:', error)
+            continue
+          }
+
+          if (data && data.length > 0) {
+            rowIds.push(data[0].id)
             inserted++
           }
         }
@@ -197,32 +210,45 @@ export async function POST(request: NextRequest) {
     const rowIds: string[] = []
 
     for (const sale of seedSales) {
-      const { data, error } = await adminSupabase
+      // First check if sale already exists
+      const { data: existing } = await adminSupabase
         .from('yard_sales')
-        .upsert(sale, { 
-          onConflict: 'title,address',
-          ignoreDuplicates: false 
-        })
         .select('id')
+        .eq('title', sale.title)
+        .eq('address', sale.address)
+        .single()
 
-      if (error) {
-        console.error('Error upserting sale:', error)
-        continue
-      }
-
-      if (data && data.length > 0) {
-        rowIds.push(data[0].id)
-        // Check if this was an insert or update by checking if the sale existed before
-        const { data: existing } = await adminSupabase
+      if (existing) {
+        // Update existing sale
+        const { data, error } = await adminSupabase
           .from('yard_sales')
+          .update(sale)
+          .eq('id', existing.id)
           .select('id')
-          .eq('title', sale.title)
-          .eq('address', sale.address)
-          .single()
 
-        if (existing) {
+        if (error) {
+          console.error('Error updating sale:', error)
+          continue
+        }
+
+        if (data && data.length > 0) {
+          rowIds.push(data[0].id)
           updated++
-        } else {
+        }
+      } else {
+        // Insert new sale
+        const { data, error } = await adminSupabase
+          .from('yard_sales')
+          .insert(sale)
+          .select('id')
+
+        if (error) {
+          console.error('Error inserting sale:', error)
+          continue
+        }
+
+        if (data && data.length > 0) {
+          rowIds.push(data[0].id)
           inserted++
         }
       }
