@@ -330,7 +330,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     previewSales.forEach(sale => {
       const point = points.find(p => p.id === sale.id)
       if (point) {
-        bounds.extend({ lat: point.lat, lng: point.lng })
+        bounds.extend(new google.maps.LatLng(point.lat, point.lng))
       }
     })
     
