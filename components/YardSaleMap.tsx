@@ -42,12 +42,17 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     loader.load().then(() => {
       if (!ref.current) return
 
+      // Default center (US center) with reasonable zoom
+      const defaultCenter = { lat: 39.8283, lng: -98.5795 }
+      const defaultZoom = 4
+
       const mapInstance = new google.maps.Map(ref.current, { 
+        center: defaultCenter,
+        zoom: defaultZoom,
         mapTypeControl: true, 
         streetViewControl: false,
         fullscreenControl: true,
         zoomControl: true,
-        zoom: 10,
         styles: [
           {
             featureType: 'poi',
@@ -301,10 +306,11 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center text-neutral-600">
           <div className="text-4xl mb-2">🗺️</div>
-          <div>{error}</div>
+          <div className="font-medium">Failed to load map</div>
           <div className="text-sm mt-2">
-            {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && 
-              'Please configure your Google Maps API key in the environment variables.'
+            {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY 
+              ? 'Google Maps API key not configured'
+              : 'Please check your internet connection and try again'
             }
           </div>
         </div>

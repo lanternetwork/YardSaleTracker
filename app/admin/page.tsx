@@ -1,11 +1,15 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createSupabaseBrowser } from '@/lib/supabase/client'
 
 export default function AdminPage() {
   const router = useRouter()
   const [isAdminEnabled, setIsAdminEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [publishedCount, setPublishedCount] = useState<number | null>(null)
+  const [seedResult, setSeedResult] = useState<string | null>(null)
+  const [isSeeding, setIsSeeding] = useState(false)
 
   useEffect(() => {
     // Check if admin features are enabled (client-side only)
@@ -26,6 +30,82 @@ export default function AdminPage() {
 
     checkAdminAccess()
   }, [])
+
+  // Fetch published sales count
+  useEffect(() => {
+    const fetchPublishedCount = async () => {
+      try {
+        const supabase = createSupabaseBrowser()
+        const fourteenDaysAgo = new Date()
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+        
+        const { count, error } = await supabase
+          .from('sales')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'published')
+          .gte('created_at', fourteenDaysAgo.toISOString())
+        
+        if (error) {
+          console.error('Error fetching published count:', error)
+        } else {
+          setPublishedCount(count || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching published count:', error)
+      }
+    }
+
+    if (isAdminEnabled) {
+      fetchPublishedCount()
+    }
+  }, [isAdminEnabled])
+
+  const handleSeedTestSales = async () => {
+    setIsSeeding(true)
+    setSeedResult(null)
+    
+    try {
+      const supabase = createSupabaseBrowser()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        setSeedResult('Error: Not authenticated')
+        return
+      }
+
+      const response = await fetch('/api/admin/seed/test-sales', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const result = await response.json()
+      
+      if (response.ok) {
+        setSeedResult(`✅ ${result.message}`)
+        // Refresh published count
+        const fourteenDaysAgo = new Date()
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+        
+        const { count } = await supabase
+          .from('sales')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'published')
+          .gte('created_at', fourteenDaysAgo.toISOString())
+        
+        setPublishedCount(count || 0)
+      } else {
+        setSeedResult(`❌ Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Seed error:', error)
+      setSeedResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsSeeding(false)
+    }
+  }
 
   useEffect(() => {
     if (!isLoading && !isAdminEnabled) {
@@ -140,17 +220,35 @@ export default function AdminPage() {
             </div>
           </div>
 
+          {/* Seed Test Sales */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-3">Seed Test Sales</h2>
+            <p className="text-sm text-neutral-600 mb-4">Add 2 test sales (Louisville + Oakland) for development.</p>
+            <button
+              onClick={handleSeedTestSales}
+              disabled={isSeeding}
+              className="w-full bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSeeding ? 'Seeding...' : 'Seed Test Sales'}
+            </button>
+            {seedResult && (
+              <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
+                {seedResult}
+              </div>
+            )}
+          </div>
+
           {/* Wizard Debug */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-3">Wizard Debug</h2>
             <p className="text-sm text-neutral-600 mb-4">Monitor posting wizard usage and dedupe effectiveness.</p>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Drafts (last 7 days):</span>
-                <span className="font-medium">-</span>
+                <span>Published sales (last 14 days):</span>
+                <span className="font-medium">{publishedCount !== null ? publishedCount : 'Loading...'}</span>
               </div>
               <div className="flex justify-between">
-                <span>Published (last 7 days):</span>
+                <span>Drafts (last 7 days):</span>
                 <span className="font-medium">-</span>
               </div>
               <div className="flex justify-between">

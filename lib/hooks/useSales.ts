@@ -19,6 +19,21 @@ export function useSales(filters?: {
     queryFn: async () => {
       const sb = createSupabaseBrowser()
       
+      // Default date filter: current week ± 7 days if no date filter present
+      let dateFrom = filters?.dateFrom
+      let dateTo = filters?.dateTo
+      
+      if (!dateFrom && !dateTo) {
+        const today = new Date()
+        const sevenDaysAgo = new Date(today)
+        sevenDaysAgo.setDate(today.getDate() - 7)
+        const sevenDaysFromNow = new Date(today)
+        sevenDaysFromNow.setDate(today.getDate() + 7)
+        
+        dateFrom = sevenDaysAgo.toISOString().split('T')[0]
+        dateTo = sevenDaysFromNow.toISOString().split('T')[0]
+      }
+      
       // Try the optimized RPC function first
       try {
         const { data, error } = await sb.rpc('search_sales', {
@@ -26,8 +41,8 @@ export function useSales(filters?: {
           max_distance_km: filters?.maxKm || null,
           user_lat: filters?.lat || null,
           user_lng: filters?.lng || null,
-          date_from: filters?.dateFrom || null,
-          date_to: filters?.dateTo || null,
+          date_from: dateFrom,
+          date_to: dateTo,
           price_min: filters?.min || null,
           price_max: filters?.max || null,
           tags_filter: filters?.tags || null,
@@ -57,11 +72,11 @@ export function useSales(filters?: {
         }
 
         // Apply date filters
-        if (filters?.dateFrom) {
-          query = query.gte('date_start', filters.dateFrom)
+        if (dateFrom) {
+          query = query.gte('date_start', dateFrom)
         }
-        if (filters?.dateTo) {
-          query = query.lte('date_start', filters.dateTo)
+        if (dateTo) {
+          query = query.lte('date_start', dateTo)
         }
 
         // Apply price filters
