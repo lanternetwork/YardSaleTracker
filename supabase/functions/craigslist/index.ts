@@ -1,3 +1,4 @@
+// @ts-ignore - Deno import
 import { serve } from "https://deno.land/std/http/server.ts"
 
 interface ScrapedSale {

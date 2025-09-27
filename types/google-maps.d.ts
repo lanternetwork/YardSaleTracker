@@ -8,7 +8,7 @@ declare namespace google {
       getZoom(): number
       addListener(eventName: string, handler: Function): MapsEventListener
       fitBounds(bounds: LatLngBounds): void
-      controls: ControlPosition[]
+      controls: { [key: number]: ControlPosition }
       map: Map
       anchor: any
     }

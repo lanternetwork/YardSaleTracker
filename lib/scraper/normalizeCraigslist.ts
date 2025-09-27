@@ -54,10 +54,10 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     if (value !== undefined && value !== null) {
       if (Array.isArray(value) && value.length === 0) {
         // Include empty arrays
-        result[key as keyof SaleMinimal] = value
+        result[key as keyof SaleMinimal] = value as any
       } else if (!Array.isArray(value) && value !== '') {
         // Include non-empty strings and other values
-        result[key as keyof SaleMinimal] = value
+        result[key as keyof SaleMinimal] = value as any
       }
     }
   })
