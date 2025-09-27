@@ -5,14 +5,15 @@ import WebVitals from '@/components/WebVitals'
 import { Header } from './Header'
 import { PWAComponents } from './PWAComponents'
 import { createHomepageStructuredData, createOrganizationStructuredData } from '@/lib/metadata'
+import { APP_NAME, DEFAULT_TITLE, DEFAULT_DESCRIPTION } from '@/lib/config/branding'
 
 export const metadata: Metadata = {
-  title: 'YardSaleFinder - Find Amazing Yard Sale Treasures',
-  description: 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!',
+  title: DEFAULT_TITLE,
+  description: DEFAULT_DESCRIPTION,
   keywords: 'yard sale, garage sale, estate sale, local sales, treasure hunting',
   openGraph: {
-    title: 'YardSaleFinder - Find Amazing Yard Sale Treasures',
-    description: 'Discover local yard sales, garage sales, and estate sales in your area.',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
     type: 'website',
   },
 }

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { APP_NAME } from '@/lib/config/branding'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -84,7 +85,7 @@ export default function PWAInstallPrompt() {
           
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-semibold text-neutral-900">
-              Install YardSaleFinder
+              Install {APP_NAME}
             </h3>
             <p className="text-xs text-neutral-600 mt-1">
               Get quick access to yard sales on your home screen

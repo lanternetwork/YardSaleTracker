@@ -22,6 +22,10 @@ This document describes all environment variables used by the Yard Sale Tracker 
   - Used by: Auth redirects, PWA manifest, sitemap generation
   - Example: `https://lootaura.com`
 
+- **NEXT_PUBLIC_APP_NAME**: Override for brand name (default: LootAura)
+  - Used by: UI text, PWA manifest, page titles
+  - Example: `LootAura` or `My Yard Sale App`
+
 ## Optional Variables
 
 ### Google Maps

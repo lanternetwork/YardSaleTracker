@@ -23,9 +23,9 @@ describe('createPageMetadata', () => {
       path: '/test'
     })
 
-    expect(metadata.title).toBe('Test Page | YardSaleFinder')
+    expect(metadata.title).toBe('Test Page | LootAura')
     expect(metadata.description).toBe('Test description')
-    expect(metadata.openGraph?.title).toBe('Test Page | YardSaleFinder')
+    expect(metadata.openGraph?.title).toBe('Test Page | LootAura')
     expect(metadata.openGraph?.url).toBe('https://yardsalefinder.com/test')
   })
 
@@ -75,7 +75,7 @@ describe('createSaleMetadata', () => {
 
     const metadata = createSaleMetadata(sale)
 
-    expect(metadata.title).toBe('Test Sale | YardSaleFinder')
+    expect(metadata.title).toBe('Test Sale | LootAura')
     expect(metadata.description).toContain('Test description')
     expect((metadata.openGraph as any)?.type).toBe('article')
     expect((metadata.openGraph?.images as any)?.[0]?.url).toBe('https://example.com/photo.jpg')
@@ -104,7 +104,7 @@ describe('createExploreMetadata', () => {
   it('should create explore metadata', () => {
     const metadata = createExploreMetadata()
 
-    expect(metadata.title).toBe('Explore Yard Sales | YardSaleFinder')
+    expect(metadata.title).toBe('Explore Yard Sales | LootAura')
     expect(metadata.description).toContain('Browse and discover')
     expect(metadata.openGraph?.url).toBe('https://yardsalefinder.com/explore')
   })
@@ -116,7 +116,7 @@ describe('createHomepageStructuredData', () => {
 
     expect(data['@context']).toBe('https://schema.org')
     expect(data['@type']).toBe('WebSite')
-    expect(data.name).toBe('YardSaleFinder')
+    expect(data.name).toBe('LootAura')
     expect(data.url).toBe('https://yardsalefinder.com')
     expect(data.potentialAction['@type']).toBe('SearchAction')
   })
@@ -128,7 +128,7 @@ describe('createOrganizationStructuredData', () => {
 
     expect(data['@context']).toBe('https://schema.org')
     expect(data['@type']).toBe('Organization')
-    expect(data.name).toBe('YardSaleFinder')
+    expect(data.name).toBe('LootAura')
     expect(data.url).toBe('https://yardsalefinder.com')
     expect(data.logo).toBe('https://yardsalefinder.com/icons/icon-512.png')
   })

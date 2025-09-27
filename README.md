@@ -1,4 +1,4 @@
-# Yard Sale Tracker
+# LootAura
 
 A modern, mobile-first web application for discovering, posting, and managing yard sales, garage sales, and estate sales in your neighborhood.
 
