@@ -7,6 +7,13 @@ import { http, HttpResponse } from 'msw'
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers)
 
+// Make matchers available globally
+declare global {
+  namespace Vi {
+    interface Assertion<T = any> extends jest.Matchers<void, T> {}
+  }
+}
+
 // Cleanup after each test
 afterEach(() => {
   cleanup()
