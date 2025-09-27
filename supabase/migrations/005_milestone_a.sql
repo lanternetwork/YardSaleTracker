@@ -150,7 +150,124 @@ CREATE POLICY "negative_matches_insert_policy" ON public.negative_matches
         auth.uid() IS NOT NULL AND created_by = auth.uid()
     );
 
+-- Create search_sales function for optimized search
+CREATE OR REPLACE FUNCTION public.search_sales(
+    search_query text DEFAULT NULL,
+    max_distance_km numeric DEFAULT NULL,
+    user_lat numeric DEFAULT NULL,
+    user_lng numeric DEFAULT NULL,
+    date_from date DEFAULT NULL,
+    date_to date DEFAULT NULL,
+    price_min numeric DEFAULT NULL,
+    price_max numeric DEFAULT NULL,
+    tags_filter text[] DEFAULT NULL,
+    limit_count integer DEFAULT 100,
+    offset_count integer DEFAULT 0
+)
+RETURNS TABLE (
+    id uuid,
+    title text,
+    description text,
+    address text,
+    city text,
+    state text,
+    zip text,
+    lat numeric,
+    lng numeric,
+    start_at timestamptz,
+    end_at timestamptz,
+    date_start date,
+    date_end date,
+    time_start time,
+    time_end time,
+    privacy_mode text,
+    geocode_precision text,
+    tags text[],
+    price_min numeric,
+    price_max numeric,
+    photos text[],
+    contact text,
+    status text,
+    source text,
+    source_id text,
+    owner_id uuid,
+    first_seen_at timestamptz,
+    last_seen_at timestamptz,
+    created_at timestamptz,
+    updated_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        s.id,
+        s.title,
+        s.description,
+        s.address,
+        s.city,
+        s.state,
+        s.zip,
+        s.lat,
+        s.lng,
+        s.start_at,
+        s.end_at,
+        s.date_start,
+        s.date_end,
+        s.time_start,
+        s.time_end,
+        s.privacy_mode,
+        s.geocode_precision,
+        s.tags,
+        s.price_min,
+        s.price_max,
+        s.photos,
+        s.contact,
+        s.status,
+        s.source,
+        s.source_id,
+        s.owner_id,
+        s.first_seen_at,
+        s.last_seen_at,
+        s.created_at,
+        s.updated_at
+    FROM public.sales s
+    WHERE 
+        s.status = 'published'
+        AND (search_query IS NULL OR s.title ILIKE '%' || search_query || '%' OR s.description ILIKE '%' || search_query || '%')
+        AND (date_from IS NULL OR s.date_start >= date_from)
+        AND (date_to IS NULL OR s.date_start <= date_to)
+        AND (price_min IS NULL OR s.price_min >= price_min)
+        AND (price_max IS NULL OR s.price_max <= price_max)
+        AND (tags_filter IS NULL OR s.tags && tags_filter)
+        AND (
+            max_distance_km IS NULL OR 
+            user_lat IS NULL OR 
+            user_lng IS NULL OR
+            ST_DWithin(
+                ST_Point(s.lng, s.lat)::geography,
+                ST_Point(user_lng, user_lat)::geography,
+                max_distance_km * 1000
+            )
+        )
+    ORDER BY 
+        CASE 
+            WHEN user_lat IS NOT NULL AND user_lng IS NOT NULL AND s.lat IS NOT NULL AND s.lng IS NOT NULL THEN
+                ST_Distance(
+                    ST_Point(s.lng, s.lat)::geography,
+                    ST_Point(user_lng, user_lat)::geography
+                )
+            ELSE 0
+        END,
+        s.last_seen_at DESC
+    LIMIT limit_count
+    OFFSET offset_count;
+END;
+$$;
+
 -- Grant necessary permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.sales TO authenticated;
 GRANT SELECT, INSERT ON public.negative_matches TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT EXECUTE ON FUNCTION public.search_sales TO authenticated;
