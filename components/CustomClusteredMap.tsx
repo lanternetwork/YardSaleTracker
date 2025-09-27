@@ -32,6 +32,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   const [clusters, setClusters] = useState<Cluster[]>([])
   const [saleMap, setSaleMap] = useState<Map<string, Sale>>(new Map())
+  const [currentZoom, setCurrentZoom] = useState<number>(10)
   
   // Cluster preview state
   const [previewSales, setPreviewSales] = useState<Sale[]>([])
@@ -118,6 +119,13 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
           setMap(mapInstance)
           setLoading(false)
           console.log('Map initialized successfully')
+          
+          // Add zoom listener
+          mapInstance.addListener('zoom_changed', () => {
+            const zoom = mapInstance.getZoom()
+            setCurrentZoom(zoom || 10)
+            console.log('Zoom changed to:', zoom)
+          })
         } catch (err) {
           console.error('Error initializing map:', err)
           setError(`Failed to initialize map: ${err}`)
@@ -143,10 +151,22 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
   }, [loader])
 
   // Custom clustering algorithm
-  const createClusters = (markers: google.maps.Marker[], sales: Sale[]): Cluster[] => {
+  const createClusters = (markers: google.maps.Marker[], sales: Sale[], zoom: number): Cluster[] => {
     if (markers.length === 0) return []
 
-    const clusterRadiusKm = 20 // 20km radius to ensure Oakland and SF cluster
+    // Adjust cluster radius based on zoom level
+    // At high zoom levels (15+), use smaller radius or no clustering
+    // At low zoom levels (<12), use larger radius
+    let clusterRadiusKm: number
+    if (zoom >= 15) {
+      clusterRadiusKm = 0 // No clustering at high zoom
+    } else if (zoom >= 12) {
+      clusterRadiusKm = 5 // Small radius at medium zoom
+    } else {
+      clusterRadiusKm = 20 // Large radius at low zoom
+    }
+    
+    console.log(`Clustering with radius: ${clusterRadiusKm}km at zoom level: ${zoom}`)
     const clusters: Cluster[] = []
     const processed = new Set<google.maps.Marker>()
 
@@ -272,7 +292,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     setSaleMap(newSaleMap)
 
     // Create clusters
-    const newClusters = createClusters(newMarkers, Array.from(newSaleMap.values()))
+    const newClusters = createClusters(newMarkers, Array.from(newSaleMap.values()), currentZoom)
     setClusters(newClusters)
 
     // Create cluster markers
@@ -328,6 +348,15 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     console.log('Markers updated:', newMarkers.length, 'clusters:', newClusters.length)
 
   }, [map, points])
+
+  // Re-cluster when zoom changes
+  useEffect(() => {
+    if (map && markers.length > 0) {
+      console.log('Re-clustering due to zoom change:', currentZoom)
+      const newClusters = createClusters(markers, Array.from(saleMap.values()), currentZoom)
+      setClusters(newClusters)
+    }
+  }, [currentZoom, map, markers, saleMap])
 
   // Preview handlers
   const handleViewAll = () => {
