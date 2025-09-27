@@ -6,9 +6,9 @@ import NavTabs from '@/components/NavTabs'
 import SearchFilters from '@/components/SearchFilters'
 import SearchResults from '@/components/SearchResults'
 import VirtualizedSalesList from '@/components/VirtualizedSalesList'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 
-const CustomClusteredMap = dynamic(() => import('@/components/CustomClusteredMap'), {
+const CustomClusteredMap = dynamicImport(() => import('@/components/CustomClusteredMap'), {
   ssr: false,
   loading: () => (
     <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
