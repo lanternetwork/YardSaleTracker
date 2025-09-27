@@ -61,7 +61,20 @@ describe('AddSaleForm', () => {
     const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: mockMutateAsync,
-      isPending: false
+      isPending: false,
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isSuccess: false,
+      isIdle: true,
+      mutate: vi.fn(),
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'idle' as const
     })
 
     render(<AddSaleForm />)
@@ -140,7 +153,20 @@ describe('AddSaleForm', () => {
     const { useCreateSale } = vi.mocked(await import('@/lib/hooks/useSales'))
     useCreateSale.mockReturnValue({
       mutateAsync: vi.fn(),
-      isPending: true
+      isPending: true,
+      data: undefined,
+      error: null,
+      variables: undefined,
+      isError: false,
+      isSuccess: false,
+      isIdle: false,
+      mutate: vi.fn(),
+      reset: vi.fn(),
+      context: undefined,
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'pending' as const
     })
 
     render(<AddSaleForm />)
