@@ -265,7 +265,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
         // Single marker - add click handler
         const marker = cluster.markers[0]
         marker.addListener('click', () => {
-          console.log('Single marker clicked:', marker.getTitle())
+          console.log('Single marker clicked:', (marker as any).getTitle())
           setPreviewSales(cluster.sales)
           setPreviewTotal(cluster.sales.length)
           setShowPreview(true)
