@@ -4,27 +4,23 @@ const memoryStore = new Map<string, { count: number; resetTime: number }>()
 // Redis client for production (optional)
 let redis: any = null
 
-// Try to import Redis, but don't fail if it's not available
-const initializeRedis = async () => {
-  try {
-    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-      // Dynamic import to avoid build-time resolution issues
-      const upstash = await import('upstash')
-      if (upstash && upstash.Redis) {
-        redis = new upstash.Redis({
-          url: process.env.UPSTASH_REDIS_REST_URL,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        })
-      }
-    }
-  } catch (error) {
-    // Silently fall back to in-memory store
-    redis = null
-  }
-}
-
-// Initialize Redis asynchronously
-initializeRedis()
+// Redis is disabled for now to avoid build issues
+// TODO: Re-enable when upstash is properly configured
+// const initializeRedis = async () => {
+//   try {
+//     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+//       const upstash = await import('upstash')
+//       if (upstash && upstash.Redis) {
+//         redis = new upstash.Redis({
+//           url: process.env.UPSTASH_REDIS_REST_URL,
+//           token: process.env.UPSTASH_REDIS_REST_TOKEN,
+//         })
+//       }
+//     }
+//   } catch (error) {
+//     redis = null
+//   }
+// }
 
 export interface RateLimitOptions {
   windowMs: number // Time window in milliseconds
