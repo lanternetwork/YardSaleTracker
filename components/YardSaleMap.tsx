@@ -50,14 +50,31 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       console.log('YardSaleMap: Google Maps API loaded successfully')
       
       // Wait for DOM to be ready and retry if ref is not available
+      let retryCount = 0
+      const maxRetries = 50 // 5 seconds max
+      
       const initializeMap = () => {
         if (!ref.current) {
-          console.log('YardSaleMap: Map container ref not ready, retrying in 100ms...')
+          retryCount++
+          if (retryCount > maxRetries) {
+            console.error('YardSaleMap: Map container ref not available after', maxRetries, 'retries')
+            setError('Map container not available')
+            setLoading(false)
+            return
+          }
+          console.log('YardSaleMap: Map container ref not ready, retrying in 100ms... (attempt', retryCount, '/', maxRetries, ')')
           setTimeout(initializeMap, 100)
           return
         }
 
         console.log('YardSaleMap: Map container ref is ready, creating map...')
+        console.log('YardSaleMap: Container element:', ref.current)
+        console.log('YardSaleMap: Container dimensions:', {
+          width: ref.current.offsetWidth,
+          height: ref.current.offsetHeight,
+          clientWidth: ref.current.clientWidth,
+          clientHeight: ref.current.clientHeight
+        })
         
         // Default center (US center) with reasonable zoom
         const defaultCenter = { lat: 39.8283, lng: -98.5795 }
@@ -361,5 +378,6 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     )
   }
 
+  console.log('YardSaleMap: Rendering map container div')
   return <div id="map" className="h-[60vh] w-full rounded-2xl bg-neutral-200" ref={ref} />
 }
