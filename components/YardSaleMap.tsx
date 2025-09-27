@@ -23,11 +23,19 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   
-  // Debug points data
-  console.log('YardSaleMap received points:', {
-    count: points.length,
-    points: points.map(p => ({ id: p.id, title: p.title, lat: p.lat, lng: p.lng }))
-  })
+      // Debug points data
+      console.log('YardSaleMap received points:', {
+        count: points.length,
+        points: points.map(p => ({ 
+          id: p.id, 
+          title: p.title, 
+          lat: p.lat, 
+          lng: p.lng, 
+          address: p.address,
+          city: p.city,
+          state: p.state
+        }))
+      })
   
   const loader = useMemo(() => 
     new Loader({ 
@@ -158,7 +166,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     
     // Enhanced clustering - group points that are reasonably close together
     const clusters: { center: { lat: number; lng: number }; points: typeof maskedPoints }[] = []
-    const clusterRadius = 0.05 // ~5km in degrees - reasonable radius for nearby sales
+    const clusterRadius = 0.15 // ~15km in degrees - should cluster Oakland and SF
     
     // Sort points by latitude to improve clustering
     const sortedPoints = [...maskedPoints].sort((a, b) => a.lat - b.lat)
