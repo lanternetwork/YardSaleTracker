@@ -74,11 +74,13 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
       return
     }
 
-    loader.load().then(() => {
-      console.log('Google Maps loader loaded successfully')
-      // Wait for DOM to be ready and retry if ref is not available
-      let retryCount = 0
-      const maxRetries = 50 // 5 seconds max
+    // Add a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      loader.load().then(() => {
+        console.log('Google Maps loader loaded successfully')
+        // Wait for DOM to be ready and retry if ref is not available
+        let retryCount = 0
+        const maxRetries = 50 // 5 seconds max
       
       const initializeMap = () => {
         if (!ref.current) {
@@ -125,6 +127,9 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
       setError(`Failed to load map: ${err.message}`)
       setLoading(false)
     })
+    }, 100)
+
+    return () => clearTimeout(timer)
   }, [loader])
 
   // Custom clustering algorithm
