@@ -5,11 +5,17 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 ## Features
 
 - 🔍 **Search & Filter**: Find sales by location, date, price, and categories
-- 🗺️ **Interactive Maps**: View sales on Google Maps with clustering
+- 🗺️ **Smart Map Clustering**: Zoom-aware clustering with InfoWindow popups
 - 📱 **PWA Support**: Install as a mobile app with offline capabilities
 - 🔐 **User Accounts**: Save favorites and manage your own sales
 - 📊 **Admin Tools**: Craigslist ingestion and system diagnostics
 - 🎨 **Modern UI**: Clean, responsive design with dark mode support
+
+### Map Clustering Features
+- **Zoom-aware clustering**: Blue circles that appear/disappear based on zoom level
+- **Rich popups**: InfoWindow showing first 10 sales with "View All" button
+- **Performance optimized**: Smooth transitions without blinking or flickering
+- **Distance-based**: Accurate clustering using Haversine formula for real-world distances
 
 ## Getting Started
 
