@@ -59,6 +59,8 @@ const nextConfig = {
               // Google Maps
               "https://maps.googleapis.com",
               "https://maps.gstatic.com",
+              "https://*.googleapis.com",
+              "https://*.gstatic.com",
               // Supabase
               "https://*.supabase.co",
               "https://*.supabase.com",
