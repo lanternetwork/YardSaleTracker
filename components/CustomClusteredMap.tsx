@@ -185,7 +185,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
 
       // Get sales for this cluster
       clusterMarkers.forEach(m => {
-        const sale = sales.find(s => s.id === m.get('saleId'))
+        const saleId = (m as any).get('saleId')
+        const sale = sales.find(s => s.id === saleId)
         if (sale) clusterSales.push(sale)
       })
 
