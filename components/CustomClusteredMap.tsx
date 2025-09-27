@@ -33,13 +33,20 @@ interface Sale {
   photos?: string[]
 }
 
-export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
+interface Cluster {
+  center: { lat: number; lng: number }
+  markers: google.maps.Marker[]
+  sales: Sale[]
+  bounds: google.maps.LatLngBounds
+}
+
+export default function CustomClusteredMap({ points }: { points: Marker[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
-  const [clusterer, setClusterer] = useState<MarkerClusterer | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
+  const [clusters, setClusters] = useState<Cluster[]>([])
   const [saleMap, setSaleMap] = useState<Map<string, Sale>>(new Map())
   
   // Cluster preview state
@@ -49,7 +56,7 @@ export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
   const [showModal, setShowModal] = useState(false)
   const [modalSales, setModalSales] = useState<Sale[]>([])
 
-  console.log('ClusteredYardSaleMap received points:', {
+  console.log('CustomClusteredMap received points:', {
     count: points.length,
     points: points.map(p => ({ 
       id: p.id, 
@@ -136,49 +143,79 @@ export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
     })
   }, [loader])
 
-  // Initialize clusterer when map is ready
-  useEffect(() => {
-    if (!map) return
+  // Custom clustering algorithm
+  const createClusters = (markers: google.maps.Marker[], sales: Sale[]): Cluster[] => {
+    if (markers.length === 0) return []
 
-    const initializeClusterer = async () => {
-      try {
-        const { MarkerClusterer } = await import('@googlemaps/markerclusterer')
-        
-        const newClusterer = new MarkerClusterer({
-          map,
-          algorithm: new MarkerClusterer.SuperClusterAlgorithm({
-            radius: 80,
-            maxZoom: 17,
-            minPoints: 2
-          })
-        })
+    const clusterRadius = 0.15 // ~15km in degrees
+    const clusters: Cluster[] = []
+    const processed = new Set<google.maps.Marker>()
 
-        setClusterer(newClusterer)
-        console.log('Clusterer initialized')
-      } catch (error) {
-        console.error('Failed to load MarkerClusterer:', error)
-        setError('Failed to load clustering library')
+    markers.forEach(marker => {
+      if (processed.has(marker)) return
+
+      const position = marker.getPosition()
+      if (!position) return
+
+      const clusterMarkers: google.maps.Marker[] = [marker]
+      const clusterSales: Sale[] = []
+      const bounds = new google.maps.LatLngBounds()
+      bounds.extend(position)
+
+      // Find nearby markers
+      markers.forEach(otherMarker => {
+        if (otherMarker === marker || processed.has(otherMarker)) return
+
+        const otherPosition = otherMarker.getPosition()
+        if (!otherPosition) return
+
+        const distance = Math.sqrt(
+          Math.pow(position.lat() - otherPosition.lat(), 2) + 
+          Math.pow(position.lng() - otherPosition.lng(), 2)
+        )
+
+        if (distance < clusterRadius) {
+          clusterMarkers.push(otherMarker)
+          bounds.extend(otherPosition)
+          processed.add(otherMarker)
+        }
+      })
+
+      processed.add(marker)
+
+      // Get sales for this cluster
+      clusterMarkers.forEach(m => {
+        const sale = sales.find(s => s.id === m.get('saleId'))
+        if (sale) clusterSales.push(sale)
+      })
+
+      // Calculate cluster center
+      const center = {
+        lat: clusterMarkers.reduce((sum, m) => sum + m.getPosition()!.lat(), 0) / clusterMarkers.length,
+        lng: clusterMarkers.reduce((sum, m) => sum + m.getPosition()!.lng(), 0) / clusterMarkers.length
       }
-    }
 
-    initializeClusterer()
+      clusters.push({
+        center,
+        markers: clusterMarkers,
+        sales: clusterSales,
+        bounds
+      })
+    })
 
-    return () => {
-      if (clusterer) {
-        clusterer.clearMarkers()
-      }
-    }
-  }, [map, clusterer])
+    return clusters
+  }
 
   // Update markers when points change
   useEffect(() => {
-    if (!map || !clusterer) return
+    if (!map) return
 
     console.log('Updating markers for', points.length, 'points')
 
     // Clear existing markers
-    clusterer.clearMarkers()
+    markers.forEach(marker => marker.setMap(null))
     setMarkers([])
+    setClusters([])
 
     if (points.length === 0) {
       console.log('No points to display')
@@ -207,23 +244,60 @@ export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
         time_start: point.time_start
       }
       
+      marker.set('saleId', point.id)
       marker.set('sale', sale)
       newSaleMap.set(point.id, sale)
-
-      // Single marker click handler
-      marker.addListener('click', () => {
-        console.log('Single marker clicked:', point.title)
-        // For single markers, we could show an info window or preview
-        // For now, just log - clustering will handle most interactions
-      })
 
       newMarkers.push(marker)
     })
 
-    // Add markers to clusterer
-    clusterer.addMarkers(newMarkers)
     setMarkers(newMarkers)
     setSaleMap(newSaleMap)
+
+    // Create clusters
+    const newClusters = createClusters(newMarkers, Array.from(newSaleMap.values()))
+    setClusters(newClusters)
+
+    // Create cluster markers
+    newClusters.forEach((cluster, index) => {
+      if (cluster.markers.length === 1) {
+        // Single marker - add click handler
+        const marker = cluster.markers[0]
+        marker.addListener('click', () => {
+          console.log('Single marker clicked:', marker.getTitle())
+          setPreviewSales(cluster.sales)
+          setPreviewTotal(cluster.sales.length)
+          setShowPreview(true)
+        })
+      } else {
+        // Cluster marker
+        const clusterMarker = new google.maps.Marker({
+          position: cluster.center,
+          map: map,
+          title: `${cluster.markers.length} sales in this area`,
+          icon: {
+            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+              <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="20" r="18" fill="#4285F4" stroke="#fff" stroke-width="2"/>
+                <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">${cluster.markers.length}</text>
+              </svg>
+            `)}`,
+            scaledSize: new google.maps.Size(40, 40),
+            anchor: new google.maps.Point(20, 20)
+          }
+        })
+
+        clusterMarker.addListener('click', () => {
+          console.log('Cluster clicked:', cluster.markers.length, 'markers')
+          setPreviewSales(cluster.sales.slice(0, 10))
+          setPreviewTotal(cluster.sales.length)
+          setShowPreview(true)
+        })
+
+        // Hide individual markers in cluster
+        cluster.markers.forEach(marker => marker.setMap(null))
+      }
+    })
 
     // Fit bounds to show all markers
     if (newMarkers.length > 0) {
@@ -234,39 +308,9 @@ export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
       map.fitBounds(bounds)
     }
 
-    console.log('Markers updated:', newMarkers.length)
+    console.log('Markers updated:', newMarkers.length, 'clusters:', newClusters.length)
 
-    // Cluster click handler
-    clusterer.addListener('clusterclick', (event: any) => {
-      console.log('Cluster clicked:', event)
-      
-      const cluster = event.cluster
-      const clusterMarkers = cluster.markers
-      const clusterSales: Sale[] = []
-
-      clusterMarkers.forEach((marker: google.maps.Marker) => {
-        const sale = marker.get('sale')
-        if (sale) {
-          clusterSales.push(sale)
-        }
-      })
-
-      // Sort by date/time
-      clusterSales.sort((a, b) => {
-        const dateA = new Date(a.date_start || a.start_at || '')
-        const dateB = new Date(b.date_start || b.start_at || '')
-        return dateA.getTime() - dateB.getTime()
-      })
-
-      console.log('Cluster sales:', clusterSales.length, clusterSales.map(s => s.title))
-
-      // Show preview with first 10
-      setPreviewSales(clusterSales.slice(0, 10))
-      setPreviewTotal(clusterSales.length)
-      setShowPreview(true)
-    })
-
-  }, [map, clusterer, points])
+  }, [map, points])
 
   // Preview handlers
   const handleViewAll = () => {
@@ -313,7 +357,7 @@ export default function ClusteredYardSaleMap({ points }: { points: Marker[] }) {
     return (
       <div className="w-full h-96 bg-gray-100 border border-gray-300 rounded flex items-center justify-center">
         <p className="text-gray-600">Loading map...</p>
-      </div>
+    </div>
     )
   }
 
