@@ -60,6 +60,15 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     []
   )
 
+  // Debug ref changes
+  useEffect(() => {
+    console.log('CustomClusteredMap mounted, ref.current:', !!ref.current)
+  }, [])
+
+  useEffect(() => {
+    console.log('Ref changed, ref.current:', !!ref.current)
+  }, [ref.current])
+
   // Initialize map
   useEffect(() => {
     console.log('Google Maps API Key check:', {
@@ -82,17 +91,18 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
         let retryCount = 0
         const maxRetries = 50 // 5 seconds max
       
-      const initializeMap = () => {
-        if (!ref.current) {
-          retryCount++
-          if (retryCount > maxRetries) {
-            setError('Map container not available after retries')
-            setLoading(false)
+        const initializeMap = () => {
+          console.log('Attempting to initialize map, retry count:', retryCount, 'ref.current:', !!ref.current)
+          if (!ref.current) {
+            retryCount++
+            if (retryCount > maxRetries) {
+              setError('Map container not available after retries')
+              setLoading(false)
+              return
+            }
+            setTimeout(initializeMap, 100)
             return
           }
-          setTimeout(initializeMap, 100)
-          return
-        }
 
         try {
           const mapInstance = new google.maps.Map(ref.current, {
@@ -335,26 +345,20 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     setShowModal(false)
   }
 
-  if (error) {
-    return (
-      <div className="w-full h-96 bg-red-100 border border-red-300 rounded flex items-center justify-center">
-        <p className="text-red-600">Map Error: {error}</p>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="w-full h-96 bg-gray-100 border border-gray-300 rounded flex items-center justify-center">
-        <p className="text-gray-600">Loading map...</p>
-    </div>
-    )
-  }
-
   return (
     <div className="relative">
       <div className="w-full h-96 border border-gray-300 rounded">
         <div ref={ref} className="w-full h-full" />
+        {loading && (
+          <div className="absolute inset-0 bg-gray-100 bg-opacity-90 flex items-center justify-center">
+            <p className="text-gray-600">Loading map...</p>
+          </div>
+        )}
+        {error && (
+          <div className="absolute inset-0 bg-red-100 bg-opacity-90 flex items-center justify-center">
+            <p className="text-red-600">Map Error: {error}</p>
+          </div>
+        )}
       </div>
       
       {showPreview && (
