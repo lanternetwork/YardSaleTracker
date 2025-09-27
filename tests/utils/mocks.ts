@@ -34,7 +34,6 @@ export class MockGoogleMapsLoader {
         maps: {
           places: {
             Autocomplete: class MockAutocomplete {
-              private input: HTMLInputElement
               private fields: string[]
               private listeners: { [key: string]: Function[] } = {}
               public input: HTMLInputElement
