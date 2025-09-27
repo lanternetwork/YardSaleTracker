@@ -245,8 +245,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
         time_start: point.time_start
       }
       
-      marker.set('saleId', point.id)
-      marker.set('sale', sale)
+      ;(marker as any).set('saleId', point.id)
+      ;(marker as any).set('sale', sale)
       newSaleMap.set(point.id, sale)
 
       newMarkers.push(marker)
