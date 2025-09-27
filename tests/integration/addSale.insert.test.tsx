@@ -140,8 +140,22 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isSuccess: true,
+      isFetching: false,
+      isRefetching: false,
+      isPending: false,
+      isStale: false,
+      isFetched: true,
+      isFetchedAfterMount: true,
+      isPlaceholderData: false,
+      isPreviousData: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      fetchStatus: 'idle' as const,
+      status: 'success' as const
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
