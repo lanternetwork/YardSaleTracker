@@ -75,6 +75,10 @@ function ExploreContent() {
           <div className="mb-4 text-sm text-neutral-600">
             {isLoading ? 'Loading...' : `${sales.length} sales found`}
           </div>
+          <div className="mb-4 p-4 bg-blue-100 border border-blue-300 rounded">
+            <p className="text-blue-800">Map tab is active! Points: {mapPoints.length}</p>
+            <p className="text-blue-600 text-sm">Sales data: {JSON.stringify(mapPoints.slice(0, 2), null, 2)}</p>
+          </div>
           <YardSaleMap points={mapPoints} />
         </div>
       )}
