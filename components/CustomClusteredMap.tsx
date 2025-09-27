@@ -284,7 +284,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
               </svg>
             `)}`,
             scaledSize: new google.maps.Size(40, 40),
-            anchor: new google.maps.Point(20, 20)
+            anchor: new (google.maps as any).Point(20, 20)
           }
         })
 
