@@ -342,8 +342,9 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   console.log('YardSaleMap: Render conditions:', { loading, error, pointsLength: points.length })
   
-  if (loading) {
-    console.log('YardSaleMap: Returning loading state')
+  // If we have points, render the map container even if still loading
+  if (loading && points.length === 0) {
+    console.log('YardSaleMap: Returning loading state (no points)')
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center">
