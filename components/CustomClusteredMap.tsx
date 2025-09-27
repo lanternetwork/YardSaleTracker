@@ -31,6 +31,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   const [clusters, setClusters] = useState<Cluster[]>([])
+  const [clusterMarkers, setClusterMarkers] = useState<google.maps.Marker[]>([])
   const [saleMap, setSaleMap] = useState<Map<string, Sale>>(new Map())
   const [currentZoom, setCurrentZoom] = useState<number>(10)
   
@@ -315,6 +316,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     setClusters(newClusters)
 
     // Create cluster markers
+    const initialClusterMarkers: google.maps.Marker[] = []
+    
     newClusters.forEach((cluster, index) => {
       if (cluster.markers.length === 1) {
         // Single marker - add click handler
@@ -352,8 +355,12 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
 
         // Hide individual markers in cluster
         cluster.markers.forEach(marker => marker.setMap(null))
+        
+        initialClusterMarkers.push(clusterMarker)
       }
     })
+    
+    setClusterMarkers(initialClusterMarkers)
 
     // Fit bounds to show all markers
     if (newMarkers.length > 0) {
@@ -376,14 +383,14 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
       setClusters(newClusters)
       
       // Clear existing cluster markers
-      clusters.forEach(cluster => {
-        if (cluster.markers.length > 1) {
-          // Hide individual markers in cluster
-          cluster.markers.forEach(marker => marker.setMap(null))
-        }
+      clusterMarkers.forEach(marker => {
+        marker.setMap(null)
       })
+      setClusterMarkers([])
       
       // Show/hide individual markers and create cluster markers
+      const newClusterMarkers: google.maps.Marker[] = []
+      
       newClusters.forEach((cluster, index) => {
         if (cluster.markers.length === 1) {
           // Single marker - show it
@@ -421,8 +428,12 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
             setPreviewTotal(cluster.sales.length)
             setShowPreview(true)
           })
+          
+          newClusterMarkers.push(clusterMarker)
         }
       })
+      
+      setClusterMarkers(newClusterMarkers)
     }
   }, [currentZoom, map, markers, saleMap])
 
