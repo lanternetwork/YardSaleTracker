@@ -43,8 +43,8 @@ export function useSales(filters?: {
           user_lng: filters?.lng || null,
           date_from: dateFrom,
           date_to: dateTo,
-          price_min: filters?.min || null,
-          price_max: filters?.max || null,
+          min_price_param: filters?.min || null,
+          max_price_param: filters?.max || null,
           tags_filter: filters?.tags || null,
           limit_count: 100,
           offset_count: 0

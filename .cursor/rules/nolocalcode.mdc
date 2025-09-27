@@ -7,3 +7,9 @@ ABSOLUTE RULE: No local command execution whatsoever
 - No npm, tsc, git, or any terminal commands
 - Cloud-only workflow: make changes → commit → push → let CI validate
 - Never run typecheck, build, test, or any local validation commands
+When the AI requires user action, it must:
+Clearly state what action is needed
+Provide detailed step-by-step instructions
+Include specific values, URLs, or settings
+Explain the expected outcome
+Provide troubleshooting if the action fails

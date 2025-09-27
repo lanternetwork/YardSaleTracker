@@ -158,8 +158,8 @@ CREATE OR REPLACE FUNCTION public.search_sales(
     user_lng numeric DEFAULT NULL,
     date_from date DEFAULT NULL,
     date_to date DEFAULT NULL,
-    price_min numeric DEFAULT NULL,
-    price_max numeric DEFAULT NULL,
+    min_price_param numeric DEFAULT NULL,
+    max_price_param numeric DEFAULT NULL,
     tags_filter text[] DEFAULT NULL,
     limit_count integer DEFAULT 100,
     offset_count integer DEFAULT 0
@@ -183,8 +183,8 @@ RETURNS TABLE (
     privacy_mode text,
     geocode_precision text,
     tags text[],
-    price_min numeric,
-    price_max numeric,
+    min_price numeric,
+    max_price numeric,
     photos text[],
     contact text,
     status text,
@@ -238,8 +238,8 @@ BEGIN
         AND (search_query IS NULL OR s.title ILIKE '%' || search_query || '%' OR s.description ILIKE '%' || search_query || '%')
         AND (date_from IS NULL OR s.date_start >= date_from)
         AND (date_to IS NULL OR s.date_start <= date_to)
-        AND (price_min IS NULL OR s.price_min >= price_min)
-        AND (price_max IS NULL OR s.price_max <= price_max)
+        AND (min_price_param IS NULL OR s.price_min >= min_price_param)
+        AND (max_price_param IS NULL OR s.price_max <= max_price_param)
         AND (tags_filter IS NULL OR s.tags && tags_filter)
         AND (
             max_distance_km IS NULL OR 
