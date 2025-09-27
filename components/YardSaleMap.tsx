@@ -163,7 +163,14 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     // Sort points by latitude to improve clustering
     const sortedPoints = [...maskedPoints].sort((a, b) => a.lat - b.lat)
     
-    sortedPoints.forEach(point => {
+    sortedPoints.forEach((point, index) => {
+      console.log(`Processing point ${index + 1}:`, {
+        title: point.title,
+        lat: point.lat,
+        lng: point.lng,
+        address: point.address
+      })
+      
       let addedToCluster = false
       
       // Check if this point is close to any existing cluster
@@ -173,12 +180,20 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           Math.pow(point.lng - cluster.center.lng, 2)
         )
         
+        console.log(`Distance to cluster:`, {
+          clusterCenter: cluster.center,
+          distance: distance,
+          radius: clusterRadius,
+          willCluster: distance < clusterRadius
+        })
+        
         if (distance < clusterRadius) {
           cluster.points.push(point)
           // Recalculate cluster center
           cluster.center.lat = cluster.points.reduce((sum, p) => sum + p.lat, 0) / cluster.points.length
           cluster.center.lng = cluster.points.reduce((sum, p) => sum + p.lng, 0) / cluster.points.length
           addedToCluster = true
+          console.log(`Added to existing cluster. New cluster size: ${cluster.points.length}`)
           break
         }
       }
@@ -188,6 +203,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           center: { lat: point.lat, lng: point.lng },
           points: [point]
         })
+        console.log(`Created new cluster for: ${point.title}`)
       }
     })
     
@@ -307,6 +323,12 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         pointCount: c.points.length,
         center: c.center,
         titles: c.points.map(p => p.title)
+      })),
+      allPoints: maskedPoints.map(p => ({
+        title: p.title,
+        lat: p.lat,
+        lng: p.lng,
+        address: p.address
       }))
     })
 
