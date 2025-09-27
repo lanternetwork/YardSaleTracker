@@ -16,15 +16,11 @@ type Marker = {
 }
 
 export default function YardSaleMap({ points }: { points: Marker[] }) {
-  console.log('YardSaleMap: Component initialized')
-  
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
-  
-  console.log('YardSaleMap received points:', points)
   
   const loader = useMemo(() => 
     new Loader({ 
@@ -37,20 +33,13 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   // Initialize map
   useEffect(() => {
-    console.log('YardSaleMap: Initializing map...')
-    console.log('YardSaleMap: API key present:', !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
-    
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-      console.error('YardSaleMap: No Google Maps API key configured')
       setError('Google Maps API key not configured')
       setLoading(false)
       return
     }
 
-    console.log('YardSaleMap: Loading Google Maps API...')
     loader.load().then(() => {
-      console.log('YardSaleMap: Google Maps API loaded successfully')
-      
       // Wait for DOM to be ready and retry if ref is not available
       let retryCount = 0
       const maxRetries = 50 // 5 seconds max
@@ -59,30 +48,18 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         if (!ref.current) {
           retryCount++
           if (retryCount > maxRetries) {
-            console.error('YardSaleMap: Map container ref not available after', maxRetries, 'retries')
             setError('Map container not available')
             setLoading(false)
             return
           }
-          console.log('YardSaleMap: Map container ref not ready, retrying in 100ms... (attempt', retryCount, '/', maxRetries, ')')
           setTimeout(initializeMap, 100)
           return
         }
-
-        console.log('YardSaleMap: Map container ref is ready, creating map...')
-        console.log('YardSaleMap: Container element:', ref.current)
-        console.log('YardSaleMap: Container dimensions:', {
-          width: ref.current.offsetWidth,
-          height: ref.current.offsetHeight,
-          clientWidth: ref.current.clientWidth,
-          clientHeight: ref.current.clientHeight
-        })
         
         // Default center (US center) with reasonable zoom
         const defaultCenter = { lat: 39.8283, lng: -98.5795 }
         const defaultZoom = 4
 
-        console.log('YardSaleMap: Creating map instance...')
         const mapInstance = new google.maps.Map(ref.current, { 
           center: defaultCenter,
           zoom: defaultZoom,
@@ -99,7 +76,6 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           ]
         })
 
-        console.log('YardSaleMap: Map instance created successfully')
         setMap(mapInstance)
         setLoading(false)
       }
@@ -107,7 +83,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       // Start the initialization process
       initializeMap()
     }).catch(err => {
-      console.error('YardSaleMap: Error loading Google Maps:', err)
+      console.error('Error loading Google Maps:', err)
       setError('Failed to load map')
       setLoading(false)
     })
@@ -115,24 +91,16 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   // Update markers when points change
   useEffect(() => {
-    console.log('YardSaleMap: Updating markers...', { map: !!map, pointsCount: points.length })
-    
-    if (!map) {
-      console.log('YardSaleMap: Map not ready yet, skipping marker update')
-      return
-    }
+    if (!map) return
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null))
     const newMarkers: google.maps.Marker[] = []
 
     if (points.length === 0) {
-      console.log('YardSaleMap: No points to display')
       setMarkers([])
       return
     }
-    
-    console.log('YardSaleMap: Processing', points.length, 'points')
 
     const bounds = new google.maps.LatLngBounds()
     
@@ -340,11 +308,8 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     }
   }, [map])
 
-  console.log('YardSaleMap: Render conditions:', { loading, error, pointsLength: points.length })
-  
   // If we have points, render the map container even if still loading
   if (loading && points.length === 0) {
-    console.log('YardSaleMap: Returning loading state (no points)')
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center">
@@ -356,7 +321,6 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   }
 
   if (error) {
-    console.log('YardSaleMap: Returning error state:', error)
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center text-neutral-600">
@@ -374,7 +338,6 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   }
 
   if (points.length === 0) {
-    console.log('YardSaleMap: Returning no points state')
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center text-neutral-600">
@@ -386,6 +349,5 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     )
   }
 
-  console.log('YardSaleMap: Rendering map container div')
   return <div id="map" className="h-[60vh] w-full rounded-2xl bg-neutral-200" ref={ref} />
 }

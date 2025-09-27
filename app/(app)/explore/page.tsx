@@ -26,35 +26,28 @@ import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
 
 function ExploreContent() {
-  console.log('ExploreContent: Component rendering...')
-  
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<Filters>({ q: '', maxKm: 25, tags: [] })
   
   const tab = searchParams.get('tab') as 'list' | 'map' | 'add' | 'find' || 'list'
-  
-  console.log('ExploreContent: Current tab:', tab)
 
   // Use React Query hook for data fetching
   const { data: sales = [], isLoading, error } = useSales(filters)
 
-  const mapPoints = useMemo(() => {
-    console.log('ExploreContent: Creating mapPoints from sales:', sales.length, 'sales')
-    const filtered = sales.filter(s => s.lat && s.lng)
-    console.log('ExploreContent: Filtered sales with lat/lng:', filtered.length)
-    const points = filtered.map(s => ({ 
-      id: s.id, 
-      title: s.title, 
-      lat: s.lat!, 
-      lng: s.lng!,
-      address: s.address || '',
-      privacy_mode: s.privacy_mode || 'exact',
-      date_start: s.date_start || '',
-      time_start: s.time_start
-    }))
-    console.log('ExploreContent: Final mapPoints:', points.length, 'points')
-    return points
-  }, [sales])
+  const mapPoints = useMemo(() => 
+    sales
+      .filter(s => s.lat && s.lng)
+      .map(s => ({ 
+        id: s.id, 
+        title: s.title, 
+        lat: s.lat!, 
+        lng: s.lng!,
+        address: s.address || '',
+        privacy_mode: s.privacy_mode || 'exact',
+        date_start: s.date_start || '',
+        time_start: s.time_start
+      }))
+  , [sales])
 
   return (
     <main className="max-w-6xl mx-auto p-4">
@@ -85,13 +78,6 @@ function ExploreContent() {
         <div>
           <div className="mb-4 text-sm text-neutral-600">
             {isLoading ? 'Loading...' : `${sales.length} sales found`}
-          </div>
-          <div className="mb-4 p-4 bg-blue-100 border border-blue-300 rounded">
-            <p className="text-blue-800">Map tab is active! Points: {mapPoints.length}</p>
-            <p className="text-blue-600 text-sm">Sales data: {JSON.stringify(mapPoints.slice(0, 2), null, 2)}</p>
-          </div>
-          <div className="mb-4 p-4 bg-green-100 border border-green-300 rounded">
-            <p className="text-green-800">About to render YardSaleMap with {mapPoints.length} points</p>
           </div>
           <YardSaleMap points={mapPoints} />
         </div>
