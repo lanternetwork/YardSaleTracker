@@ -1,23 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-
-interface Sale {
-  id: string
-  title: string
-  description?: string
-  address?: string
-  city?: string
-  state?: string
-  start_at?: string
-  date_start?: string
-  time_start?: string
-  end_at?: string
-  date_end?: string
-  time_end?: string
-  tags?: string[]
-  photos?: string[]
-}
+import { Sale } from '@/types/sale'
 
 interface ClusterAllModalProps {
   sales: Sale[]

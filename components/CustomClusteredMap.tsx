@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
 import ClusterPreview from './ClusterPreview'
 import ClusterAllModal from './ClusterAllModal'
+import { Sale } from '@/types/sale'
 
 type Marker = { 
   id: string
@@ -14,23 +15,6 @@ type Marker = {
   privacy_mode: 'exact' | 'block_until_24h'
   date_start: string
   time_start?: string
-}
-
-interface Sale {
-  id: string
-  title: string
-  description?: string
-  address?: string
-  city?: string
-  state?: string
-  start_at?: string
-  date_start?: string
-  time_start?: string
-  end_at?: string
-  date_end?: string
-  time_end?: string
-  tags?: string[]
-  photos?: string[]
 }
 
 interface Cluster {

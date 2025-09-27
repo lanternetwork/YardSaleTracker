@@ -1,17 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-
-interface Sale {
-  id: string
-  title: string
-  address?: string
-  city?: string
-  state?: string
-  start_at?: string
-  date_start?: string
-  time_start?: string
-}
+import { Sale } from '@/types/sale'
 
 interface ClusterPreviewProps {
   sales: Sale[]
