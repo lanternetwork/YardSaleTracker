@@ -16,6 +16,8 @@ type Marker = {
 }
 
 export default function YardSaleMap({ points }: { points: Marker[] }) {
+  console.log('YardSaleMap: Component initialized')
+  
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

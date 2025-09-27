@@ -18,6 +18,8 @@ import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
 
 function ExploreContent() {
+  console.log('ExploreContent: Component rendering...')
+  
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<Filters>({ q: '', maxKm: 25, tags: [] })
   
