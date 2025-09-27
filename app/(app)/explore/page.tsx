@@ -9,7 +9,15 @@ import dynamic from 'next/dynamic'
 
 const YardSaleMap = dynamic(() => import('@/components/YardSaleMap'), {
   ssr: false,
-  loading: () => <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">Loading map...</div>
+  loading: () => (
+    <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
+        <div className="text-neutral-600">Loading map...</div>
+        <div className="text-xs text-neutral-500 mt-2">Dynamic import in progress</div>
+      </div>
+    </div>
+  )
 })
 import AddSaleForm from '@/components/AddSaleForm'
 import ImportSales from '@/components/ImportSales'
@@ -78,6 +86,9 @@ function ExploreContent() {
           <div className="mb-4 p-4 bg-blue-100 border border-blue-300 rounded">
             <p className="text-blue-800">Map tab is active! Points: {mapPoints.length}</p>
             <p className="text-blue-600 text-sm">Sales data: {JSON.stringify(mapPoints.slice(0, 2), null, 2)}</p>
+          </div>
+          <div className="mb-4 p-4 bg-green-100 border border-green-300 rounded">
+            <p className="text-green-800">About to render YardSaleMap with {mapPoints.length} points</p>
           </div>
           <YardSaleMap points={mapPoints} />
         </div>
