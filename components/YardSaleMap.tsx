@@ -338,7 +338,10 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     }
   }, [map])
 
+  console.log('YardSaleMap: Render conditions:', { loading, error, pointsLength: points.length })
+  
   if (loading) {
+    console.log('YardSaleMap: Returning loading state')
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center">
@@ -350,6 +353,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   }
 
   if (error) {
+    console.log('YardSaleMap: Returning error state:', error)
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center text-neutral-600">
@@ -367,6 +371,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   }
 
   if (points.length === 0) {
+    console.log('YardSaleMap: Returning no points state')
     return (
       <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
         <div className="text-center text-neutral-600">
