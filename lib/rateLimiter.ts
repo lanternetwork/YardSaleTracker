@@ -7,14 +7,18 @@ let redis: any = null
 // Try to import Redis, but don't fail if it's not available
 try {
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const { Redis } = require('upstash')
-    redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
+    // Dynamic import to avoid build-time resolution issues
+    const upstash = require('upstash')
+    if (upstash && upstash.Redis) {
+      redis = new upstash.Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    }
   }
 } catch (error) {
-  console.warn('Upstash Redis not available, using in-memory store')
+  // Silently fall back to in-memory store
+  redis = null
 }
 
 export interface RateLimitOptions {

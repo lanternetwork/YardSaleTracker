@@ -2,15 +2,29 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import webpush from 'web-push'
 
-// Configure web-push
-webpush.setVapidDetails(
-  'mailto:admin@yardsalefinder.com',
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+// Configure web-push only if keys are available (not during build)
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  try {
+    webpush.setVapidDetails(
+      'mailto:admin@yardsalefinder.com',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    )
+  } catch (error) {
+    console.warn('VAPID keys not properly configured:', error)
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if VAPID is configured
+    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+      return NextResponse.json(
+        { error: 'Push notifications not configured' },
+        { status: 503 }
+      )
+    }
+
     const supabase = createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
     
