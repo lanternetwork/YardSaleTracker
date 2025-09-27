@@ -34,6 +34,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
   const [clusterMarkers, setClusterMarkers] = useState<google.maps.Marker[]>([])
   const [saleMap, setSaleMap] = useState<Map<string, Sale>>(new Map())
   const [currentZoom, setCurrentZoom] = useState<number>(10)
+  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null)
   
   // Cluster preview state
   const [previewSales, setPreviewSales] = useState<Sale[]>([])
@@ -348,9 +349,55 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
 
         clusterMarker.addListener('click', () => {
           console.log('Cluster clicked:', cluster.markers.length, 'markers')
-          setPreviewSales(cluster.sales.slice(0, 10))
-          setPreviewTotal(cluster.sales.length)
-          setShowPreview(true)
+          
+          // Close any existing info window
+          if (activeInfoWindow) {
+            activeInfoWindow.close()
+          }
+          
+          // Create info window content with first 10 sales
+          const first10Sales = cluster.sales.slice(0, 10)
+          const hasMore = cluster.sales.length > 10
+          
+          const infoContent = `
+            <div style="max-width: 300px; padding: 10px;">
+              <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">
+                ${cluster.sales.length} Sales in This Area
+              </h3>
+              <div style="max-height: 200px; overflow-y: auto;">
+                ${first10Sales.map(sale => `
+                  <div style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <div style="font-weight: bold; color: #333; margin-bottom: 4px;">
+                      ${sale.title}
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-bottom: 2px;">
+                      ${sale.address || 'No address'}
+                    </div>
+                    <div style="font-size: 12px; color: #666;">
+                      ${sale.date_start ? new Date(sale.date_start).toLocaleDateString() : 'No date'}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              ${hasMore ? `
+                <div style="margin-top: 10px; text-align: center;">
+                  <button onclick="window.open('/explore?tab=list&cluster=${cluster.sales.map(s => s.id).join(',')}', '_blank')" 
+                          style="background: #4285F4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    View All ${cluster.sales.length} Sales
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `
+          
+          // Create and show info window
+          const infoWindow = new google.maps.InfoWindow({
+            content: infoContent,
+            maxWidth: 300
+          })
+          
+          infoWindow.open(map, clusterMarker)
+          setActiveInfoWindow(infoWindow)
         })
 
         // Hide individual markers in cluster
@@ -380,6 +427,20 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     if (map && markers.length > 0) {
       console.log('Re-clustering due to zoom change:', currentZoom)
       const newClusters = createClusters(markers, Array.from(saleMap.values()), currentZoom)
+      
+      // Check if clustering actually changed
+      const clustersChanged = newClusters.length !== clusters.length || 
+        newClusters.some((newCluster, index) => {
+          const oldCluster = clusters[index]
+          return !oldCluster || newCluster.markers.length !== oldCluster.markers.length
+        })
+      
+      if (!clustersChanged) {
+        console.log('Clustering unchanged, skipping marker updates')
+        return
+      }
+      
+      console.log('Clustering changed, updating markers')
       setClusters(newClusters)
       
       // Clear existing cluster markers
@@ -424,9 +485,55 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
 
           clusterMarker.addListener('click', () => {
             console.log('Cluster clicked with', cluster.sales.length, 'sales')
-            setPreviewSales(cluster.sales)
-            setPreviewTotal(cluster.sales.length)
-            setShowPreview(true)
+            
+            // Close any existing info window
+            if (activeInfoWindow) {
+              activeInfoWindow.close()
+            }
+            
+            // Create info window content with first 10 sales
+            const first10Sales = cluster.sales.slice(0, 10)
+            const hasMore = cluster.sales.length > 10
+            
+            const infoContent = `
+              <div style="max-width: 300px; padding: 10px;">
+                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">
+                  ${cluster.sales.length} Sales in This Area
+                </h3>
+                <div style="max-height: 200px; overflow-y: auto;">
+                  ${first10Sales.map(sale => `
+                    <div style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                      <div style="font-weight: bold; color: #333; margin-bottom: 4px;">
+                        ${sale.title}
+                      </div>
+                      <div style="font-size: 12px; color: #666; margin-bottom: 2px;">
+                        ${sale.address || 'No address'}
+                      </div>
+                      <div style="font-size: 12px; color: #666;">
+                        ${sale.date_start ? new Date(sale.date_start).toLocaleDateString() : 'No date'}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+                ${hasMore ? `
+                  <div style="margin-top: 10px; text-align: center;">
+                    <button onclick="window.open('/explore?tab=list&cluster=${cluster.sales.map(s => s.id).join(',')}', '_blank')" 
+                            style="background: #4285F4; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                      View All ${cluster.sales.length} Sales
+                    </button>
+                  </div>
+                ` : ''}
+              </div>
+            `
+            
+            // Create and show info window
+            const infoWindow = new google.maps.InfoWindow({
+              content: infoContent,
+              maxWidth: 300
+            })
+            
+            infoWindow.open(map, clusterMarker)
+            setActiveInfoWindow(infoWindow)
           })
           
           newClusterMarkers.push(clusterMarker)
