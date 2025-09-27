@@ -167,6 +167,25 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     }
     
     console.log(`Clustering with radius: ${clusterRadiusKm}km at zoom level: ${zoom}`)
+    
+    // If no clustering at this zoom level, return individual markers as single-item clusters
+    if (clusterRadiusKm === 0) {
+      console.log('No clustering at this zoom level - showing individual markers')
+      return markers.map(marker => {
+        const position = marker.getPosition()
+        if (!position) return null
+        
+        const saleId = (marker as any).get('saleId')
+        const sale = sales.find(s => s.id === saleId)
+        
+        return {
+          center: { lat: position.lat(), lng: position.lng() },
+          markers: [marker],
+          sales: sale ? [sale] : [],
+          bounds: new google.maps.LatLngBounds(position, position)
+        }
+      }).filter(Boolean) as Cluster[]
+    }
     const clusters: Cluster[] = []
     const processed = new Set<google.maps.Marker>()
 
@@ -355,6 +374,55 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
       console.log('Re-clustering due to zoom change:', currentZoom)
       const newClusters = createClusters(markers, Array.from(saleMap.values()), currentZoom)
       setClusters(newClusters)
+      
+      // Clear existing cluster markers
+      clusters.forEach(cluster => {
+        if (cluster.markers.length > 1) {
+          // Hide individual markers in cluster
+          cluster.markers.forEach(marker => marker.setMap(null))
+        }
+      })
+      
+      // Show/hide individual markers and create cluster markers
+      newClusters.forEach((cluster, index) => {
+        if (cluster.markers.length === 1) {
+          // Single marker - show it
+          const marker = cluster.markers[0]
+          marker.setMap(map)
+          marker.addListener('click', () => {
+            console.log('Single marker clicked:', (marker as any).getTitle())
+            setPreviewSales(cluster.sales)
+            setPreviewTotal(cluster.sales.length)
+            setShowPreview(true)
+          })
+        } else {
+          // Cluster - hide individual markers and show cluster marker
+          cluster.markers.forEach(marker => marker.setMap(null))
+          
+          const clusterMarker = new google.maps.Marker({
+            position: cluster.center,
+            map: map,
+            title: `${cluster.markers.length} sales in this area`,
+            icon: {
+              url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="20" cy="20" r="18" fill="#4285F4" stroke="#fff" stroke-width="2"/>
+                  <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">${cluster.markers.length}</text>
+                </svg>
+              `)}`,
+              scaledSize: new google.maps.Size(40, 40),
+              anchor: new (google.maps as any).Point(20, 20)
+            }
+          })
+
+          clusterMarker.addListener('click', () => {
+            console.log('Cluster clicked with', cluster.sales.length, 'sales')
+            setPreviewSales(cluster.sales)
+            setPreviewTotal(cluster.sales.length)
+            setShowPreview(true)
+          })
+        }
+      })
     }
   }, [currentZoom, map, markers, saleMap])
 
