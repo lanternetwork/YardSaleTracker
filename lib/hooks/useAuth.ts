@@ -25,6 +25,7 @@ export function useProfile() {
     queryFn: async () => {
       if (!user) return null
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('profiles')
         .select('*')
@@ -147,6 +148,7 @@ export function useFavorites() {
     queryFn: async () => {
       if (!user) return []
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('favorites')
         .select(`
@@ -159,7 +161,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) as unknown as Sale[] || []
+      return data?.map((fav: any) => fav.yard_sales).filter(Boolean) as unknown as Sale[] || []
     },
     enabled: !!user,
   })
@@ -175,6 +177,7 @@ export function useToggleFavorite() {
         throw new Error('Please sign in to save favorites')
       }
 
+      const sb = createSupabaseBrowser()
       if (isFavorited) {
         const { error } = await sb
           .from('favorites')

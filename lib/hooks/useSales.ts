@@ -46,6 +46,7 @@ export function useSale(id: string) {
   return useQuery({
     queryKey: ['sale', id],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('yard_sales')
         .select('*')
@@ -72,6 +73,7 @@ export function useCreateSale() {
         throw new Error('Invalid sale data')
       }
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('yard_sales')
         .insert([parsed.data])
@@ -100,6 +102,7 @@ export function useUpdateSale() {
         throw new Error('Invalid sale data')
       }
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('yard_sales')
         .update(parsed.data)
@@ -125,6 +128,7 @@ export function useDeleteSale() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      const sb = createSupabaseBrowser()
       const { error } = await sb
         .from('yard_sales')
         .delete()
@@ -144,6 +148,7 @@ export function useSaleItems(saleId: string) {
   return useQuery({
     queryKey: ['sale-items', saleId],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('sale_items')
         .select('*')
