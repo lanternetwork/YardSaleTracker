@@ -77,15 +77,22 @@ export async function POST(request: NextRequest) {
       const rowIds: string[] = []
 
       for (const sale of seedSales) {
+        console.log('Processing sale:', sale.title, sale.address)
+        
         // First check if sale already exists
-        const { data: existing } = await adminSupabase
+        const { data: existing, error: checkError } = await adminSupabase
           .from('yard_sales')
           .select('id')
           .eq('title', sale.title)
           .eq('address', sale.address)
           .single()
 
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking existing sale:', checkError)
+        }
+
         if (existing) {
+          console.log('Sale exists, updating:', existing.id)
           // Update existing sale
           const { data, error } = await adminSupabase
             .from('yard_sales')
@@ -101,8 +108,10 @@ export async function POST(request: NextRequest) {
           if (data && data.length > 0) {
             rowIds.push(data[0].id)
             updated++
+            console.log('Updated sale:', data[0].id)
           }
         } else {
+          console.log('Sale does not exist, inserting new sale')
           // Insert new sale
           const { data, error } = await adminSupabase
             .from('yard_sales')
@@ -111,12 +120,14 @@ export async function POST(request: NextRequest) {
 
           if (error) {
             console.error('Error inserting sale:', error)
+            console.error('Sale data:', JSON.stringify(sale, null, 2))
             continue
           }
 
           if (data && data.length > 0) {
             rowIds.push(data[0].id)
             inserted++
+            console.log('Inserted sale:', data[0].id)
           }
         }
       }
@@ -210,15 +221,22 @@ export async function POST(request: NextRequest) {
     const rowIds: string[] = []
 
     for (const sale of seedSales) {
+      console.log('Processing sale (regular admin):', sale.title, sale.address)
+      
       // First check if sale already exists
-      const { data: existing } = await adminSupabase
+      const { data: existing, error: checkError } = await adminSupabase
         .from('yard_sales')
         .select('id')
         .eq('title', sale.title)
         .eq('address', sale.address)
         .single()
 
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing sale:', checkError)
+      }
+
       if (existing) {
+        console.log('Sale exists, updating:', existing.id)
         // Update existing sale
         const { data, error } = await adminSupabase
           .from('yard_sales')
@@ -234,8 +252,10 @@ export async function POST(request: NextRequest) {
         if (data && data.length > 0) {
           rowIds.push(data[0].id)
           updated++
+          console.log('Updated sale:', data[0].id)
         }
       } else {
+        console.log('Sale does not exist, inserting new sale')
         // Insert new sale
         const { data, error } = await adminSupabase
           .from('yard_sales')
@@ -244,12 +264,14 @@ export async function POST(request: NextRequest) {
 
         if (error) {
           console.error('Error inserting sale:', error)
+          console.error('Sale data:', JSON.stringify(sale, null, 2))
           continue
         }
 
         if (data && data.length > 0) {
           rowIds.push(data[0].id)
           inserted++
+          console.log('Inserted sale:', data[0].id)
         }
       }
     }
