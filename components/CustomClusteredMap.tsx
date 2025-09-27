@@ -395,7 +395,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
             content: infoContent
           })
           
-          infoWindow.open(map, clusterMarker)
+          infoWindow.open(map)
+          infoWindow.setPosition(clusterMarker.getPosition()!)
           setActiveInfoWindow(infoWindow)
         })
 
@@ -530,7 +531,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
               content: infoContent
             })
             
-            infoWindow.open(map, clusterMarker)
+            infoWindow.open(map)
+            infoWindow.setPosition(clusterMarker.getPosition()!)
             setActiveInfoWindow(infoWindow)
           })
           
