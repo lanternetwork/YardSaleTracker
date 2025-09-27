@@ -76,22 +76,70 @@ describe('Dedupe Functionality', () => {
 
 describe('Date Overlap', () => {
   it('should detect overlapping dates', () => {
-    const sale1 = { date_start: '2024-12-28', date_end: '2024-12-29' }
-    const sale2 = { date_start: '2024-12-28', date_end: '2024-12-29' }
+    const sale1 = { 
+      id: 'sale-1', 
+      title: 'Test Sale 1', 
+      address: '123 Test St', 
+      lat: 37.7749, 
+      lng: -122.4194,
+      date_start: '2024-12-28', 
+      date_end: '2024-12-29' 
+    }
+    const sale2 = { 
+      id: 'sale-2', 
+      title: 'Test Sale 2', 
+      address: '456 Test Ave', 
+      lat: 37.7849, 
+      lng: -122.4094,
+      date_start: '2024-12-28', 
+      date_end: '2024-12-29' 
+    }
     
     expect(hasDateOverlap(sale1, sale2)).toBe(true)
   })
 
   it('should detect partial overlap', () => {
-    const sale1 = { date_start: '2024-12-28', date_end: '2024-12-29' }
-    const sale2 = { date_start: '2024-12-29', date_end: '2024-12-30' }
+    const sale1 = { 
+      id: 'sale-1', 
+      title: 'Test Sale 1', 
+      address: '123 Test St', 
+      lat: 37.7749, 
+      lng: -122.4194,
+      date_start: '2024-12-28', 
+      date_end: '2024-12-29' 
+    }
+    const sale2 = { 
+      id: 'sale-2', 
+      title: 'Test Sale 2', 
+      address: '456 Test Ave', 
+      lat: 37.7849, 
+      lng: -122.4094,
+      date_start: '2024-12-29', 
+      date_end: '2024-12-30' 
+    }
     
     expect(hasDateOverlap(sale1, sale2)).toBe(true)
   })
 
   it('should not detect non-overlapping dates', () => {
-    const sale1 = { date_start: '2024-12-28', date_end: '2024-12-29' }
-    const sale2 = { date_start: '2024-12-30', date_end: '2024-12-31' }
+    const sale1 = { 
+      id: 'sale-1', 
+      title: 'Test Sale 1', 
+      address: '123 Test St', 
+      lat: 37.7749, 
+      lng: -122.4194,
+      date_start: '2024-12-28', 
+      date_end: '2024-12-29' 
+    }
+    const sale2 = { 
+      id: 'sale-2', 
+      title: 'Test Sale 2', 
+      address: '456 Test Ave', 
+      lat: 37.7849, 
+      lng: -122.4094,
+      date_start: '2024-12-30', 
+      date_end: '2024-12-31' 
+    }
     
     expect(hasDateOverlap(sale1, sale2)).toBe(false)
   })
