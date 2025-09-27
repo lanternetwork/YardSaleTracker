@@ -15,6 +15,7 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(10).optional(),
   NOMINATIM_APP_EMAIL: z.string().email().optional(),
+  ENABLE_PUBLIC_ADMIN: z.string().optional(),
 })
 
 // Validate public environment variables with fallbacks for build time
@@ -50,6 +51,7 @@ const getServerEnv = () => {
       UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
       NOMINATIM_APP_EMAIL: process.env.NOMINATIM_APP_EMAIL,
+      ENABLE_PUBLIC_ADMIN: process.env.ENABLE_PUBLIC_ADMIN,
     })
   } catch (error) {
     // Fallback for build time when env vars might not be available
@@ -59,6 +61,7 @@ const getServerEnv = () => {
       UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
       NOMINATIM_APP_EMAIL: process.env.NOMINATIM_APP_EMAIL,
+      ENABLE_PUBLIC_ADMIN: process.env.ENABLE_PUBLIC_ADMIN,
     }
   }
 }

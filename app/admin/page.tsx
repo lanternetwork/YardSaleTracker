@@ -6,6 +6,7 @@ import { createSupabaseBrowser } from '@/lib/supabase/client'
 export default function AdminPage() {
   const router = useRouter()
   const [isAdminEnabled, setIsAdminEnabled] = useState(false)
+  const [isPublicAdminMode, setIsPublicAdminMode] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [publishedCount, setPublishedCount] = useState<number | null>(null)
   const [seedResult, setSeedResult] = useState<string | null>(null)
@@ -15,6 +16,19 @@ export default function AdminPage() {
     // Check if admin features are enabled (client-side only)
     const checkAdminAccess = async () => {
       try {
+        // Check for public admin mode first
+        const publicAdminResponse = await fetch('/api/admin/public-mode')
+        if (publicAdminResponse.ok) {
+          const publicAdminData = await publicAdminResponse.json()
+          if (publicAdminData.enabled) {
+            setIsPublicAdminMode(true)
+            setIsAdminEnabled(true)
+            setIsLoading(false)
+            return
+          }
+        }
+        
+        // Fall back to regular admin check
         const response = await fetch('/api/healthz')
         if (response.ok) {
           const data = await response.json()
@@ -138,6 +152,22 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Public Admin Mode Warning Banner */}
+        {isPublicAdminMode && (
+          <div className="mb-6 bg-amber-100 border border-amber-300 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-amber-600 mr-3">⚠️</div>
+              <div>
+                <h3 className="font-semibold text-amber-800">Public Admin Mode (Preview)</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  This environment is running with public admin enabled (preview-only). 
+                  Disable by removing ENABLE_PUBLIC_ADMIN in Vercel → Preview env.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
           <p className="text-neutral-600">System diagnostics and administrative tools.</p>
