@@ -48,35 +48,45 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     console.log('YardSaleMap: Loading Google Maps API...')
     loader.load().then(() => {
       console.log('YardSaleMap: Google Maps API loaded successfully')
-      if (!ref.current) {
-        console.error('YardSaleMap: Map container ref is null')
-        return
+      
+      // Wait for DOM to be ready and retry if ref is not available
+      const initializeMap = () => {
+        if (!ref.current) {
+          console.log('YardSaleMap: Map container ref not ready, retrying in 100ms...')
+          setTimeout(initializeMap, 100)
+          return
+        }
+
+        console.log('YardSaleMap: Map container ref is ready, creating map...')
+        
+        // Default center (US center) with reasonable zoom
+        const defaultCenter = { lat: 39.8283, lng: -98.5795 }
+        const defaultZoom = 4
+
+        console.log('YardSaleMap: Creating map instance...')
+        const mapInstance = new google.maps.Map(ref.current, { 
+          center: defaultCenter,
+          zoom: defaultZoom,
+          mapTypeControl: true, 
+          streetViewControl: false,
+          fullscreenControl: true,
+          zoomControl: true,
+          styles: [
+            {
+              featureType: 'poi',
+              elementType: 'labels',
+              stylers: [{ visibility: 'off' }]
+            }
+          ]
+        })
+
+        console.log('YardSaleMap: Map instance created successfully')
+        setMap(mapInstance)
+        setLoading(false)
       }
-
-      // Default center (US center) with reasonable zoom
-      const defaultCenter = { lat: 39.8283, lng: -98.5795 }
-      const defaultZoom = 4
-
-      console.log('YardSaleMap: Creating map instance...')
-      const mapInstance = new google.maps.Map(ref.current, { 
-        center: defaultCenter,
-        zoom: defaultZoom,
-        mapTypeControl: true, 
-        streetViewControl: false,
-        fullscreenControl: true,
-        zoomControl: true,
-        styles: [
-          {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          }
-        ]
-      })
-
-      console.log('YardSaleMap: Map instance created successfully')
-      setMap(mapInstance)
-      setLoading(false)
+      
+      // Start the initialization process
+      initializeMap()
     }).catch(err => {
       console.error('YardSaleMap: Error loading Google Maps:', err)
       setError('Failed to load map')
