@@ -61,7 +61,8 @@ export default function SimpleMap({ points }: SimpleMapProps) {
       })
 
       marker.addListener('click', () => {
-        infoWindow.open(map, marker)
+        infoWindow.open(map)
+        infoWindow.setPosition(marker.getPosition()!)
       })
 
       markers.push(marker)
