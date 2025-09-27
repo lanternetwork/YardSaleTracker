@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
   try {
     // Check for public admin mode first
     if (allowPublicAdmin()) {
-      // In public admin mode, use a default user ID for seeding
-      const defaultUserId = '00000000-0000-0000-0000-000000000000'
+        // In public admin mode, use NULL for owner_id to avoid foreign key constraint
+        const defaultUserId = null
       console.log('Public admin mode enabled - allowing seed operation')
       
       // Continue with seeding using default user ID
