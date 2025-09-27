@@ -22,6 +22,8 @@ function ExploreContent() {
   const [filters, setFilters] = useState<Filters>({ q: '', maxKm: 25, tags: [] })
   
   const tab = searchParams.get('tab') as 'list' | 'map' | 'add' | 'find' || 'list'
+  
+  console.log('ExploreContent: Current tab:', tab)
 
   // Use React Query hook for data fetching
   const { data: sales = [], isLoading, error } = useSales(filters)
@@ -66,7 +68,14 @@ function ExploreContent() {
           />
         </div>
       )}
-      {tab === 'map' && <YardSaleMap points={mapPoints} />}
+      {tab === 'map' && (
+        <div>
+          <div className="mb-4 text-sm text-neutral-600">
+            {isLoading ? 'Loading...' : `${sales.length} sales found`}
+          </div>
+          <YardSaleMap points={mapPoints} />
+        </div>
+      )}
       {tab === 'add' && (
         <div id="add" className="max-w-2xl">
           <h2 className="text-2xl font-bold mb-4">Post Your Sale</h2>
