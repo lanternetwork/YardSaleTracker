@@ -15,6 +15,8 @@ export default function AdminPage() {
   const [isCleaning, setIsCleaning] = useState(false)
   const [debugResult, setDebugResult] = useState<string | null>(null)
   const [isDebugging, setIsDebugging] = useState(false)
+  const [forceSeedResult, setForceSeedResult] = useState<string | null>(null)
+  const [isForceSeeding, setIsForceSeeding] = useState(false)
 
   useEffect(() => {
     // Check if admin features are enabled (client-side only)
@@ -197,6 +199,41 @@ export default function AdminPage() {
     }
   }
 
+  const handleForceSeed = async () => {
+    setIsForceSeeding(true)
+    setForceSeedResult(null)
+    
+    try {
+      const response = await fetch('/api/debug/force-seed', {
+        method: 'POST'
+      })
+      const result = await response.json()
+      
+      if (response.ok) {
+        setForceSeedResult(`✅ ${result.message}`)
+        // Refresh published count
+        const supabase = createSupabaseBrowser()
+        const fourteenDaysAgo = new Date()
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+        
+        const { count } = await supabase
+          .from('yard_sales')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'active')
+          .gte('created_at', fourteenDaysAgo.toISOString())
+        
+        setPublishedCount(count || 0)
+      } else {
+        setForceSeedResult(`❌ Error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Force seed error:', error)
+      setForceSeedResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsForceSeeding(false)
+    }
+  }
+
   useEffect(() => {
     if (!isLoading && !isAdminEnabled) {
       router.push('/')
@@ -362,16 +399,30 @@ export default function AdminPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-3">Map Debug</h2>
             <p className="text-sm text-neutral-600 mb-4">Debug map data and clustering.</p>
-            <button
-              onClick={handleDebugMapData}
-              disabled={isDebugging}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDebugging ? 'Debugging...' : 'Debug Map Data'}
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={handleDebugMapData}
+                disabled={isDebugging}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDebugging ? 'Debugging...' : 'Debug Map Data'}
+              </button>
+              <button
+                onClick={handleForceSeed}
+                disabled={isForceSeeding}
+                className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isForceSeeding ? 'Force Seeding...' : 'Force Seed (Bypass RLS)'}
+              </button>
+            </div>
             {debugResult && (
               <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
                 {debugResult}
+              </div>
+            )}
+            {forceSeedResult && (
+              <div className="mt-3 text-sm p-2 bg-neutral-100 rounded">
+                {forceSeedResult}
               </div>
             )}
           </div>
