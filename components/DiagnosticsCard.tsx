@@ -1,10 +1,12 @@
 'use client'
-import { config } from '@/lib/config/env'
 import Link from 'next/link'
 
 export default function DiagnosticsCard() {
   // Only show in preview builds when diagnostics are enabled
-  if (!config.features.diagnostics && !config.features.admin) {
+  const isDiagnosticsEnabled = process.env.NEXT_PUBLIC_ENABLE_DIAGNOSTICS === 'true'
+  const isAdminEnabled = process.env.ENABLE_ADMIN === 'true'
+  
+  if (!isDiagnosticsEnabled && !isAdminEnabled) {
     return null
   }
 

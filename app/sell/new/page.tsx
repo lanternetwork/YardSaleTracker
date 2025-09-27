@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseClient } from '@/lib/supabase/client'
-import { config } from '@/lib/config/env'
 import WizardWeekendPicker from '@/components/WizardWeekendPicker'
 import WizardPrivacyPreview from '@/components/WizardPrivacyPreview'
 import WizardDedupePrompt from '@/components/WizardDedupePrompt'

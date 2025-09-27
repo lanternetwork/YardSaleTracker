@@ -1,5 +1,4 @@
 'use client'
-import { config } from '@/lib/config/env'
 import Link from 'next/link'
 
 interface EmptyStateProps {
@@ -32,7 +31,7 @@ export default function EmptyState({
             </Link>
           )}
           
-          {config.features.demo && showDemo && (
+          {process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true' && showDemo && (
             <div className="mt-4">
               <p className="text-sm text-neutral-500 mb-3">Or check out these demo sales:</p>
               <div className="grid grid-cols-1 gap-3">

@@ -1,19 +1,50 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { config } from '@/lib/config/env'
 
 export default function AdminPage() {
   const router = useRouter()
+  const [isAdminEnabled, setIsAdminEnabled] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if admin features are enabled
-    if (!config.features.admin) {
+    // Check if admin features are enabled (client-side only)
+    const checkAdminAccess = async () => {
+      try {
+        const response = await fetch('/api/healthz')
+        if (response.ok) {
+          const data = await response.json()
+          setIsAdminEnabled(data.services?.admin || false)
+        }
+      } catch (error) {
+        console.error('Failed to check admin access:', error)
+        setIsAdminEnabled(false)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkAdminAccess()
+  }, [])
+
+  useEffect(() => {
+    if (!isLoading && !isAdminEnabled) {
       router.push('/')
     }
-  }, [router])
+  }, [isLoading, isAdminEnabled, router])
 
-  if (!config.features.admin) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAdminEnabled) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -76,16 +107,16 @@ export default function AdminPage() {
             <h2 className="text-lg font-semibold mb-3">Environment</h2>
             <div className="space-y-2 text-sm">
               <div>
-                <span className="font-medium">Node:</span> {config.server.NODE_ENV}
+                <span className="font-medium">Node:</span> {process.env.NODE_ENV || 'development'}
               </div>
               <div>
-                <span className="font-medium">Vercel:</span> {config.server.VERCEL_ENV || 'N/A'}
+                <span className="font-medium">Vercel:</span> {process.env.VERCEL_ENV || 'N/A'}
               </div>
               <div>
-                <span className="font-medium">Admin:</span> {config.features.admin ? 'Enabled' : 'Disabled'}
+                <span className="font-medium">Admin:</span> Enabled
               </div>
               <div>
-                <span className="font-medium">Diagnostics:</span> {config.features.diagnostics ? 'Enabled' : 'Disabled'}
+                <span className="font-medium">Diagnostics:</span> {process.env.NEXT_PUBLIC_ENABLE_DIAGNOSTICS === 'true' ? 'Enabled' : 'Disabled'}
               </div>
             </div>
           </div>
@@ -95,16 +126,16 @@ export default function AdminPage() {
             <h2 className="text-lg font-semibold mb-3">Services</h2>
             <div className="space-y-2 text-sm">
               <div>
-                <span className="font-medium">Supabase:</span> {config.services.supabase ? '✅' : '❌'}
+                <span className="font-medium">Supabase:</span> {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌'}
               </div>
               <div>
-                <span className="font-medium">Maps:</span> {config.services.maps ? '✅' : '❌'}
+                <span className="font-medium">Maps:</span> {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ? '✅' : '❌'}
               </div>
               <div>
-                <span className="font-medium">Redis:</span> {config.services.redis ? '✅' : '❌'}
+                <span className="font-medium">Redis:</span> {process.env.UPSTASH_REDIS_REST_URL ? '✅' : '❌'}
               </div>
               <div>
-                <span className="font-medium">Push:</span> {config.services.push ? '✅' : '❌'}
+                <span className="font-medium">Push:</span> {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ? '✅' : '❌'}
               </div>
             </div>
           </div>

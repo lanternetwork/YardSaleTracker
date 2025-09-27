@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminSupabase } from '@/lib/supabase/admin'
-import { config } from '@/lib/config/env'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
