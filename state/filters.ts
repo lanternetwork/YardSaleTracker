@@ -4,13 +4,18 @@ export type Filters = {
   dateFrom?: string
   dateTo?: string
   tags?: string[]
-  min?: number
-  max?: number
   category?: string
 }
+
+// Default to today + 7 days
+const today = new Date()
+const sevenDaysFromNow = new Date(today)
+sevenDaysFromNow.setDate(today.getDate() + 7)
 
 export const defaultFilters: Filters = { 
   q: '', 
   maxKm: 25, 
-  tags: [] 
+  tags: [],
+  dateFrom: today.toISOString().split('T')[0],
+  dateTo: sevenDaysFromNow.toISOString().split('T')[0]
 }

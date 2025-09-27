@@ -150,23 +150,14 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       }
     })
     
-    // Enhanced clustering logic for better UX
+    // Simple clustering - group points that are very close together
     const clusters: { center: { lat: number; lng: number }; points: typeof maskedPoints }[] = []
-    const clusterRadius = 0.05 // ~5km in degrees - larger radius for better clustering
+    const clusterRadius = 0.01 // ~1km in degrees - smaller radius for tighter clustering
     
-    // Sort points by distance from center to improve clustering
-    const centerLat = maskedPoints.reduce((sum, p) => sum + p.lat, 0) / maskedPoints.length
-    const centerLng = maskedPoints.reduce((sum, p) => sum + p.lng, 0) / maskedPoints.length
-    
-    const sortedPoints = [...maskedPoints].sort((a, b) => {
-      const distA = Math.sqrt(Math.pow(a.lat - centerLat, 2) + Math.pow(a.lng - centerLng, 2))
-      const distB = Math.sqrt(Math.pow(b.lat - centerLat, 2) + Math.pow(b.lng - centerLng, 2))
-      return distA - distB
-    })
-    
-    sortedPoints.forEach(point => {
+    maskedPoints.forEach(point => {
       let addedToCluster = false
       
+      // Check if this point is close to any existing cluster
       for (const cluster of clusters) {
         const distance = Math.sqrt(
           Math.pow(point.lat - cluster.center.lat, 2) + 
@@ -175,7 +166,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         
         if (distance < clusterRadius) {
           cluster.points.push(point)
-          // Update cluster center
+          // Recalculate cluster center
           cluster.center.lat = cluster.points.reduce((sum, p) => sum + p.lat, 0) / cluster.points.length
           cluster.center.lng = cluster.points.reduce((sum, p) => sum + p.lng, 0) / cluster.points.length
           addedToCluster = true

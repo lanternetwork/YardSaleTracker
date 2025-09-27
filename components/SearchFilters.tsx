@@ -26,10 +26,8 @@ export default function SearchFilters({
     const urlFilters: Filters = {
       q: searchParams.get('q') || '',
       maxKm: searchParams.get('maxKm') ? Number(searchParams.get('maxKm')) : 25,
-      dateFrom: searchParams.get('dateFrom') || undefined,
-      dateTo: searchParams.get('dateTo') || undefined,
-      min: searchParams.get('min') ? Number(searchParams.get('min')) : undefined,
-      max: searchParams.get('max') ? Number(searchParams.get('max')) : undefined,
+      dateFrom: searchParams.get('dateFrom') || defaultFilters.dateFrom,
+      dateTo: searchParams.get('dateTo') || defaultFilters.dateTo,
       tags: searchParams.get('tags') ? searchParams.get('tags')!.split(',') : []
     }
     setF(urlFilters)
@@ -108,16 +106,18 @@ export default function SearchFilters({
           {/* Distance filter */}
           <div>
             <label className="block text-sm font-medium mb-1">Max Distance</label>
-            <div className="flex items-center gap-2">
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="25" 
-                value={f.maxKm ? Math.round(f.maxKm * 0.621371) : ''}
-                onChange={e => set('maxKm', Number(e.target.value) * 1.609)} 
-              />
-              <span className="text-sm text-neutral-600">miles</span>
-            </div>
+            <select 
+              className="w-full px-2 py-1 rounded border text-sm" 
+              value={f.maxKm || 25}
+              onChange={e => set('maxKm', Number(e.target.value))}
+            >
+              <option value={5}>5 km (3 miles)</option>
+              <option value={10}>10 km (6 miles)</option>
+              <option value={25}>25 km (15 miles)</option>
+              <option value={50}>50 km (30 miles)</option>
+              <option value={100}>100 km (60 miles)</option>
+              <option value={250}>250 km (150 miles)</option>
+            </select>
           </div>
 
           {/* Date range */}
@@ -141,27 +141,6 @@ export default function SearchFilters({
             />
           </div>
 
-          {/* Price range */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Price Range</label>
-            <div className="flex gap-1">
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="Min" 
-                value={f.min || ''}
-                onChange={e => set('min', e.target.value ? Number(e.target.value) : undefined)} 
-              />
-              <span className="text-sm text-neutral-600 self-center">-</span>
-              <input 
-                type="number" 
-                className="w-20 px-2 py-1 rounded border text-sm" 
-                placeholder="Max" 
-                value={f.max || ''}
-                onChange={e => set('max', e.target.value ? Number(e.target.value) : undefined)} 
-              />
-            </div>
-          </div>
         </div>
       )}
 

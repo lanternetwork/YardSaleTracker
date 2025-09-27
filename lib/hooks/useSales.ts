@@ -11,8 +11,6 @@ export function useSales(filters?: {
   dateFrom?: string
   dateTo?: string
   tags?: string[]
-  min?: number
-  max?: number
 }) {
   return useQuery({
     queryKey: ['sales', filters],
@@ -43,8 +41,8 @@ export function useSales(filters?: {
           user_lng: filters?.lng || null,
           date_from: dateFrom,
           date_to: dateTo,
-          min_price_param: filters?.min || null,
-          max_price_param: filters?.max || null,
+          min_price_param: null,
+          max_price_param: null,
           tags_filter: filters?.tags || null,
           limit_count: 100,
           offset_count: 0
@@ -79,13 +77,6 @@ export function useSales(filters?: {
           query = query.lte('start_at', dateTo + 'T23:59:59Z')
         }
 
-        // Apply price filters
-        if (filters?.min) {
-          query = query.gte('price_min', filters.min)
-        }
-        if (filters?.max) {
-          query = query.lte('price_max', filters.max)
-        }
 
         // Apply tags filter
         if (filters?.tags && filters.tags.length > 0) {
