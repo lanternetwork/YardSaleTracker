@@ -198,9 +198,9 @@ export async function POST(request: NextRequest) {
 
     for (const sale of seedSales) {
       const { data, error } = await adminSupabase
-        .from('sales')
+        .from('yard_sales')
         .upsert(sale, { 
-          onConflict: 'source,source_id',
+          onConflict: 'title,address',
           ignoreDuplicates: false 
         })
         .select('id')
@@ -214,10 +214,10 @@ export async function POST(request: NextRequest) {
         rowIds.push(data[0].id)
         // Check if this was an insert or update by checking if the sale existed before
         const { data: existing } = await adminSupabase
-          .from('sales')
+          .from('yard_sales')
           .select('id')
-          .eq('source', sale.source)
-          .eq('source_id', sale.source_id)
+          .eq('title', sale.title)
+          .eq('address', sale.address)
           .single()
 
         if (existing) {
