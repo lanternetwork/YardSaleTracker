@@ -75,7 +75,7 @@ describe('AddSaleForm', () => {
       failureReason: null,
       isPaused: false,
       status: 'idle' as const
-    })
+    } as any)
 
     render(<AddSaleForm />)
     
@@ -167,7 +167,7 @@ describe('AddSaleForm', () => {
       failureReason: null,
       isPaused: false,
       status: 'pending' as const
-    })
+    } as any)
 
     render(<AddSaleForm />)
     
