@@ -146,9 +146,21 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
   const createClusters = (markers: google.maps.Marker[], sales: Sale[]): Cluster[] => {
     if (markers.length === 0) return []
 
-    const clusterRadius = 0.15 // ~15km in degrees
+    const clusterRadiusKm = 20 // 20km radius to ensure Oakland and SF cluster
     const clusters: Cluster[] = []
     const processed = new Set<google.maps.Marker>()
+
+    // Helper function to calculate distance between two points in km
+    const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+      const R = 6371 // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180
+      const dLng = (lng2 - lng1) * Math.PI / 180
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLng/2) * Math.sin(dLng/2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+      return R * c
+    }
 
     markers.forEach(marker => {
       if (processed.has(marker)) return
@@ -168,12 +180,15 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
         const otherPosition = otherMarker.getPosition()
         if (!otherPosition) return
 
-        const distance = Math.sqrt(
-          Math.pow(position.lat() - otherPosition.lat(), 2) + 
-          Math.pow(position.lng() - otherPosition.lng(), 2)
+        const distanceKm = getDistanceKm(
+          position.lat(), position.lng(),
+          otherPosition.lat(), otherPosition.lng()
         )
 
-        if (distance < clusterRadius) {
+        console.log(`Distance between markers: ${distanceKm.toFixed(2)}km (threshold: ${clusterRadiusKm}km)`)
+
+        if (distanceKm < clusterRadiusKm) {
+          console.log(`Markers are close enough to cluster!`)
           clusterMarkers.push(otherMarker)
           bounds.extend(otherPosition)
           processed.add(otherMarker)
@@ -181,6 +196,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
       })
 
       processed.add(marker)
+
+      console.log(`Cluster found: ${clusterMarkers.length} markers at (${position.lat()}, ${position.lng()})`)
 
       // Get sales for this cluster
       clusterMarkers.forEach(m => {
