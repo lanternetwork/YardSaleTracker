@@ -55,16 +55,7 @@ const nextConfig = {
               ...(isPreview ? ["https://vercel.live"] : []),
               // Development
               ...(isDevelopment ? ["'unsafe-eval'"] : []),
-              "connect-src 'self'",
-              // Google Maps
-              "https://maps.googleapis.com",
-              "https://maps.gstatic.com",
-              "https://*.googleapis.com",
-              "https://*.gstatic.com",
-              // Supabase
-              "https://*.supabase.co",
-              "https://*.supabase.com",
-              "wss://*.supabase.co",
+              "connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.supabase.co https://*.supabase.com wss://*.supabase.co",
               // Vercel Live (preview only)
               ...(isPreview ? ["https://vercel.live", "wss://vercel.live"] : []),
               "img-src 'self' data: blob:",
