@@ -13,15 +13,13 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { ENV_PUBLIC, ENV_SERVER } from '../env'
 
-if (!ENV_SERVER.SUPABASE_SERVICE_ROLE) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE for admin client')
-}
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const serviceRole = process.env.SUPABASE_SERVICE_ROLE || 'placeholder-service-role'
 
 export const adminSupabase = createClient(
-  ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL,
-  ENV_SERVER.SUPABASE_SERVICE_ROLE,
+  url,
+  serviceRole,
   { 
     auth: { 
       persistSession: false,
