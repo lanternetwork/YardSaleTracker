@@ -158,7 +158,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     
     // Enhanced clustering - group points that are reasonably close together
     const clusters: { center: { lat: number; lng: number }; points: typeof maskedPoints }[] = []
-    const clusterRadius = 0.1 // ~10km in degrees - much larger radius for better clustering
+    const clusterRadius = 1.0 // ~100km in degrees - very large radius for testing
     
     // Sort points by latitude to improve clustering
     const sortedPoints = [...maskedPoints].sort((a, b) => a.lat - b.lat)
