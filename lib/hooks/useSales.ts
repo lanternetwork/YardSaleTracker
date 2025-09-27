@@ -18,26 +18,73 @@ export function useSales(filters?: {
     queryKey: ['sales', filters],
     queryFn: async () => {
       const sb = createSupabaseBrowser()
-      // Use the optimized search function for better performance
-      const { data, error } = await sb.rpc('search_sales', {
-        search_query: filters?.q || null,
-        max_distance_km: filters?.maxKm || null,
-        user_lat: filters?.lat || null,
-        user_lng: filters?.lng || null,
-        date_from: filters?.dateFrom || null,
-        date_to: filters?.dateTo || null,
-        price_min: filters?.min || null,
-        price_max: filters?.max || null,
-        tags_filter: filters?.tags || null,
-        limit_count: 100,
-        offset_count: 0
-      })
+      
+      // Try the optimized RPC function first
+      try {
+        const { data, error } = await sb.rpc('search_sales', {
+          search_query: filters?.q || null,
+          max_distance_km: filters?.maxKm || null,
+          user_lat: filters?.lat || null,
+          user_lng: filters?.lng || null,
+          date_from: filters?.dateFrom || null,
+          date_to: filters?.dateTo || null,
+          price_min: filters?.min || null,
+          price_max: filters?.max || null,
+          tags_filter: filters?.tags || null,
+          limit_count: 100,
+          offset_count: 0
+        })
 
-      if (error) {
-        throw new Error(error.message)
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        return data as Sale[]
+      } catch (rpcError) {
+        // Fallback to regular query if RPC function is not available
+        console.warn('RPC function not available, using fallback query:', rpcError)
+        
+        let query = sb
+          .from('sales')
+          .select('*')
+          .eq('status', 'published')
+          .order('last_seen_at', { ascending: false })
+          .limit(100)
+
+        // Apply text search filter
+        if (filters?.q) {
+          query = query.or(`title.ilike.%${filters.q}%,description.ilike.%${filters.q}%`)
+        }
+
+        // Apply date filters
+        if (filters?.dateFrom) {
+          query = query.gte('date_start', filters.dateFrom)
+        }
+        if (filters?.dateTo) {
+          query = query.lte('date_start', filters.dateTo)
+        }
+
+        // Apply price filters
+        if (filters?.min) {
+          query = query.gte('price_min', filters.min)
+        }
+        if (filters?.max) {
+          query = query.lte('price_max', filters.max)
+        }
+
+        // Apply tags filter
+        if (filters?.tags && filters.tags.length > 0) {
+          query = query.overlaps('tags', filters.tags)
+        }
+
+        const { data, error } = await query
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        return data as Sale[]
       }
-
-      return data as Sale[]
     },
   })
 }
