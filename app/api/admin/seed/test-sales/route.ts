@@ -34,25 +34,20 @@ export async function POST(request: NextRequest) {
           address: 'Louisville, KY',
           city: 'Louisville',
           state: 'KY',
-          lat: 38.2527,
-          lng: -85.7585,
-          date_start: dateStr,
-          date_end: dateStr,
-          time_start: '08:00:00',
-          time_end: '14:00:00',
-          privacy_mode: 'exact',
-          geocode_precision: 'exact',
-          tags: ['community', 'furniture', 'electronics'],
-          price_min: 1,
-          price_max: 100,
-          photos: [],
-          contact: 'Call for details',
-          status: 'published',
-          source: 'seed',
-          source_id: 'louisville-community-7884222884',
-          owner_id: defaultUserId,
-          first_seen_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString()
+        lat: 38.2527,
+        lng: -85.7585,
+        start_at: dateStr + 'T08:00:00Z',
+        end_at: dateStr + 'T14:00:00Z',
+        tags: ['community', 'furniture', 'electronics'],
+        price_min: 1,
+        price_max: 100,
+        photos: [],
+        contact: 'Call for details',
+        status: 'active',
+        source: 'seed',
+        owner_id: defaultUserId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
         },
         {
           title: 'Multi-Family Yard Sale (Saturday)',
@@ -60,25 +55,20 @@ export async function POST(request: NextRequest) {
           address: 'Oakland, CA',
           city: 'Oakland',
           state: 'CA',
-          lat: 37.8044,
-          lng: -122.2712,
-          date_start: dateStr,
-          date_end: dateStr,
-          time_start: '08:00:00',
-          time_end: '14:00:00',
-          privacy_mode: 'exact',
-          geocode_precision: 'exact',
-          tags: ['multi-family', 'toys', 'books', 'kitchen'],
-          price_min: 2,
-          price_max: 50,
-          photos: [],
-          contact: 'Text for address',
-          status: 'published',
-          source: 'seed',
-          source_id: 'oakland-multi-family-7884477469',
-          owner_id: defaultUserId,
-          first_seen_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString()
+        lat: 37.8044,
+        lng: -122.2712,
+        start_at: dateStr + 'T08:00:00Z',
+        end_at: dateStr + 'T14:00:00Z',
+        tags: ['multi-family', 'toys', 'books', 'kitchen'],
+        price_min: 2,
+        price_max: 50,
+        photos: [],
+        contact: 'Text for address',
+        status: 'active',
+        source: 'seed',
+        owner_id: defaultUserId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
         }
       ]
 
@@ -88,9 +78,9 @@ export async function POST(request: NextRequest) {
 
       for (const sale of seedSales) {
         const { data, error } = await adminSupabase
-          .from('sales')
+          .from('yard_sales')
           .upsert(sale, { 
-            onConflict: 'source,source_id',
+            onConflict: 'title,address',
             ignoreDuplicates: false 
           })
           .select('id')
@@ -104,10 +94,10 @@ export async function POST(request: NextRequest) {
           rowIds.push(data[0].id)
           // Check if this was an insert or update by checking if the sale existed before
           const { data: existing } = await adminSupabase
-            .from('sales')
+            .from('yard_sales')
             .select('id')
-            .eq('source', sale.source)
-            .eq('source_id', sale.source_id)
+            .eq('title', sale.title)
+            .eq('address', sale.address)
             .single()
 
           if (existing) {
@@ -166,23 +156,18 @@ export async function POST(request: NextRequest) {
         state: 'KY',
         lat: 38.2527,
         lng: -85.7585,
-        date_start: dateStr,
-        date_end: dateStr,
-        time_start: '08:00:00',
-        time_end: '14:00:00',
-        privacy_mode: 'exact',
-        geocode_precision: 'exact',
+        start_at: dateStr + 'T08:00:00Z',
+        end_at: dateStr + 'T14:00:00Z',
         tags: ['community', 'furniture', 'electronics'],
         price_min: 1,
         price_max: 100,
         photos: [],
         contact: 'Call for details',
-        status: 'published',
+        status: 'active',
         source: 'seed',
-        source_id: 'louisville-community-7884222884',
         owner_id: user.id,
-        first_seen_at: new Date().toISOString(),
-        last_seen_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       },
       {
         title: 'Multi-Family Yard Sale (Saturday)',
@@ -192,23 +177,18 @@ export async function POST(request: NextRequest) {
         state: 'CA',
         lat: 37.8044,
         lng: -122.2712,
-        date_start: dateStr,
-        date_end: dateStr,
-        time_start: '08:00:00',
-        time_end: '14:00:00',
-        privacy_mode: 'exact',
-        geocode_precision: 'exact',
+        start_at: dateStr + 'T08:00:00Z',
+        end_at: dateStr + 'T14:00:00Z',
         tags: ['multi-family', 'toys', 'books', 'kitchen'],
         price_min: 2,
         price_max: 50,
         photos: [],
         contact: 'Text for address',
-        status: 'published',
+        status: 'active',
         source: 'seed',
-        source_id: 'oakland-multi-family-7884477469',
         owner_id: user.id,
-        first_seen_at: new Date().toISOString(),
-        last_seen_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     ]
 

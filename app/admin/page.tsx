@@ -54,9 +54,9 @@ export default function AdminPage() {
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
         
         const { count, error } = await supabase
-          .from('sales')
+          .from('yard_sales')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'published')
+          .eq('status', 'active')
           .gte('created_at', fourteenDaysAgo.toISOString())
         
         if (error) {
@@ -104,9 +104,9 @@ export default function AdminPage() {
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
         
         const { count } = await supabase
-          .from('sales')
+          .from('yard_sales')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'published')
+          .eq('status', 'active')
           .gte('created_at', fourteenDaysAgo.toISOString())
         
         setPublishedCount(count || 0)
