@@ -3,12 +3,11 @@ import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { Profile, Sale } from '@/lib/types'
 import { ProfileSchema } from '@/lib/zodSchemas'
 
-const sb = createSupabaseBrowser()
-
 export function useAuth() {
   return useQuery({
     queryKey: ['auth'],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data: { user }, error } = await sb.auth.getUser()
       if (error) {
         throw new Error(error.message)
@@ -47,6 +46,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (profileData: Partial<Profile>) => {
+      const sb = createSupabaseBrowser()
       const { data: { user } } = await sb.auth.getUser()
       if (!user) {
         throw new Error('Not authenticated')
@@ -80,6 +80,7 @@ export function useSignIn() {
 
   return useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb.auth.signInWithPassword({
         email,
         password
@@ -103,6 +104,7 @@ export function useSignUp() {
 
   return useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb.auth.signUp({
         email,
         password
@@ -125,6 +127,7 @@ export function useSignOut() {
 
   return useMutation({
     mutationFn: async () => {
+      const sb = createSupabaseBrowser()
       const { error } = await sb.auth.signOut()
       if (error) {
         throw new Error(error.message)

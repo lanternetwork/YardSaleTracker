@@ -3,8 +3,6 @@ import { createSupabaseBrowser } from '@/lib/supabase/client'
 import { Sale, SaleItem } from '@/lib/types'
 import { SaleSchema } from '@/lib/zodSchemas'
 
-const sb = createSupabaseBrowser()
-
 export function useSales(filters?: {
   q?: string
   maxKm?: number
@@ -19,6 +17,7 @@ export function useSales(filters?: {
   return useQuery({
     queryKey: ['sales', filters],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       // Use the optimized search function for better performance
       const { data, error } = await sb.rpc('search_sales', {
         search_query: filters?.q || null,
@@ -165,6 +164,7 @@ export function useFavorites() {
   return useQuery({
     queryKey: ['favorites'],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data: { user } } = await sb.auth.getUser()
       if (!user) return []
 
