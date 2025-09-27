@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMockSupabaseClient } from '@/tests/utils/mocks'
-import { useCreateSale } from '@/lib/hooks/useSales'
+import { useCreateSale, useSales } from '@/lib/hooks/useSales'
 import Explore from '@/app/(app)/explore/page'
 import { getAddressFixtures } from '@/tests/utils/mocks'
 

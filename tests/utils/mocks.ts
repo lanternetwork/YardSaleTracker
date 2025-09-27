@@ -37,10 +37,13 @@ export class MockGoogleMapsLoader {
               private input: HTMLInputElement
               private fields: string[]
               private listeners: { [key: string]: Function[] } = {}
+              public input: HTMLInputElement
+              public options: any
 
               constructor(input: HTMLInputElement, options: { fields: string[] }) {
                 this.input = input
                 this.fields = options.fields
+                this.options = options
               }
 
               addListener(event: string, callback: Function) {
