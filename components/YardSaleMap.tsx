@@ -23,6 +23,12 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   
+  // Debug points data
+  console.log('YardSaleMap received points:', {
+    count: points.length,
+    points: points.map(p => ({ id: p.id, title: p.title, lat: p.lat, lng: p.lng }))
+  })
+  
   const loader = useMemo(() => 
     new Loader({ 
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!, 
@@ -261,7 +267,18 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           `
         })
         
+        // Debug cluster click
+        console.log('Cluster marker created:', {
+          pointCount: cluster.points.length,
+          titles: cluster.points.map(p => p.title),
+          center: cluster.center
+        })
+        
         marker.addListener('click', () => {
+          console.log('Cluster marker clicked:', {
+            pointCount: cluster.points.length,
+            titles: cluster.points.map(p => p.title)
+          })
           // Close any existing info window first
           if (activeInfoWindowRef.current) {
             activeInfoWindowRef.current.close()
