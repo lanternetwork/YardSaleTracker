@@ -392,8 +392,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
           
           // Create and show info window
           const infoWindow = new google.maps.InfoWindow({
-            content: infoContent,
-            maxWidth: 300
+            content: infoContent
           })
           
           infoWindow.open(map, clusterMarker)
@@ -528,8 +527,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
             
             // Create and show info window
             const infoWindow = new google.maps.InfoWindow({
-              content: infoContent,
-              maxWidth: 300
+              content: infoContent
             })
             
             infoWindow.open(map, clusterMarker)
