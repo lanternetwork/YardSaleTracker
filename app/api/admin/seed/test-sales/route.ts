@@ -18,9 +18,8 @@ export async function POST(request: NextRequest) {
   try {
     // Check for public admin mode first
     if (allowPublicAdmin()) {
-        // In public admin mode, use NULL for owner_id to avoid foreign key constraint
-        const defaultUserId = null
-      console.log('Public admin mode enabled - allowing seed operation')
+        // In public admin mode, we need to use service-role to bypass RLS
+        console.log('Public admin mode enabled - allowing seed operation')
       
       // Continue with seeding using default user ID
       const nextSaturday = getNextSaturday()
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
         contact: 'Call for details',
         status: 'active',
         source: 'seed',
-        owner_id: defaultUserId,
+        owner_id: null, // Service-role will bypass RLS
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
         },
@@ -78,7 +77,7 @@ export async function POST(request: NextRequest) {
         contact: 'Text for address',
         status: 'active',
         source: 'seed',
-        owner_id: defaultUserId,
+        owner_id: null, // Service-role will bypass RLS
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
         },
@@ -105,7 +104,7 @@ export async function POST(request: NextRequest) {
         contact: 'Call for details',
         status: 'active',
         source: 'seed',
-        owner_id: defaultUserId,
+        owner_id: null, // Service-role will bypass RLS
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
         }
@@ -116,7 +115,7 @@ export async function POST(request: NextRequest) {
       const rowIds: string[] = []
 
       for (const sale of seedSales) {
-        console.log('Processing sale:', sale.title, sale.address)
+        console.log('Processing sale:', sale.title, sale.address, 'owner_id:', sale.owner_id)
         
         // First check if sale already exists
         const { data: existing, error: checkError } = await adminSupabase
