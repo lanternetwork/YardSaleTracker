@@ -22,6 +22,8 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
   
+  console.log('YardSaleMap received points:', points)
+  
   const loader = useMemo(() => 
     new Loader({ 
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!, 
@@ -33,19 +35,29 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   // Initialize map
   useEffect(() => {
+    console.log('YardSaleMap: Initializing map...')
+    console.log('YardSaleMap: API key present:', !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
+    
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+      console.error('YardSaleMap: No Google Maps API key configured')
       setError('Google Maps API key not configured')
       setLoading(false)
       return
     }
 
+    console.log('YardSaleMap: Loading Google Maps API...')
     loader.load().then(() => {
-      if (!ref.current) return
+      console.log('YardSaleMap: Google Maps API loaded successfully')
+      if (!ref.current) {
+        console.error('YardSaleMap: Map container ref is null')
+        return
+      }
 
       // Default center (US center) with reasonable zoom
       const defaultCenter = { lat: 39.8283, lng: -98.5795 }
       const defaultZoom = 4
 
+      console.log('YardSaleMap: Creating map instance...')
       const mapInstance = new google.maps.Map(ref.current, { 
         center: defaultCenter,
         zoom: defaultZoom,
@@ -62,10 +74,11 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         ]
       })
 
+      console.log('YardSaleMap: Map instance created successfully')
       setMap(mapInstance)
       setLoading(false)
     }).catch(err => {
-      console.error('Error loading Google Maps:', err)
+      console.error('YardSaleMap: Error loading Google Maps:', err)
       setError('Failed to load map')
       setLoading(false)
     })
@@ -73,16 +86,24 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
   // Update markers when points change
   useEffect(() => {
-    if (!map) return
+    console.log('YardSaleMap: Updating markers...', { map: !!map, pointsCount: points.length })
+    
+    if (!map) {
+      console.log('YardSaleMap: Map not ready yet, skipping marker update')
+      return
+    }
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null))
     const newMarkers: google.maps.Marker[] = []
 
     if (points.length === 0) {
+      console.log('YardSaleMap: No points to display')
       setMarkers([])
       return
     }
+    
+    console.log('YardSaleMap: Processing', points.length, 'points')
 
     const bounds = new google.maps.LatLngBounds()
     
