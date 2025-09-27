@@ -7,7 +7,7 @@ import SearchResults from '@/components/SearchResults'
 import VirtualizedSalesList from '@/components/VirtualizedSalesList'
 import dynamic from 'next/dynamic'
 
-const SimpleMap = dynamic(() => import('@/components/SimpleMap'), {
+const ClusteredYardSaleMap = dynamic(() => import('@/components/ClusteredYardSaleMap'), {
   ssr: false,
   loading: () => (
     <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">
@@ -79,7 +79,7 @@ function ExploreContent() {
           <div className="mb-4 text-sm text-neutral-600">
             {isLoading ? 'Loading...' : `${sales.length} sales found`}
           </div>
-          <SimpleMap points={mapPoints} />
+          <ClusteredYardSaleMap points={mapPoints} />
         </div>
       )}
       {tab === 'add' && (
