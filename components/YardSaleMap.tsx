@@ -17,11 +17,11 @@ type Marker = {
 
 export default function YardSaleMap({ points }: { points: Marker[] }) {
   const ref = useRef<HTMLDivElement>(null)
+  const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
-  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null)
   
   const loader = useMemo(() => 
     new Loader({ 
@@ -83,9 +83,9 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         
         // Add click listener to close info windows when clicking on map
         mapInstance.addListener('click', () => {
-          if (activeInfoWindow) {
-            activeInfoWindow.close()
-            setActiveInfoWindow(null)
+          if (activeInfoWindowRef.current) {
+            activeInfoWindowRef.current.close()
+            activeInfoWindowRef.current = null
           }
         })
         
@@ -112,10 +112,10 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   useEffect(() => {
     if (!map) return
 
-    // Close any active info window
-    if (activeInfoWindow) {
-      activeInfoWindow.close()
-      setActiveInfoWindow(null)
+    // Close any active info window and reset state
+    if (activeInfoWindowRef.current) {
+      activeInfoWindowRef.current.close()
+      activeInfoWindowRef.current = null
     }
 
     // Clear existing markers
@@ -150,11 +150,21 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       }
     })
     
-    // Simple clustering logic
+    // Enhanced clustering logic for better UX
     const clusters: { center: { lat: number; lng: number }; points: typeof maskedPoints }[] = []
-    const clusterRadius = 0.01 // ~1km in degrees
+    const clusterRadius = 0.05 // ~5km in degrees - larger radius for better clustering
     
-    maskedPoints.forEach(point => {
+    // Sort points by distance from center to improve clustering
+    const centerLat = maskedPoints.reduce((sum, p) => sum + p.lat, 0) / maskedPoints.length
+    const centerLng = maskedPoints.reduce((sum, p) => sum + p.lng, 0) / maskedPoints.length
+    
+    const sortedPoints = [...maskedPoints].sort((a, b) => {
+      const distA = Math.sqrt(Math.pow(a.lat - centerLat, 2) + Math.pow(a.lng - centerLng, 2))
+      const distB = Math.sqrt(Math.pow(b.lat - centerLat, 2) + Math.pow(b.lng - centerLng, 2))
+      return distA - distB
+    })
+    
+    sortedPoints.forEach(point => {
       let addedToCluster = false
       
       for (const cluster of clusters) {
@@ -213,13 +223,14 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
             })
             
             marker.addListener('click', () => {
-              // Close any existing info window
-              if (activeInfoWindow) {
-                activeInfoWindow.close()
+              // Close any existing info window first
+              if (activeInfoWindowRef.current) {
+                activeInfoWindowRef.current.close()
+                activeInfoWindowRef.current = null
               }
               // Open new info window and track it
               infoWindow.open({ map, anchor: marker })
-              setActiveInfoWindow(infoWindow)
+              activeInfoWindowRef.current = infoWindow
             })
         
         newMarkers.push(marker)
@@ -260,13 +271,14 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         })
         
         marker.addListener('click', () => {
-          // Close any existing info window
-          if (activeInfoWindow) {
-            activeInfoWindow.close()
+          // Close any existing info window first
+          if (activeInfoWindowRef.current) {
+            activeInfoWindowRef.current.close()
+            activeInfoWindowRef.current = null
           }
           // Open new info window and track it
           infoWindow.open({ map, anchor: marker })
-          setActiveInfoWindow(infoWindow)
+          activeInfoWindowRef.current = infoWindow
         })
         
         newMarkers.push(marker)
