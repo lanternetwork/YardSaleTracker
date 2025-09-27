@@ -38,20 +38,23 @@ function ExploreContent() {
   // Use React Query hook for data fetching
   const { data: sales = [], isLoading, error } = useSales(filters)
 
-  const mapPoints = useMemo(() => 
-    sales
-      .filter(s => s.lat && s.lng)
-      .map(s => ({ 
-        id: s.id, 
-        title: s.title, 
-        lat: s.lat!, 
-        lng: s.lng!,
-        address: s.address || '',
-        privacy_mode: s.privacy_mode || 'exact',
-        date_start: s.date_start || '',
-        time_start: s.time_start
-      }))
-  , [sales])
+  const mapPoints = useMemo(() => {
+    console.log('ExploreContent: Creating mapPoints from sales:', sales.length, 'sales')
+    const filtered = sales.filter(s => s.lat && s.lng)
+    console.log('ExploreContent: Filtered sales with lat/lng:', filtered.length)
+    const points = filtered.map(s => ({ 
+      id: s.id, 
+      title: s.title, 
+      lat: s.lat!, 
+      lng: s.lng!,
+      address: s.address || '',
+      privacy_mode: s.privacy_mode || 'exact',
+      date_start: s.date_start || '',
+      time_start: s.time_start
+    }))
+    console.log('ExploreContent: Final mapPoints:', points.length, 'points')
+    return points
+  }, [sales])
 
   return (
     <main className="max-w-6xl mx-auto p-4">
