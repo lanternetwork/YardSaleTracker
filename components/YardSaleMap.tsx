@@ -94,7 +94,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           console.log('Map tiles loaded successfully')
         })
         
-        mapInstance.addListener('error', (error) => {
+        mapInstance.addListener('error', (error: any) => {
           console.error('Map error:', error)
         })
       }
