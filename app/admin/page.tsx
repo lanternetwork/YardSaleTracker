@@ -106,6 +106,7 @@ export default function AdminPage() {
       if (response.ok) {
         setSeedResult(`✅ ${result.message}`)
         // Refresh published count
+        const supabase = createSupabaseBrowser()
         const fourteenDaysAgo = new Date()
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
         
