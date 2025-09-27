@@ -21,6 +21,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const [error, setError] = useState<string | null>(null)
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [markers, setMarkers] = useState<google.maps.Marker[]>([])
+  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null)
   
   const loader = useMemo(() => 
     new Loader({ 
@@ -63,6 +64,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         const mapInstance = new google.maps.Map(ref.current, { 
           center: defaultCenter,
           zoom: defaultZoom,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
           mapTypeControl: true, 
           streetViewControl: false,
           fullscreenControl: true,
@@ -78,6 +80,23 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
         setMap(mapInstance)
         setLoading(false)
+        
+        // Add click listener to close info windows when clicking on map
+        mapInstance.addListener('click', () => {
+          if (activeInfoWindow) {
+            activeInfoWindow.close()
+            setActiveInfoWindow(null)
+          }
+        })
+        
+        // Add error listener to debug map issues
+        mapInstance.addListener('tilesloaded', () => {
+          console.log('Map tiles loaded successfully')
+        })
+        
+        mapInstance.addListener('error', (error) => {
+          console.error('Map error:', error)
+        })
       }
       
       // Start the initialization process
@@ -92,6 +111,12 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   // Update markers when points change
   useEffect(() => {
     if (!map) return
+
+    // Close any active info window
+    if (activeInfoWindow) {
+      activeInfoWindow.close()
+      setActiveInfoWindow(null)
+    }
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null))
@@ -171,25 +196,31 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           }
         })
         
-        const infoWindow = new google.maps.InfoWindow({ 
-          content: `
-            <div class="p-2">
-              <h3 class="font-semibold text-lg">${point.title}</h3>
-              <p class="text-sm text-neutral-600">${point.address}</p>
-              ${point.is_masked ? '<p class="text-xs text-blue-600">🔒 Privacy mode active</p>' : ''}
-              <a 
-                href="/sale/${point.id}" 
-                class="text-amber-600 hover:text-amber-700 font-medium"
-              >
-                View Details →
-              </a>
-            </div>
-          `
-        })
-        
-        marker.addListener('click', () => {
-          infoWindow.open({ map, anchor: marker })
-        })
+            const infoWindow = new google.maps.InfoWindow({ 
+              content: `
+                <div class="p-2">
+                  <h3 class="font-semibold text-lg">${point.title}</h3>
+                  <p class="text-sm text-neutral-600">${point.address}</p>
+                  ${point.is_masked ? '<p class="text-xs text-blue-600">🔒 Privacy mode active</p>' : ''}
+                  <a 
+                    href="/sale/${point.id}" 
+                    class="text-amber-600 hover:text-amber-700 font-medium"
+                  >
+                    View Details →
+                  </a>
+                </div>
+              `
+            })
+            
+            marker.addListener('click', () => {
+              // Close any existing info window
+              if (activeInfoWindow) {
+                activeInfoWindow.close()
+              }
+              // Open new info window and track it
+              infoWindow.open({ map, anchor: marker })
+              setActiveInfoWindow(infoWindow)
+            })
         
         newMarkers.push(marker)
         bounds.extend(marker.getPosition()!)
@@ -229,7 +260,13 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
         })
         
         marker.addListener('click', () => {
+          // Close any existing info window
+          if (activeInfoWindow) {
+            activeInfoWindow.close()
+          }
+          // Open new info window and track it
           infoWindow.open({ map, anchor: marker })
+          setActiveInfoWindow(infoWindow)
         })
         
         newMarkers.push(marker)
