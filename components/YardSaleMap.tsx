@@ -31,9 +31,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
           title: p.title, 
           lat: p.lat, 
           lng: p.lng, 
-          address: p.address,
-          city: p.city,
-          state: p.state
+          address: p.address
         }))
       })
   
