@@ -8,8 +8,7 @@ interface ScrapedSale {
   address?: string
   start_at?: string
   end_at?: string
-  price_min?: number
-  price_max?: number
+  // (deprecated; yard sales do not have sale-level prices)
   contact?: string
   source: string
   url?: string
@@ -148,22 +147,14 @@ serve(async (req: any) => {
       
       // Convert to ScrapedSale format
       const results: ScrapedSale[] = parsedItems.map(item => {
-        // Extract price range from single price
-        let price_min: number | undefined
-        let price_max: number | undefined
-        
-        if (item.price !== null) {
-          price_min = item.price
-          price_max = item.price
-        }
+        // (deprecated; yard sales do not have sale-level prices)
         
         return {
           id: item.id,
           title: item.title,
           description: `Found on Craigslist ${city}`,
           start_at: item.postedAt,
-          price_min,
-          price_max,
+          // (deprecated; yard sales do not have sale-level prices)
           source: 'craigslist',
           url: item.url
         }

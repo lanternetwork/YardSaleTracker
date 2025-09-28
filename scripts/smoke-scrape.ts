@@ -60,7 +60,7 @@ async function smokeTestScraper(): Promise<ScrapeResult> {
       data.results.slice(0, 3).forEach((item: any, index: number) => {
         console.log(`  ${index + 1}. ${item.title}`)
         console.log(`     📅 ${item.start_at || 'No date'}`)
-        console.log(`     💰 ${item.price_min ? `$${item.price_min}` : 'No price'}`)
+        // (deprecated; yard sales do not have sale-level prices)
         console.log(`     🔗 ${item.url || 'No URL'}`)
         console.log('')
       })

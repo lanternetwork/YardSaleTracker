@@ -11,8 +11,7 @@ interface ScrapedSale {
   address?: string
   start_at?: string
   end_at?: string
-  price_min?: number
-  price_max?: number
+  // (deprecated; yard sales do not have sale-level prices)
   contact?: string
   source: string
   url?: string
@@ -108,8 +107,7 @@ export default function ImportSales() {
             lng,
             start_at: sale.start_at,
             end_at: sale.end_at,
-            price_min: sale.price_min,
-            price_max: sale.price_max,
+            // (deprecated; yard sales do not have sale-level prices)
             contact: sale.contact,
             source: sale.source,
             source_id: sale.id,
@@ -241,9 +239,7 @@ export default function ImportSales() {
                         <div className="text-sm text-neutral-500 space-y-1">
                           {sale.address && <div>📍 {sale.address}</div>}
                           {sale.start_at && <div>📅 {sale.start_at}</div>}
-                          {sale.price_min && sale.price_max && (
-                            <div>💰 ${sale.price_min} - ${sale.price_max}</div>
-                          )}
+                          {/* (deprecated; yard sales do not have sale-level prices) */}
                           {sale.contact && <div>📞 {sale.contact}</div>}
                           {sale.url && (
                             <div>
