@@ -79,11 +79,11 @@ export async function GET(request: NextRequest) {
     
     console.log(`Cache miss for ZIP ${zip}, fetching from Nominatim`)
     
-    // Try multiple search approaches
+    // Try multiple search approaches - prioritize US results
     const searchQueries = [
-      `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=${country}&format=json&limit=1`,
-      `https://nominatim.openstreetmap.org/search?postalcode=${zip}&format=json&limit=1`,
-      `https://nominatim.openstreetmap.org/search?q=${zip}&country=${country}&format=json&limit=1`
+      `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=${country}&format=json&limit=5`,
+      `https://nominatim.openstreetmap.org/search?postalcode=${zip}&format=json&limit=5`,
+      `https://nominatim.openstreetmap.org/search?q=${zip}&country=${country}&format=json&limit=5`
     ]
     
     let data: any[] = []
@@ -117,9 +117,26 @@ export async function GET(request: NextRequest) {
         })
         
         if (responseData && responseData.length > 0) {
-          data = responseData
-          console.log(`Found results with approach ${i + 1}`)
-          break
+          // Filter for US results if country is US
+          if (country === 'US') {
+            const usResults = responseData.filter((result: any) => 
+              result.address?.country_code === 'us' || 
+              result.address?.country === 'United States' ||
+              result.display_name?.includes('United States')
+            )
+            if (usResults.length > 0) {
+              data = usResults
+              console.log(`Found ${usResults.length} US results with approach ${i + 1}`)
+              break
+            } else {
+              console.log(`No US results found with approach ${i + 1}, trying next approach`)
+              continue
+            }
+          } else {
+            data = responseData
+            console.log(`Found results with approach ${i + 1}`)
+            break
+          }
         }
       } catch (error) {
         console.log(`Request ${i + 1} failed with error:`, error)
@@ -137,6 +154,20 @@ export async function GET(request: NextRequest) {
     
     const result = data[0]
     console.log(`Using result for ZIP ${zip}:`, result)
+    
+    // Additional validation for US results
+    if (country === 'US') {
+      const isUSResult = result.address?.country_code === 'us' || 
+                       result.address?.country === 'United States' ||
+                       result.display_name?.includes('United States')
+      
+      if (!isUSResult) {
+        console.log(`Result is not from US, rejecting:`, result.address)
+        return NextResponse.json({ 
+          error: `ZIP code ${zip} not found in the United States. This might be a new or non-standard ZIP code.` 
+        }, { status: 404 })
+      }
+    }
     
     const geocodeResult: GeocodeResult = {
       lat: parseFloat(result.lat),

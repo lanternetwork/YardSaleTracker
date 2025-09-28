@@ -9,9 +9,9 @@ export async function GET(request: NextRequest) {
   console.log(`Testing ZIP code: ${zip}`)
   
   const searchQueries = [
-    `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json&limit=1`,
-    `https://nominatim.openstreetmap.org/search?postalcode=${zip}&format=json&limit=1`,
-    `https://nominatim.openstreetmap.org/search?q=${zip}&country=US&format=json&limit=1`
+    `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json&limit=5`,
+    `https://nominatim.openstreetmap.org/search?postalcode=${zip}&format=json&limit=5`,
+    `https://nominatim.openstreetmap.org/search?q=${zip}&country=US&format=json&limit=5`
   ]
   
   const results = []
@@ -29,12 +29,21 @@ export async function GET(request: NextRequest) {
       
       const data = await response.json()
       
+      // Filter for US results
+      const usResults = data?.filter((result: any) => 
+        result.address?.country_code === 'us' || 
+        result.address?.country === 'United States' ||
+        result.display_name?.includes('United States')
+      ) || []
+      
       results.push({
         approach: i + 1,
         url,
         status: response.status,
         dataLength: data?.length || 0,
-        data: data
+        usResultsLength: usResults.length,
+        data: data,
+        usResults: usResults
       })
       
       console.log(`Approach ${i + 1} result:`, {
