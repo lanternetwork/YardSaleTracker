@@ -79,30 +79,64 @@ export async function GET(request: NextRequest) {
     
     console.log(`Cache miss for ZIP ${zip}, fetching from Nominatim`)
     
-    // Geocode using Nominatim
-    const nominatimUrl = `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=${country}&format=json&limit=1`
+    // Try multiple search approaches
+    const searchQueries = [
+      `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=${country}&format=json&limit=1`,
+      `https://nominatim.openstreetmap.org/search?postalcode=${zip}&format=json&limit=1`,
+      `https://nominatim.openstreetmap.org/search?q=${zip}&country=${country}&format=json&limit=1`
+    ]
     
-    const startTime = Date.now()
-    const response = await fetch(nominatimUrl, {
-      headers: {
-        'User-Agent': 'LootAura/1.0 (contact@lootaura.com)'
+    let data: any[] = []
+    let lastError: Error | null = null
+    
+    for (let i = 0; i < searchQueries.length; i++) {
+      const url = searchQueries[i]
+      console.log(`Trying search approach ${i + 1} for ZIP ${zip}: ${url}`)
+      
+      const startTime = Date.now()
+      try {
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'LootAura/1.0 (contact@lootaura.com)'
+          }
+        })
+        
+        const fetchTime = Date.now() - startTime
+        console.log(`Nominatim request ${i + 1} took ${fetchTime}ms`)
+        
+        if (!response.ok) {
+          console.log(`Request ${i + 1} failed with status: ${response.status}`)
+          continue
+        }
+        
+        const responseData = await response.json()
+        console.log(`Nominatim response ${i + 1} for ZIP ${zip}:`, {
+          status: response.status,
+          dataLength: responseData?.length || 0,
+          data: responseData
+        })
+        
+        if (responseData && responseData.length > 0) {
+          data = responseData
+          console.log(`Found results with approach ${i + 1}`)
+          break
+        }
+      } catch (error) {
+        console.log(`Request ${i + 1} failed with error:`, error)
+        lastError = error as Error
+        continue
       }
-    })
-    
-    const fetchTime = Date.now() - startTime
-    console.log(`Nominatim request took ${fetchTime}ms`)
-    
-    if (!response.ok) {
-      throw new Error(`Nominatim request failed: ${response.status}`)
     }
     
-    const data = await response.json()
-    
     if (!data || data.length === 0) {
-      return NextResponse.json({ error: 'ZIP code not found' }, { status: 404 })
+      console.log(`No results found for ZIP ${zip} with any approach`)
+      return NextResponse.json({ 
+        error: `ZIP code ${zip} not found. This might be a new or non-standard ZIP code.` 
+      }, { status: 404 })
     }
     
     const result = data[0]
+    console.log(`Using result for ZIP ${zip}:`, result)
     
     const geocodeResult: GeocodeResult = {
       lat: parseFloat(result.lat),
