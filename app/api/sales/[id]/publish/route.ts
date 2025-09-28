@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { jwtVerify } from 'jose'
-import { findDuplicateCandidates } from '@/lib/sales/dedupe'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
+const DRAFT_SECRET = process.env.DRAFT_SECRET || 'fallback-draft-secret'
 
 export async function POST(
   request: NextRequest,
@@ -42,9 +41,19 @@ export async function POST(
 
     // Check for duplicates (but don't block - just log)
     try {
-      const candidates = await findDuplicateCandidates(sale)
-      if (candidates.length > 0) {
-        console.log(`Found ${candidates.length} potential duplicates for sale ${sale.id}`)
+      const response = await fetch('/api/sales/dedupe/candidates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sale)
+      })
+      
+      if (response.ok) {
+        const candidates = await response.json()
+        if (candidates.length > 0) {
+          console.log(`Found ${candidates.length} potential duplicates for sale ${sale.id}`)
+        }
       }
     } catch (error) {
       console.error('Error checking duplicates:', error)
