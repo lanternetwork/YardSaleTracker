@@ -464,7 +464,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
             setPreviewTotal(cluster.sales.length)
             setShowPreview(true)
           })
-          console.log('Re-clustering: Single marker shown:', (marker as any).getTitle())
+          console.log('Re-clustering: Single marker shown:', (marker as any).getTitle(), 'at zoom:', currentZoom)
         } else {
           // Cluster - hide individual markers and show cluster marker
           cluster.markers.forEach(marker => marker.setMap(null))
