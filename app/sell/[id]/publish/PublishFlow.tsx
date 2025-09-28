@@ -152,15 +152,19 @@ export default function PublishFlow() {
             
             <div className="space-y-4">
               {candidates.map((candidate) => (
-                <div key={candidate.sale.id} className="bg-white rounded-lg p-4 border border-yellow-300">
+                <div key={candidate.id} className="bg-white rounded-lg p-4 border border-yellow-300">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{candidate.sale.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{candidate.sale.address}</p>
-                      <p className="text-sm text-gray-500 mt-1">{candidate.reason}</p>
+                      <h4 className="font-medium text-gray-900">{candidate.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {candidate.date_start} {candidate.time_start && `at ${candidate.time_start}`}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {Math.round(candidate.distance)}m away • {Math.round(candidate.similarity * 100)}% similar
+                      </p>
                     </div>
                     <button
-                      onClick={() => handleNotDuplicate(candidate.sale.id)}
+                      onClick={() => handleNotDuplicate(candidate.id)}
                       className="ml-4 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
                     >
                       Not a duplicate
