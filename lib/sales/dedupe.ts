@@ -77,8 +77,7 @@ export async function findDuplicateCandidates(options: DedupeOptions): Promise<D
         time_start,
         time_end,
         lat,
-        lng,
-        similarity(title, $1) as trigram_similarity
+        lng
       `)
       .gte('lat', lat - latRange)
       .lte('lat', lat + latRange)
@@ -87,7 +86,6 @@ export async function findDuplicateCandidates(options: DedupeOptions): Promise<D
       .eq('status', 'published')
       .not('lat', 'is', null)
       .not('lng', 'is', null)
-      .order('trigram_similarity', { ascending: false })
       .limit(50) // Get more candidates for filtering
 
     if (error) {
@@ -113,22 +111,25 @@ export async function findDuplicateCandidates(options: DedupeOptions): Promise<D
           return false
         }
         
-        // Check trigram similarity (≥0.35)
-        if (candidate.trigram_similarity < 0.35) return false
-        
         return true
       })
-      .map(candidate => ({
-        id: candidate.id,
-        title: candidate.title,
-        date_start: candidate.date_start,
-        date_end: candidate.date_end,
-        time_start: candidate.time_start,
-        time_end: candidate.time_end,
-        distance: calculateDistance(lat, lng, candidate.lat!, candidate.lng!),
-        similarity: candidate.trigram_similarity,
-        url: `/sale/${candidate.id}`
-      }))
+      .map(candidate => {
+        // Calculate similarity manually
+        const similarity = calculateStringSimilarity(title, candidate.title)
+        
+        return {
+          id: candidate.id,
+          title: candidate.title,
+          date_start: candidate.date_start,
+          date_end: candidate.date_end,
+          time_start: candidate.time_start,
+          time_end: candidate.time_end,
+          distance: calculateDistance(lat, lng, candidate.lat!, candidate.lng!),
+          similarity: similarity,
+          url: `/sale/${candidate.id}`
+        }
+      })
+      .filter(candidate => candidate.similarity >= 0.35) // Filter by similarity threshold
       .sort((a, b) => {
         // Sort by composite score: similarity * 0.7 + distance_score * 0.3
         const aScore = a.similarity * 0.7 + (1 - Math.min(a.distance / 150, 1)) * 0.3
