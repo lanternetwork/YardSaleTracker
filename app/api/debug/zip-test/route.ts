@@ -43,13 +43,13 @@ export async function GET(request: NextRequest) {
         firstResult: data?.[0] || null
       })
       
-    } catch (error) {
-      results.push({
-        approach: i + 1,
-        url,
-        error: error.message
-      })
-    }
+      } catch (error) {
+        results.push({
+          approach: i + 1,
+          url,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
   }
   
   return NextResponse.json({
