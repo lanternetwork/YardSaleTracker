@@ -321,14 +321,16 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
     
     newClusters.forEach((cluster, index) => {
       if (cluster.markers.length === 1) {
-        // Single marker - add click handler
+        // Single marker - make sure it's visible and add click handler
         const marker = cluster.markers[0]
+        marker.setMap(map) // Explicitly show the marker
         marker.addListener('click', () => {
           console.log('Single marker clicked:', (marker as any).getTitle())
           setPreviewSales(cluster.sales)
           setPreviewTotal(cluster.sales.length)
           setShowPreview(true)
         })
+        console.log('Single marker shown:', (marker as any).getTitle())
       } else {
         // Cluster marker
         const clusterMarker = new google.maps.Marker({
@@ -462,6 +464,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
             setPreviewTotal(cluster.sales.length)
             setShowPreview(true)
           })
+          console.log('Re-clustering: Single marker shown:', (marker as any).getTitle())
         } else {
           // Cluster - hide individual markers and show cluster marker
           cluster.markers.forEach(marker => marker.setMap(null))
