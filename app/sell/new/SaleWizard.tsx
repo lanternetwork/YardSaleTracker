@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useAutosaveDraft } from '@/lib/hooks/useAutosaveDraft'
 import TimePresetSelector from '@/components/TimePresetSelector'
 import { type TimePreset } from '@/lib/date/presets'
+import DedupePrompt from '@/components/DedupePrompt'
+import PrivacyCountdown from '@/components/PrivacyCountdown'
+import { type DedupeCandidate } from '@/lib/sales/dedupe'
 
 interface WizardStep {
   id: string
@@ -50,6 +53,8 @@ export default function SaleWizard() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedPreset, setSelectedPreset] = useState<string>('')
+  const [dupeCandidates, setDupeCandidates] = useState<DedupeCandidate[]>([])
+  const [showDedupePrompt, setShowDedupePrompt] = useState(false)
 
   const updateSaleData = (updates: Partial<SaleData>) => {
     setSaleData(prev => ({ ...prev, ...updates }))
@@ -124,6 +129,64 @@ export default function SaleWizard() {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
     }
+  }
+
+  // Check for duplicate candidates
+  const checkDuplicates = async () => {
+    if (!saleData.lat || !saleData.lng || !saleData.title || !saleData.date_start) {
+      return []
+    }
+
+    try {
+      const response = await fetch('/api/sales/dedupe/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lat: saleData.lat,
+          lng: saleData.lng,
+          title: saleData.title,
+          date_start: saleData.date_start,
+          date_end: saleData.date_end
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to check duplicates')
+      }
+
+      const candidates = await response.json()
+      return candidates
+    } catch (error) {
+      console.error('Error checking duplicates:', error)
+      return []
+    }
+  }
+
+  // Handle not duplicate action
+  const handleNotDuplicate = async (candidateId: string) => {
+    if (!saleData.id) return
+
+    try {
+      const response = await fetch(`/api/sales/${saleData.id}/not-duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otherSaleId: candidateId })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to record not duplicate')
+      }
+
+      // Remove the candidate from the list
+      setDupeCandidates(prev => prev.filter(c => c.id !== candidateId))
+    } catch (error) {
+      console.error('Error recording not duplicate:', error)
+    }
+  }
+
+  // Handle view candidate
+  const handleViewCandidate = (candidateId: string) => {
+    window.open(`/sale/${candidateId}`, '_blank', 'noopener,noreferrer')
   }
 
   const handleSubmit = async () => {
@@ -249,6 +312,19 @@ export default function SaleWizard() {
         <div className="bg-white rounded-lg shadow-sm p-6">
           {renderStep()}
         </div>
+
+        {/* Dedupe prompt */}
+        {showDedupePrompt && (
+          <div className="mt-6">
+            <DedupePrompt
+              candidates={dupeCandidates}
+              onNotDuplicate={handleNotDuplicate}
+              onViewCandidate={handleViewCandidate}
+              onContinue={handleSubmit}
+              isLoading={isSubmitting}
+            />
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="flex justify-between mt-6">
@@ -461,16 +537,30 @@ function PreviewStep({
       <h3 className="text-lg font-semibold text-gray-900">Preview Your Sale</h3>
       
       <div className="bg-gray-50 rounded-lg p-4">
-        <h4 className="font-medium text-gray-900">{data.title}</h4>
-        {data.description && (
-          <p className="text-gray-600 mt-2">{data.description}</p>
-        )}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h4 className="font-medium text-gray-900">{data.title}</h4>
+            {data.description && (
+              <p className="text-gray-600 mt-2">{data.description}</p>
+            )}
+          </div>
+          
+          {/* Privacy countdown */}
+          <PrivacyCountdown sale={data} className="ml-4" />
+        </div>
         
         <div className="mt-4 space-y-2 text-sm text-gray-600">
           <p><strong>When:</strong> {data.date_start} at {data.time_start}</p>
           {data.date_end && <p><strong>Ends:</strong> {data.date_end} at {data.time_end}</p>}
           <p><strong>Where:</strong> {data.address}</p>
-          <p><strong>Privacy:</strong> {data.privacy_mode === 'exact' ? 'Exact location' : 'Block-level until 24h before'}</p>
+          <div className="flex items-center gap-2">
+            <span><strong>Privacy:</strong></span>
+            {data.privacy_mode === 'exact' ? (
+              <span className="text-green-600">Exact location</span>
+            ) : (
+              <span className="text-amber-600">Block-level until 24h before</span>
+            )}
+          </div>
         </div>
       </div>
 

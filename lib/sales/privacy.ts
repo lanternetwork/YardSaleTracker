@@ -12,6 +12,21 @@ export interface Sale {
 }
 
 /**
+ * Get the sale start datetime in the local timezone
+ * @param sale - The sale object
+ * @returns Date object for the sale start time
+ */
+export function getSaleStartZoned(sale: Sale): Date | null {
+  if (!sale.date_start || !sale.time_start) {
+    return null
+  }
+
+  // Create a date in the local timezone
+  const startDate = new Date(`${sale.date_start}T${sale.time_start}`)
+  return startDate
+}
+
+/**
  * Determines if a sale's coordinates should be masked
  * @param sale - The sale object
  * @param now - Current timestamp (defaults to now)
@@ -22,14 +37,13 @@ export function shouldMask(sale: Sale, now: Date = new Date()): boolean {
     return false
   }
 
-  if (!sale.date_start || !sale.time_start) {
+  const startDate = getSaleStartZoned(sale)
+  if (!startDate) {
     return false
   }
 
-  // Parse the start datetime
-  const startDate = new Date(`${sale.date_start}T${sale.time_start}`)
-  const revealTime = new Date(startDate.getTime() - 24 * 60 * 60 * 1000) // 24 hours before
-
+  // Calculate 24 hours before start
+  const revealTime = new Date(startDate.getTime() - 24 * 60 * 60 * 1000)
   return now < revealTime
 }
 

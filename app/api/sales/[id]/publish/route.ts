@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { createHash } from 'crypto'
+import { findDuplicateCandidates } from '@/lib/sales/dedupe'
 
 export const runtime = 'nodejs'
 
@@ -39,25 +38,32 @@ export async function POST(
       )
     }
 
-    // Check for duplicates (but don't block - just log)
-    try {
-      const response = await fetch('/api/sales/dedupe/candidates', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(sale)
-      })
-      
-      if (response.ok) {
-        const candidates = await response.json()
+    // Check for duplicates before publishing
+    const { force } = await request.json().catch(() => ({}))
+    
+    if (!force) {
+      try {
+        const candidates = await findDuplicateCandidates({
+          lat: sale.lat,
+          lng: sale.lng,
+          title: sale.title,
+          date_start: sale.date_start,
+          date_end: sale.date_end
+        })
+        
         if (candidates.length > 0) {
-          console.log(`Found ${candidates.length} potential duplicates for sale ${sale.id}`)
+          return NextResponse.json(
+            { 
+              error: 'Potential duplicates found',
+              candidates: candidates.slice(0, 3) // Return top 3 candidates
+            },
+            { status: 409 }
+          )
         }
+      } catch (error) {
+        console.error('Error checking duplicates:', error)
+        // Continue with publish if dedupe check fails
       }
-    } catch (error) {
-      console.error('Error checking duplicates:', error)
-      // Don't fail the publish for dedupe errors
     }
 
     // Update sale to published status and assign ownership

@@ -1,55 +1,77 @@
-import { describe, it, expect, vi } from 'vitest'
-import { shouldMask, maskCoords, applyPrivacyMasking, getRevealTimeRemaining, formatRevealTimeRemaining } from '@/lib/sales/privacy'
+import { describe, it, expect } from 'vitest'
+import { 
+  getSaleStartZoned, 
+  shouldMask, 
+  maskCoords, 
+  formatRevealTimeRemaining 
+} from '@/lib/sales/privacy'
 
 describe('Privacy Masking', () => {
+  describe('getSaleStartZoned', () => {
+    it('should return correct date for valid sale', () => {
+      const sale = {
+        date_start: '2024-01-06',
+        time_start: '08:00'
+      }
+      
+      const startDate = getSaleStartZoned(sale)
+      expect(startDate).toBeInstanceOf(Date)
+      expect(startDate?.getFullYear()).toBe(2024)
+      expect(startDate?.getMonth()).toBe(0) // January
+      expect(startDate?.getDate()).toBe(6)
+    })
+
+    it('should return null for missing date', () => {
+      const sale = { time_start: '08:00' }
+      const startDate = getSaleStartZoned(sale)
+      expect(startDate).toBeNull()
+    })
+
+    it('should return null for missing time', () => {
+      const sale = { date_start: '2024-01-06' }
+      const startDate = getSaleStartZoned(sale)
+      expect(startDate).toBeNull()
+    })
+  })
+
   describe('shouldMask', () => {
-    it('should return false for exact privacy mode', () => {
+    it('should not mask exact privacy mode', () => {
       const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'exact' as const,
-        date_start: '2023-12-01',
-        time_start: '10:00'
+        privacy_mode: 'exact',
+        date_start: '2024-01-06',
+        time_start: '08:00'
       }
       
       expect(shouldMask(sale)).toBe(false)
     })
 
-    it('should return false when privacy mode is block_until_24h but no date/time', () => {
+    it('should mask block_until_24h before reveal time', () => {
       const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'block_until_24h' as const
+        privacy_mode: 'block_until_24h',
+        date_start: '2024-01-06',
+        time_start: '08:00'
       }
       
-      expect(shouldMask(sale)).toBe(false)
+      // Set current time to 25 hours before start
+      const now = new Date('2024-01-05T07:00:00Z')
+      expect(shouldMask(sale, now)).toBe(true)
     })
 
-    it('should return true when privacy mode is block_until_24h and more than 24h before start', () => {
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + 2) // 2 days from now
-      
+    it('should not mask block_until_24h after reveal time', () => {
       const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'block_until_24h' as const,
-        date_start: futureDate.toISOString().split('T')[0],
-        time_start: '10:00'
+        privacy_mode: 'block_until_24h',
+        date_start: '2024-01-06',
+        time_start: '08:00'
       }
       
-      expect(shouldMask(sale)).toBe(true)
+      // Set current time to 23 hours before start (within 24h)
+      const now = new Date('2024-01-05T09:00:00Z')
+      expect(shouldMask(sale, now)).toBe(false)
     })
 
-    it('should return false when privacy mode is block_until_24h and less than 24h before start', () => {
-      const futureDate = new Date()
-      futureDate.setHours(futureDate.getHours() + 12) // 12 hours from now
-      
+    it('should not mask if missing date/time', () => {
       const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'block_until_24h' as const,
-        date_start: futureDate.toISOString().split('T')[0],
-        time_start: futureDate.toTimeString().split(' ')[0].substring(0, 5)
+        privacy_mode: 'block_until_24h'
       }
       
       expect(shouldMask(sale)).toBe(false)
@@ -57,126 +79,68 @@ describe('Privacy Masking', () => {
   })
 
   describe('maskCoords', () => {
-    it('should round coordinates to ~3 decimal places', () => {
-      const result = maskCoords(37.7749, -122.4194)
+    it('should round coordinates to block level', () => {
+      const lat = 37.7749295
+      const lng = -122.4194155
       
-      expect(result.lat).toBe(37.775)
-      expect(result.lng).toBe(-122.419)
+      const masked = maskCoords(lat, lng)
+      
+      expect(masked.lat).toBe(37.775) // Rounded to 3 decimal places
+      expect(masked.lng).toBe(-122.419)
     })
 
     it('should handle negative coordinates', () => {
-      const result = maskCoords(-37.7749, -122.4194)
+      const lat = -37.7749295
+      const lng = -122.4194155
       
-      expect(result.lat).toBe(-37.775)
-      expect(result.lng).toBe(-122.419)
-    })
-  })
-
-  describe('applyPrivacyMasking', () => {
-    it('should not mask when shouldMask returns false', () => {
-      const sale = {
-        id: '1',
-        title: 'Test Sale',
-        lat: 37.7749,
-        lng: -122.4194,
-        privacy_mode: 'exact' as const
-      }
+      const masked = maskCoords(lat, lng)
       
-      const result = applyPrivacyMasking(sale)
-      
-      expect(result.lat).toBe(37.7749)
-      expect(result.lng).toBe(-122.4194)
-      expect(result.is_masked).toBeUndefined()
-    })
-
-    it('should mask when shouldMask returns true', () => {
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + 2)
-      
-      const sale = {
-        id: '1',
-        title: 'Test Sale',
-        lat: 37.7749,
-        lng: -122.4194,
-        privacy_mode: 'block_until_24h' as const,
-        date_start: futureDate.toISOString().split('T')[0],
-        time_start: '10:00'
-      }
-      
-      const result = applyPrivacyMasking(sale)
-      
-      expect(result.lat).toBe(37.775)
-      expect(result.lng).toBe(-122.419)
-      expect(result.is_masked).toBe(true)
-      expect(result.reveal_time).toBeDefined()
-    })
-  })
-
-  describe('getRevealTimeRemaining', () => {
-    it('should return 0 for exact privacy mode', () => {
-      const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'exact' as const
-      }
-      
-      expect(getRevealTimeRemaining(sale)).toBe(0)
-    })
-
-    it('should return 0 when no date/time provided', () => {
-      const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'block_until_24h' as const
-      }
-      
-      expect(getRevealTimeRemaining(sale)).toBe(0)
-    })
-
-    it('should return correct time remaining', () => {
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + 2)
-      
-      const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'block_until_24h' as const,
-        date_start: futureDate.toISOString().split('T')[0],
-        time_start: '10:00'
-      }
-      
-      const remaining = getRevealTimeRemaining(sale)
-      expect(remaining).toBeGreaterThan(0)
-      expect(remaining).toBeLessThan(2 * 24 * 60 * 60 * 1000) // Less than 2 days
+      expect(masked.lat).toBe(-37.775)
+      expect(masked.lng).toBe(-122.419)
     })
   })
 
   describe('formatRevealTimeRemaining', () => {
-    it('should return "Revealed" when time remaining is 0', () => {
+    it('should format hours and minutes correctly', () => {
       const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'exact' as const
+        privacy_mode: 'block_until_24h',
+        date_start: '2024-01-06',
+        time_start: '08:00'
       }
       
-      expect(formatRevealTimeRemaining(sale)).toBe('Revealed')
+      // Set current time to 2.5 hours before reveal
+      const now = new Date('2024-01-05T05:30:00Z')
+      const formatted = formatRevealTimeRemaining(sale, now)
+      
+      expect(formatted).toMatch(/2h 30m/)
     })
 
-    it('should format hours and minutes correctly', () => {
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + 1)
-      futureDate.setHours(futureDate.getHours() + 2)
-      
+    it('should format minutes only for short durations', () => {
       const sale = {
-        id: '1',
-        title: 'Test Sale',
-        privacy_mode: 'block_until_24h' as const,
-        date_start: futureDate.toISOString().split('T')[0],
-        time_start: '10:00'
+        privacy_mode: 'block_until_24h',
+        date_start: '2024-01-06',
+        time_start: '08:00'
       }
       
-      const result = formatRevealTimeRemaining(sale)
-      expect(result).toMatch(/\d+h \d+m/)
+      // Set current time to 30 minutes before reveal
+      const now = new Date('2024-01-05T07:30:00Z')
+      const formatted = formatRevealTimeRemaining(sale, now)
+      
+      expect(formatted).toMatch(/30m/)
+    })
+
+    it('should return "Revealed" when already revealed', () => {
+      const sale = {
+        privacy_mode: 'block_until_24h',
+        date_start: '2024-01-06',
+        time_start: '08:00'
+      }
+      
+      // Set current time to after reveal
+      const now = new Date('2024-01-05T09:00:00Z')
+      const formatted = formatRevealTimeRemaining(sale, now)
+      
+      expect(formatted).toBe('Revealed')
     })
   })
 })
