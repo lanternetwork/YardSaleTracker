@@ -10,12 +10,19 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 - 🔐 **User Accounts**: Save favorites and manage your own sales
 - 📊 **Admin Tools**: Craigslist ingestion and system diagnostics
 - 🎨 **Modern UI**: Clean, responsive design with dark mode support
+- 🛡️ **Stabilize Mode**: Preview safety switch to disable heavy features during development
 
 ### Map Clustering Features
 - **Zoom-aware clustering**: Blue circles that appear/disappear based on zoom level
 - **Rich popups**: InfoWindow showing first 10 sales with "View All" button
 - **Performance optimized**: Smooth transitions without blinking or flickering
 - **Distance-based**: Accurate clustering using Haversine formula for real-world distances
+
+### Stabilize Mode
+- **Preview Safety**: Set `STABILIZE_MODE=1` in Vercel Preview to disable wizard pages
+- **Lightweight Placeholders**: Shows simple notices instead of heavy components
+- **Easy Toggle**: Remove the environment variable to re-enable full functionality
+- **Development Friendly**: Prevents SSR/import failures during heavy development
 
 ## Getting Started
 
@@ -45,6 +52,9 @@ A modern, mobile-first web application for discovering, posting, and managing ya
    
    # Google Maps (Optional)
    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-maps-key
+   
+   # Feature Flags (Optional)
+   STABILIZE_MODE=0  # Set to 1 to disable wizard pages in preview
    ```
 
 3. **Install dependencies**:

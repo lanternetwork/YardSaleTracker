@@ -1,93 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
-import { z } from 'zod'
+import { cookies } from 'next/headers'
+import { SignJWT } from 'jose'
 
 export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
 
-const createSaleSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  address: z.string().min(1, 'Address is required'),
-  date_start: z.string().min(1, 'Start date is required'),
-  date_end: z.string().optional(),
-  time_start: z.string().optional(),
-  time_end: z.string().optional(),
-  privacy_mode: z.enum(['exact', 'block_until_24h']).default('exact'),
-  price_min: z.number().optional(),
-  price_max: z.number().optional(),
-  tags: z.array(z.string()).default([]),
-  status: z.enum(['draft', 'published', 'hidden', 'auto_hidden']).default('draft')
-})
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
+
+interface SaleData {
+  title: string
+  description?: string
+  photos?: string[]
+  date_start: string
+  date_end?: string
+  time_start: string
+  time_end?: string
+  address: string
+  lat?: number
+  lng?: number
+  privacy_mode: 'exact' | 'block_until_24h'
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const validatedData = createSaleSchema.parse(body)
+    const saleData: SaleData = await request.json()
     
-    const supabase = createSupabaseServer()
-    
-    // Check if user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      // Create draft without owner_id (anonymous draft)
-      const { data: sale, error } = await supabase
-        .from('sales')
-        .insert({
-          ...validatedData,
-          owner_id: null,
-          source: 'manual',
-          source_id: null
-        })
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Failed to create anonymous draft:', error)
-        return NextResponse.json(
-          { error: 'Failed to create draft' },
-          { status: 500 }
-        )
-      }
-      
-      return NextResponse.json({ id: sale.id })
-    }
-    
-    // Create sale with authenticated user
-    const { data: sale, error } = await supabase
-      .from('sales')
-      .insert({
-        ...validatedData,
-        owner_id: user.id,
-        source: 'manual',
-        source_id: null
-      })
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Failed to create sale:', error)
+    // Validate required fields
+    if (!saleData.title || !saleData.date_start || !saleData.time_start || !saleData.address) {
       return NextResponse.json(
-        { error: 'Failed to create sale' },
-        { status: 500 }
-      )
-    }
-    
-    return NextResponse.json({ id: sale.id })
-  } catch (error) {
-    console.error('Error creating sale:', error)
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Missing required fields: title, date_start, time_start, address' },
         { status: 400 }
       )
     }
+
+    const supabase = createSupabaseServer()
     
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    // Create draft sale
+    const { data: sale, error } = await supabase
+      .from('sales')
+      .insert({
+        title: saleData.title,
+        description: saleData.description,
+        address: saleData.address,
+        lat: saleData.lat,
+        lng: saleData.lng,
+        date_start: saleData.date_start,
+        date_end: saleData.date_end,
+        time_start: saleData.time_start,
+        time_end: saleData.time_end,
+        privacy_mode: saleData.privacy_mode,
+        status: 'draft'
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating sale:', error)
+      return NextResponse.json({ error: 'Failed to create sale' }, { status: 500 })
+    }
+
+    // Create signed token for draft access
+    const token = await new SignJWT({ saleId: sale.id })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('7d')
+      .sign(new TextEncoder().encode(JWT_SECRET))
+
+    // Set HttpOnly cookie for draft access
+    const cookieStore = cookies()
+    cookieStore.set('draft_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 // 7 days
+    })
+
+    return NextResponse.json({ 
+      id: sale.id,
+      message: 'Draft created successfully'
+    })
+
+  } catch (error) {
+    console.error('Error in POST /api/sales:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

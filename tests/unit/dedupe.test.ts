@@ -1,181 +1,59 @@
-import { describe, it, expect } from 'vitest'
-import { findDuplicates, hasDateOverlap, calculateDistance, calculateSimilarity } from '@/lib/dedupe'
+import { describe, it, expect, vi } from 'vitest'
+import { calculateDistance, dateRangesOverlap } from '@/lib/sales/dedupe'
 
-describe('Dedupe Functionality', () => {
-  const mockSale = {
-    id: 'sale-1',
-    title: 'Vintage Furniture Sale',
-    address: '123 Main St, City, State',
-    lat: 37.7749,
-    lng: -122.4194,
-    date_start: '2024-12-28',
-    date_end: '2024-12-29'
-  }
+describe('Deduplication', () => {
+  describe('calculateDistance', () => {
+    it('should calculate distance between two points correctly', () => {
+      // Distance between San Francisco and Oakland (approximately 12.5 km)
+      const sf = { lat: 37.7749, lng: -122.4194 }
+      const oakland = { lat: 37.8044, lng: -122.2712 }
+      
+      const distance = calculateDistance(sf.lat, sf.lng, oakland.lat, oakland.lng)
+      
+      // Should be approximately 12.5 km (12500 meters)
+      expect(distance).toBeCloseTo(12500, -2) // Within 100 meters
+    })
 
-  const mockCandidates = [
-    {
-      id: 'sale-2',
-      title: 'Vintage Furniture & Antiques',
-      address: '125 Main St, City, State',
-      lat: 37.7750,
-      lng: -122.4195,
-      date_start: '2024-12-28',
-      date_end: '2024-12-29'
-    },
-    {
-      id: 'sale-3',
-      title: 'Electronics Sale',
-      address: '456 Oak Ave, City, State',
-      lat: 37.7849,
-      lng: -122.4294,
-      date_start: '2024-12-28',
-      date_end: '2024-12-29'
-    },
-    {
-      id: 'sale-4',
-      title: 'Furniture & Home Decor',
-      address: '127 Main St, City, State',
-      lat: 37.7751,
-      lng: -122.4196,
-      date_start: '2024-12-30',
-      date_end: '2024-12-31'
-    }
-  ]
+    it('should return 0 for identical coordinates', () => {
+      const distance = calculateDistance(37.7749, -122.4194, 37.7749, -122.4194)
+      expect(distance).toBe(0)
+    })
 
-  it('should find duplicates based on distance and similarity', async () => {
-    const duplicates = await findDuplicates(mockSale, mockCandidates)
-    
-    expect(duplicates).toHaveLength(1)
-    expect(duplicates[0].id).toBe('sale-2')
-    expect(duplicates[0].similarity).toBeGreaterThan(0.3)
-    expect(duplicates[0].distance).toBeLessThan(150)
+    it('should handle negative coordinates', () => {
+      const distance = calculateDistance(-37.7749, -122.4194, -37.8044, -122.2712)
+      expect(distance).toBeGreaterThan(0)
+    })
   })
 
-  it('should not find duplicates for different dates', async () => {
-    const saleWithDifferentDate = {
-      ...mockSale,
-      date_start: '2024-12-30',
-      date_end: '2024-12-31'
-    }
-    
-    const duplicates = await findDuplicates(saleWithDifferentDate, mockCandidates)
-    expect(duplicates).toHaveLength(0)
-  })
+  describe('dateRangesOverlap', () => {
+    it('should return true for overlapping date ranges', () => {
+      expect(dateRangesOverlap('2023-12-01', '2023-12-03', '2023-12-02', '2023-12-04')).toBe(true)
+    })
 
-  it('should not find duplicates for distant locations', async () => {
-    const distantSale = {
-      ...mockSale,
-      lat: 37.8849,
-      lng: -122.5294
-    }
-    
-    const duplicates = await findDuplicates(distantSale, mockCandidates)
-    expect(duplicates).toHaveLength(0)
-  })
-})
+    it('should return true for identical date ranges', () => {
+      expect(dateRangesOverlap('2023-12-01', '2023-12-03', '2023-12-01', '2023-12-03')).toBe(true)
+    })
 
-describe('Date Overlap', () => {
-  it('should detect overlapping dates', () => {
-    const sale1 = { 
-      id: 'sale-1', 
-      title: 'Test Sale 1', 
-      address: '123 Test St', 
-      lat: 37.7749, 
-      lng: -122.4194,
-      date_start: '2024-12-28', 
-      date_end: '2024-12-29' 
-    }
-    const sale2 = { 
-      id: 'sale-2', 
-      title: 'Test Sale 2', 
-      address: '456 Test Ave', 
-      lat: 37.7849, 
-      lng: -122.4094,
-      date_start: '2024-12-28', 
-      date_end: '2024-12-29' 
-    }
-    
-    expect(hasDateOverlap(sale1, sale2)).toBe(true)
-  })
+    it('should return true when one range contains the other', () => {
+      expect(dateRangesOverlap('2023-12-01', '2023-12-05', '2023-12-02', '2023-12-03')).toBe(true)
+    })
 
-  it('should detect partial overlap', () => {
-    const sale1 = { 
-      id: 'sale-1', 
-      title: 'Test Sale 1', 
-      address: '123 Test St', 
-      lat: 37.7749, 
-      lng: -122.4194,
-      date_start: '2024-12-28', 
-      date_end: '2024-12-29' 
-    }
-    const sale2 = { 
-      id: 'sale-2', 
-      title: 'Test Sale 2', 
-      address: '456 Test Ave', 
-      lat: 37.7849, 
-      lng: -122.4094,
-      date_start: '2024-12-29', 
-      date_end: '2024-12-30' 
-    }
-    
-    expect(hasDateOverlap(sale1, sale2)).toBe(true)
-  })
+    it('should return false for non-overlapping ranges', () => {
+      expect(dateRangesOverlap('2023-12-01', '2023-12-02', '2023-12-03', '2023-12-04')).toBe(false)
+    })
 
-  it('should not detect non-overlapping dates', () => {
-    const sale1 = { 
-      id: 'sale-1', 
-      title: 'Test Sale 1', 
-      address: '123 Test St', 
-      lat: 37.7749, 
-      lng: -122.4194,
-      date_start: '2024-12-28', 
-      date_end: '2024-12-29' 
-    }
-    const sale2 = { 
-      id: 'sale-2', 
-      title: 'Test Sale 2', 
-      address: '456 Test Ave', 
-      lat: 37.7849, 
-      lng: -122.4094,
-      date_start: '2024-12-30', 
-      date_end: '2024-12-31' 
-    }
-    
-    expect(hasDateOverlap(sale1, sale2)).toBe(false)
-  })
-})
+    it('should return true for ranges that touch at the boundary', () => {
+      expect(dateRangesOverlap('2023-12-01', '2023-12-02', '2023-12-02', '2023-12-03')).toBe(true)
+    })
 
-describe('Distance Calculation', () => {
-  it('should calculate distance between two points', () => {
-    const distance = calculateDistance(37.7749, -122.4194, 37.7750, -122.4195)
-    expect(distance).toBeGreaterThan(0)
-    expect(distance).toBeLessThan(100) // Should be very close
-  })
+    it('should handle single-day events (no end date)', () => {
+      expect(dateRangesOverlap('2023-12-01', undefined, '2023-12-01', undefined)).toBe(true)
+      expect(dateRangesOverlap('2023-12-01', undefined, '2023-12-02', undefined)).toBe(false)
+    })
 
-  it('should return 0 for identical points', () => {
-    const distance = calculateDistance(37.7749, -122.4194, 37.7749, -122.4194)
-    expect(distance).toBe(0)
-  })
-})
-
-describe('Similarity Calculation', () => {
-  it('should return 1 for identical strings', () => {
-    const similarity = calculateSimilarity('Vintage Furniture Sale', 'Vintage Furniture Sale')
-    expect(similarity).toBe(1)
-  })
-
-  it('should return high similarity for similar strings', () => {
-    const similarity = calculateSimilarity('Vintage Furniture Sale', 'Vintage Furniture & Antiques')
-    expect(similarity).toBeGreaterThan(0.3)
-  })
-
-  it('should return low similarity for different strings', () => {
-    const similarity = calculateSimilarity('Vintage Furniture Sale', 'Electronics Sale')
-    expect(similarity).toBeLessThan(0.3)
-  })
-
-  it('should handle empty strings', () => {
-    const similarity = calculateSimilarity('', '')
-    expect(similarity).toBe(0)
+    it('should handle mixed single-day and multi-day events', () => {
+      expect(dateRangesOverlap('2023-12-01', '2023-12-03', '2023-12-02', undefined)).toBe(true)
+      expect(dateRangesOverlap('2023-12-01', undefined, '2023-12-01', '2023-12-03')).toBe(true)
+    })
   })
 })

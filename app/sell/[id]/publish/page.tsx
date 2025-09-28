@@ -2,19 +2,19 @@ import { isStabilize } from '@/lib/config/flags'
 
 // Stabilize Mode guard
 if (isStabilize) {
-  export default function ManagePage() {
+  export default function PublishPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Manage Sale
+            Publish Sale
           </h1>
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <p className="text-yellow-800">
               <strong>Stabilize mode active in preview</strong>
             </p>
             <p className="text-sm text-yellow-700 mt-2">
-              The sale management interface is temporarily disabled in preview mode 
+              The sale publishing flow is temporarily disabled in preview mode 
               to ensure system stability. This feature will be available in production.
             </p>
           </div>
@@ -24,10 +24,10 @@ if (isStabilize) {
   }
 }
 
-// Full manage implementation
+// Full publish implementation
 import dynamic from 'next/dynamic'
 
-const SaleManager = dynamic(() => import('./SaleManager'), {
+const PublishFlow = dynamic(() => import('./PublishFlow'), {
   ssr: false,
   loading: () => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -39,6 +39,6 @@ const SaleManager = dynamic(() => import('./SaleManager'), {
   )
 })
 
-export default function ManagePage() {
-  return <SaleManager />
+export default function PublishPage() {
+  return <PublishFlow />
 }

@@ -17,19 +17,26 @@ export function useSales(filters?: {
     queryFn: async () => {
       const sb = createSupabaseBrowser()
       
-      // Default date filter: current week ± 7 days if no date filter present
+      // Default date filter: this weekend & future if no date filter present
       let dateFrom = filters?.dateFrom
       let dateTo = filters?.dateTo
       
       if (!dateFrom && !dateTo) {
         const today = new Date()
-        const sevenDaysAgo = new Date(today)
-        sevenDaysAgo.setDate(today.getDate() - 7)
-        const sevenDaysFromNow = new Date(today)
-        sevenDaysFromNow.setDate(today.getDate() + 7)
+        const startOfWeekend = new Date(today)
         
-        dateFrom = sevenDaysAgo.toISOString().split('T')[0]
-        dateTo = sevenDaysFromNow.toISOString().split('T')[0]
+        // Find the start of this weekend (Friday)
+        const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        const daysToFriday = (5 - dayOfWeek + 7) % 7 // Days until Friday
+        startOfWeekend.setDate(today.getDate() + daysToFriday)
+        
+        // If it's already weekend (Friday-Sunday), use today
+        if (dayOfWeek >= 5) {
+          startOfWeekend.setDate(today.getDate())
+        }
+        
+        dateFrom = startOfWeekend.toISOString().split('T')[0]
+        // No end date - show all future sales
       }
       
       // Try the optimized RPC function first
