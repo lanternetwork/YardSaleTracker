@@ -114,7 +114,7 @@ describe('Add Sale Integration', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <Explore />
+        <Explore searchParams={{}} />
       </QueryClientProvider>
     )
 
@@ -159,7 +159,7 @@ describe('Add Sale Integration', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <Explore />
+        <Explore searchParams={{}} />
       </QueryClientProvider>
     )
 
@@ -194,7 +194,7 @@ describe('Add Sale Integration', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <Explore />
+        <Explore searchParams={{}} />
       </QueryClientProvider>
     )
 
@@ -231,7 +231,7 @@ describe('Add Sale Integration', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <Explore />
+        <Explore searchParams={{}} />
       </QueryClientProvider>
     )
 
@@ -265,7 +265,7 @@ describe('Add Sale Integration', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <Explore />
+        <Explore searchParams={{}} />
       </QueryClientProvider>
     )
 
@@ -350,7 +350,7 @@ describe('Add Sale Integration', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <Explore />
+        <Explore searchParams={{}} />
       </QueryClientProvider>
     )
 

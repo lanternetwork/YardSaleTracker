@@ -1,3 +1,9 @@
+import { Suspense } from 'react'
+import { headers } from 'next/headers'
+import { getInitialCenter } from '@/lib/server/geo'
+import { querySalesByRadius, getDefaultDateRange } from '@/lib/server/salesQuery'
+import ExploreClient from './ExploreClient'
+
 interface ExplorePageProps {
   searchParams: {
     tab?: string
@@ -46,8 +52,8 @@ export default async function Explore({ searchParams }: ExplorePageProps) {
   
   // Convert to map points
   const mapPoints = sales
-    .filter(s => s.lat && s.lng)
-    .map(s => ({ 
+    .filter((s: any) => s.lat && s.lng)
+    .map((s: any) => ({ 
       id: s.id, 
       title: s.title, 
       lat: s.lat!, 
