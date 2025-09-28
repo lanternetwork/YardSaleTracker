@@ -11,12 +11,20 @@ export interface Sale {
   [key: string]: any
 }
 
+export interface PrivacySale {
+  privacy_mode?: 'exact' | 'block_until_24h'
+  date_start?: string
+  time_start?: string
+  lat?: number
+  lng?: number
+}
+
 /**
  * Get the sale start datetime in the local timezone
  * @param sale - The sale object
  * @returns Date object for the sale start time
  */
-export function getSaleStartZoned(sale: Sale): Date | null {
+export function getSaleStartZoned(sale: PrivacySale): Date | null {
   if (!sale.date_start || !sale.time_start) {
     return null
   }
@@ -32,7 +40,7 @@ export function getSaleStartZoned(sale: Sale): Date | null {
  * @param now - Current timestamp (defaults to now)
  * @returns true if coordinates should be masked
  */
-export function shouldMask(sale: Sale, now: Date = new Date()): boolean {
+export function shouldMask(sale: PrivacySale, now: Date = new Date()): boolean {
   if (sale.privacy_mode !== 'block_until_24h') {
     return false
   }
@@ -90,7 +98,7 @@ export function applyPrivacyMasking(sale: Sale, now: Date = new Date()): Sale {
  * @param now - Current timestamp (defaults to now)
  * @returns Time remaining in milliseconds, or 0 if already revealed
  */
-export function getRevealTimeRemaining(sale: Sale, now: Date = new Date()): number {
+export function getRevealTimeRemaining(sale: PrivacySale, now: Date = new Date()): number {
   if (sale.privacy_mode !== 'block_until_24h' || !sale.date_start || !sale.time_start) {
     return 0
   }
@@ -107,7 +115,7 @@ export function getRevealTimeRemaining(sale: Sale, now: Date = new Date()): numb
  * @param now - Current timestamp (defaults to now)
  * @returns Formatted time string (e.g., "2h 30m" or "Revealed")
  */
-export function formatRevealTimeRemaining(sale: Sale, now: Date = new Date()): string {
+export function formatRevealTimeRemaining(sale: PrivacySale, now: Date = new Date()): string {
   const remaining = getRevealTimeRemaining(sale, now)
   
   if (remaining === 0) {
