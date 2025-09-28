@@ -1,7 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAutosaveDraft } from '@/lib/hooks/useAutosaveDraft'
+import TimePresetSelector from '@/components/TimePresetSelector'
+import { type TimePreset } from '@/lib/date/presets'
 
 interface WizardStep {
   id: string
@@ -17,6 +20,7 @@ const steps: WizardStep[] = [
 ]
 
 interface SaleData {
+  id?: string
   title: string
   description: string
   photos: string[]
@@ -45,9 +49,69 @@ export default function SaleWizard() {
     privacy_mode: 'exact'
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedPreset, setSelectedPreset] = useState<string>('')
 
   const updateSaleData = (updates: Partial<SaleData>) => {
     setSaleData(prev => ({ ...prev, ...updates }))
+  }
+
+  // Autosave functionality
+  const { isSaving, lastSaved, error: saveError, saveNow } = useAutosaveDraft(saleData, {
+    delay: 800,
+    onSave: async (data) => {
+      if (!data.id) {
+        // Create new draft
+        const response = await fetch('/api/sales', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to create draft')
+        }
+        
+        const result = await response.json()
+        setSaleData(prev => ({ ...prev, id: result.id }))
+      } else {
+        // Update existing draft
+        const response = await fetch(`/api/sales/${data.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        
+        if (!response.ok) {
+          throw new Error('Failed to save draft')
+        }
+      }
+    },
+    onError: (error) => {
+      console.error('Autosave error:', error)
+    }
+  })
+
+  // Handle time preset selection
+  const handlePresetSelect = (preset: TimePreset) => {
+    setSelectedPreset(preset.id)
+    
+    if (preset.id === 'custom') {
+      // Clear preset data, let user fill manually
+      updateSaleData({
+        date_start: '',
+        date_end: '',
+        time_start: '',
+        time_end: ''
+      })
+    } else {
+      // Apply preset data
+      updateSaleData({
+        date_start: preset.date_start,
+        date_end: preset.date_end,
+        time_start: preset.time_start,
+        time_end: preset.time_end
+      })
+    }
   }
 
   const nextStep = () => {
@@ -149,13 +213,35 @@ export default function SaleWizard() {
               </div>
             ))}
           </div>
-          <div className="mt-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {steps[currentStep].title}
-            </h2>
-            <p className="text-gray-600">
-              {steps[currentStep].description}
-            </p>
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {steps[currentStep].title}
+              </h2>
+              <p className="text-gray-600">
+                {steps[currentStep].description}
+              </p>
+            </div>
+            
+            {/* Autosave status */}
+            <div className="text-sm text-gray-500">
+              {isSaving && (
+                <span className="flex items-center text-blue-600">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Saving...
+                </span>
+              )}
+              {!isSaving && lastSaved && (
+                <span className="text-green-600">
+                  ✓ Saved {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+              {saveError && (
+                <span className="text-red-600">
+                  ⚠ Save failed
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -233,54 +319,81 @@ function BasicsStep({ data, onChange }: { data: SaleData; onChange: (updates: Pa
 function WhenStep({ data, onChange }: { data: SaleData; onChange: (updates: Partial<SaleData>) => void }) {
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Start Date *
-        </label>
-        <input
-          type="date"
-          value={data.date_start}
-          onChange={(e) => onChange({ date_start: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          required
-        />
-      </div>
+      <TimePresetSelector
+        onPresetSelect={(preset) => {
+          if (preset.id === 'custom') {
+            onChange({
+              date_start: '',
+              date_end: '',
+              time_start: '',
+              time_end: ''
+            })
+          } else {
+            onChange({
+              date_start: preset.date_start,
+              date_end: preset.date_end,
+              time_start: preset.time_start,
+              time_end: preset.time_end
+            })
+          }
+        }}
+        selectedPreset={data.date_start && data.time_start ? 'custom' : ''}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          End Date (optional)
-        </label>
-        <input
-          type="date"
-          value={data.date_end || ''}
-          onChange={(e) => onChange({ date_end: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-      </div>
+      <div className="border-t pt-6">
+        <h4 className="text-sm font-medium text-gray-700 mb-4">Custom Schedule</h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Start Date *
+            </label>
+            <input
+              type="date"
+              value={data.date_start}
+              onChange={(e) => onChange({ date_start: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Start Time *
-        </label>
-        <input
-          type="time"
-          value={data.time_start}
-          onChange={(e) => onChange({ time_start: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          required
-        />
-      </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              End Date (optional)
+            </label>
+            <input
+              type="date"
+              value={data.date_end || ''}
+              onChange={(e) => onChange({ date_end: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          End Time (optional)
-        </label>
-        <input
-          type="time"
-          value={data.time_end || ''}
-          onChange={(e) => onChange({ time_end: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Start Time *
+            </label>
+            <input
+              type="time"
+              value={data.time_start}
+              onChange={(e) => onChange({ time_start: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              End Time (optional)
+            </label>
+            <input
+              type="time"
+              value={data.time_end || ''}
+              onChange={(e) => onChange({ time_end: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
       </div>
     </div>
   )

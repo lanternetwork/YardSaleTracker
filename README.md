@@ -11,6 +11,8 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 - 📊 **Admin Tools**: Craigslist ingestion and system diagnostics
 - 🎨 **Modern UI**: Clean, responsive design with dark mode support
 - 🛡️ **Stabilize Mode**: Preview safety switch to disable heavy features during development
+- ⏰ **Time Presets**: Quick date/time selection for common yard sale schedules
+- 💾 **Autosave Drafts**: Secure draft persistence for anonymous users without account creation
 
 ### Map Clustering Features
 - **Zoom-aware clustering**: Blue circles that appear/disappear based on zoom level
@@ -23,6 +25,15 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 - **Lightweight Placeholders**: Shows simple notices instead of heavy components
 - **Easy Toggle**: Remove the environment variable to re-enable full functionality
 - **Development Friendly**: Prevents SSR/import failures during heavy development
+
+### Time Presets & Autosave
+- **Quick Scheduling**: Pre-configured time slots for "This Saturday 8–2", "This Sunday 9–1", "Sat + Sun 8–2", and "Custom"
+- **Local Timezone**: Automatically calculates next Saturday/Sunday in your timezone
+- **Autosave Drafts**: Anonymous users can create and save drafts without account creation
+- **Secure Tokens**: Draft access controlled by secure HttpOnly cookies with hashed tokens
+- **Real-time Feedback**: Live "Saving..." and "Saved" status indicators
+- **Persistence**: Drafts survive page reloads and browser sessions
+- **Publish Flow**: Sign-in required only when publishing; drafts are claimed to user account
 
 ## Getting Started
 

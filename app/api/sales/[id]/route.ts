@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-import { createHash } from 'crypto'
+import { readDraftCookie, verifyDraftToken } from '@/lib/server/draftToken'
 
 export const runtime = 'nodejs'
 
-const DRAFT_SECRET = process.env.DRAFT_SECRET || 'fallback-draft-secret'
+interface SaleUpdate {
+  title?: string
+  description?: string
+  photos?: string[]
+  date_start?: string
+  date_end?: string
+  time_start?: string
+  time_end?: string
+  address?: string
+  lat?: number
+  lng?: number
+  privacy_mode?: 'exact' | 'block_until_24h'
+}
 
 export async function GET(
   request: NextRequest,
@@ -29,7 +40,10 @@ export async function GET(
 
   } catch (error) {
     console.error('Error in GET /api/sales/[id]:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
 
@@ -38,106 +52,80 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const updates = await request.json()
+    const saleId = params.id
+    const updateData: SaleUpdate = await request.json()
+    
     const supabase = createSupabaseServer()
     
-    // Check if user is authenticated or has draft access
-    const cookieStore = cookies()
-    const draftToken = cookieStore.get('draft_session')?.value
+    // Check if user is authenticated and owns the sale
+    const { data: { user } } = await supabase.auth.getUser()
     
-    let hasAccess = false
+    let isAuthorized = false
     
-    if (draftToken) {
-      try {
-        const [saleId, token] = draftToken.split(':')
-        const expectedToken = createHash('sha256')
-          .update(`${saleId}:${DRAFT_SECRET}`)
-          .digest('hex')
-        
-        hasAccess = saleId === params.id && token === expectedToken
-      } catch (error) {
-        // Token invalid, check auth
+    if (user) {
+      // Check if user owns the sale
+      const { data: sale } = await supabase
+        .from('yard_sales')
+        .select('owner_id')
+        .eq('id', saleId)
+        .single()
+      
+      if (sale && sale.owner_id === user.id) {
+        isAuthorized = true
       }
     }
     
-    // If no draft access, check if user is authenticated and owns the sale
-    if (!hasAccess) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: sale } = await supabase
-          .from('yard_sales')
-          .select('owner_id')
-          .eq('id', params.id)
+    // If not authorized by user ownership, check draft token
+    if (!isAuthorized) {
+      const draftToken = readDraftCookie(request, saleId)
+      
+      if (draftToken) {
+        // Get stored token hash
+        const { data: tokenData } = await supabase
+          .from('sale_draft_tokens')
+          .select('token_hash')
+          .eq('sale_id', saleId)
           .single()
         
-        hasAccess = sale?.owner_id === user.id
+        if (tokenData && await verifyDraftToken(draftToken, tokenData.token_hash)) {
+          isAuthorized = true
+        }
       }
     }
     
-    if (!hasAccess) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      )
     }
-
+    
+    // Update the sale
     const { data: sale, error } = await supabase
       .from('yard_sales')
       .update({
-        ...updates,
-        updated_at: new Date().toISOString()
+        ...updateData,
+        last_seen_at: new Date().toISOString()
       })
-      .eq('id', params.id)
+      .eq('id', saleId)
       .select()
       .single()
 
     if (error) {
       console.error('Error updating sale:', error)
-      return NextResponse.json({ error: 'Failed to update sale' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to update sale' },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json(sale)
+    return NextResponse.json({ saved: true, sale })
 
   } catch (error) {
     console.error('Error in PATCH /api/sales/[id]:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const supabase = createSupabaseServer()
-    
-    // Check if user is authenticated and owns the sale
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: sale } = await supabase
-      .from('yard_sales')
-      .select('owner_id')
-      .eq('id', params.id)
-      .single()
-
-    if (sale?.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
-
-    const { error } = await supabase
-      .from('yard_sales')
-      .delete()
-      .eq('id', params.id)
-
-    if (error) {
-      console.error('Error deleting sale:', error)
-      return NextResponse.json({ error: 'Failed to delete sale' }, { status: 500 })
-    }
-
-    return NextResponse.json({ message: 'Sale deleted successfully' })
-
-  } catch (error) {
-    console.error('Error in DELETE /api/sales/[id]:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }
