@@ -1,9 +1,22 @@
 import { isStabilize } from '@/lib/config/flags'
 import dynamic from 'next/dynamic'
 
-// Stabilize Mode guard - lightweight placeholder
-if (isStabilize) {
-  export default function NewSalePage() {
+// Full wizard implementation
+const SaleWizard = dynamic(() => import('./SaleWizard'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading wizard...</p>
+      </div>
+    </div>
+  )
+})
+
+export default function NewSalePage() {
+  // Stabilize Mode guard - lightweight placeholder
+  if (isStabilize) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center">
@@ -23,21 +36,6 @@ if (isStabilize) {
       </div>
     )
   }
-}
 
-// Full wizard implementation (when not in stabilize mode)
-const SaleWizard = dynamic(() => import('./SaleWizard'), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading wizard...</p>
-      </div>
-    </div>
-  )
-})
-
-export default function NewSalePage() {
   return <SaleWizard />
 }

@@ -1,9 +1,22 @@
 import { isStabilize } from '@/lib/config/flags'
 import dynamic from 'next/dynamic'
 
-// Stabilize Mode guard
-if (isStabilize) {
-  export default function ManagePage() {
+// Full manage implementation
+const SaleManager = dynamic(() => import('./SaleManager'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+})
+
+export default function ManagePage() {
+  // Stabilize Mode guard
+  if (isStabilize) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center">
@@ -23,21 +36,6 @@ if (isStabilize) {
       </div>
     )
   }
-}
 
-// Full manage implementation
-const SaleManager = dynamic(() => import('./SaleManager'), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
-      </div>
-    </div>
-  )
-})
-
-export default function ManagePage() {
   return <SaleManager />
 }

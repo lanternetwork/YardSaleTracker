@@ -1,9 +1,22 @@
 import { isStabilize } from '@/lib/config/flags'
 import dynamic from 'next/dynamic'
 
-// Stabilize Mode guard
-if (isStabilize) {
-  export default function PublishPage() {
+// Full publish implementation
+const PublishFlow = dynamic(() => import('./PublishFlow'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+})
+
+export default function PublishPage() {
+  // Stabilize Mode guard
+  if (isStabilize) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center">
@@ -23,21 +36,6 @@ if (isStabilize) {
       </div>
     )
   }
-}
 
-// Full publish implementation
-const PublishFlow = dynamic(() => import('./PublishFlow'), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
-      </div>
-    </div>
-  )
-})
-
-export default function PublishPage() {
   return <PublishFlow />
 }
