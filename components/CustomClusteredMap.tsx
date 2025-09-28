@@ -24,7 +24,13 @@ interface Cluster {
   bounds: google.maps.LatLngBounds
 }
 
-export default function CustomClusteredMap({ points }: { points: Marker[] }) {
+interface CustomClusteredMapProps {
+  points: Marker[]
+  center?: { lat: number; lng: number }
+  zoom?: number
+}
+
+export default function CustomClusteredMap({ points, center, zoom }: CustomClusteredMapProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -109,8 +115,8 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
 
         try {
           const mapInstance = new google.maps.Map(ref.current, {
-            center: { lat: 37.7749, lng: -122.4194 },
-            zoom: 10,
+            center: center || { lat: 37.7749, lng: -122.4194 },
+            zoom: zoom || 10,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             mapTypeControl: true,
             streetViewControl: true,
@@ -151,6 +157,22 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
 
     return () => clearTimeout(timer)
   }, [loader])
+
+  // Update map center when center prop changes
+  useEffect(() => {
+    if (map && center) {
+      map.setCenter(center)
+      console.log('Map center updated to:', center)
+    }
+  }, [map, center])
+
+  // Update map zoom when zoom prop changes
+  useEffect(() => {
+    if (map && zoom) {
+      map.setZoom(zoom)
+      console.log('Map zoom updated to:', zoom)
+    }
+  }, [map, zoom])
 
   // Custom clustering algorithm
   const createClusters = (markers: google.maps.Marker[], sales: Sale[], zoom: number): Cluster[] => {

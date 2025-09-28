@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState, Suspense } from 'react'
+import { useMemo, useState, Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 import NavTabs from '@/components/NavTabs'
@@ -60,9 +60,26 @@ export default function ExploreClient({
   
   const tab = searchParams.tab as 'list' | 'map' | 'add' | 'find' || 'list'
 
+  // Track current center and radius from URL params
+  const [currentCenter, setCurrentCenter] = useState(initialCenter)
+  const [currentRadius, setCurrentRadius] = useState(initialRadius)
+  
   // Use initial data from server
   const [sales] = useState(initialSales)
   const [mapPoints] = useState(initialMapPoints)
+
+  // Update center when URL params change
+  useEffect(() => {
+    if (searchParams.lat && searchParams.lng) {
+      setCurrentCenter({
+        lat: parseFloat(searchParams.lat),
+        lng: parseFloat(searchParams.lng)
+      })
+    }
+    if (searchParams.radius) {
+      setCurrentRadius(parseFloat(searchParams.radius))
+    }
+  }, [searchParams.lat, searchParams.lng, searchParams.radius])
 
   return (
     <main className="max-w-6xl mx-auto p-4">
@@ -94,7 +111,11 @@ export default function ExploreClient({
           <div className="mb-4 text-sm text-neutral-600">
             {sales.length} sales found
           </div>
-          <CustomClusteredMap points={mapPoints} />
+          <CustomClusteredMap 
+            points={mapPoints} 
+            center={currentCenter}
+            zoom={currentRadius <= 5 ? 12 : currentRadius <= 25 ? 10 : 8}
+          />
         </div>
       )}
       {tab === 'add' && (
