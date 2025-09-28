@@ -4,7 +4,7 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 
 ## Features
 
-- 🔍 **Search & Filter**: Find sales by location, date, price, and categories
+- 🔍 **Search & Filter**: Find sales by location, date, and categories
 - 🗺️ **Smart Map Clustering**: Zoom-aware clustering with InfoWindow popups
 - 📱 **PWA Support**: Install as a mobile app with offline capabilities
 - 🔐 **User Accounts**: Save favorites and manage your own sales

@@ -17,8 +17,7 @@ export type Sale = {
   privacy_mode?: 'exact' | 'block_until_24h'
   geocode_precision?: string
   tags: string[]
-  price_min?: number
-  price_max?: number
+  // (deprecated; yard sales do not have sale-level prices)
   photos: string[]
   contact?: string
   status: 'active'|'completed'|'cancelled'|'draft'|'published'|'hidden'|'auto_hidden'

@@ -44,8 +44,7 @@ export async function POST(request: NextRequest) {
         privacy_mode: 'exact',
         geocode_precision: 'exact',
         tags: ['community', 'furniture', 'electronics'],
-        price_min: 1,
-        price_max: 100,
+        // (deprecated; yard sales do not have sale-level prices)
         photos: [],
         contact: 'Call for details',
         status: 'active',
@@ -71,8 +70,7 @@ export async function POST(request: NextRequest) {
         privacy_mode: 'exact',
         geocode_precision: 'exact',
         tags: ['multi-family', 'toys', 'books', 'kitchen'],
-        price_min: 2,
-        price_max: 50,
+        // (deprecated; yard sales do not have sale-level prices)
         photos: [],
         contact: 'Text for address',
         status: 'active',
@@ -98,8 +96,7 @@ export async function POST(request: NextRequest) {
         privacy_mode: 'exact',
         geocode_precision: 'exact',
         tags: ['neighborhood', 'furniture', 'clothing', 'electronics'],
-        price_min: 1,
-        price_max: 75,
+        // (deprecated; yard sales do not have sale-level prices)
         photos: [],
         contact: 'Call for details',
         status: 'active',
@@ -227,8 +224,7 @@ export async function POST(request: NextRequest) {
         privacy_mode: 'exact',
         geocode_precision: 'exact',
         tags: ['community', 'furniture', 'electronics'],
-        price_min: 1,
-        price_max: 100,
+        // (deprecated; yard sales do not have sale-level prices)
         photos: [],
         contact: 'Call for details',
         status: 'active',
@@ -254,8 +250,7 @@ export async function POST(request: NextRequest) {
         privacy_mode: 'exact',
         geocode_precision: 'exact',
         tags: ['multi-family', 'toys', 'books', 'kitchen'],
-        price_min: 2,
-        price_max: 50,
+        // (deprecated; yard sales do not have sale-level prices)
         photos: [],
         contact: 'Text for address',
         status: 'active',
@@ -281,8 +276,7 @@ export async function POST(request: NextRequest) {
         privacy_mode: 'exact',
         geocode_precision: 'exact',
         tags: ['neighborhood', 'furniture', 'clothing', 'electronics'],
-        price_min: 1,
-        price_max: 75,
+        // (deprecated; yard sales do not have sale-level prices)
         photos: [],
         contact: 'Call for details',
         status: 'active',

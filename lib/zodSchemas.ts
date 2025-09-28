@@ -10,8 +10,7 @@ export const SaleSchema = z.object({
   start_at: z.string().optional(),
   end_at: z.string().optional(),
   tags: z.array(z.string()).default([]),
-  price_min: z.number().optional(),
-  price_max: z.number().optional(),
+  // (deprecated; yard sales do not have sale-level prices)
   lat: z.number().optional(),
   lng: z.number().optional(),
   contact: z.string().optional(),

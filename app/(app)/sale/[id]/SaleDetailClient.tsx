@@ -120,14 +120,6 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
             </div>
           )}
 
-          {sale.price_min && sale.price_max && (
-            <div>
-              <h3 className="font-semibold text-neutral-900">Price Range</h3>
-              <p className="text-neutral-600">
-                ${sale.price_min} - ${sale.price_max}
-              </p>
-            </div>
-          )}
 
           {sale.contact && (
             <div>

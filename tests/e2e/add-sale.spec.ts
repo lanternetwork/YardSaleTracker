@@ -221,8 +221,7 @@ test.describe('Add Sale E2E Flow', () => {
     await page.fill('textarea[name="description"]', 'Large neighborhood garage sale with furniture and electronics')
     await page.fill('input[name="start_at"]', '2025-02-01T09:00')
     await page.fill('input[name="end_at"]', '2025-02-01T17:00')
-    await page.fill('input[name="price_min"]', '5')
-    await page.fill('input[name="price_max"]', '100')
+    // (deprecated; yard sales do not have sale-level prices)
     await page.fill('input[name="contact"]', '555-123-4567')
     
     // Add a tag

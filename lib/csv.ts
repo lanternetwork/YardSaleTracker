@@ -10,8 +10,7 @@ export interface CSVRow {
   start_at?: string
   end_at?: string
   tags?: string
-  price_min?: string
-  price_max?: string
+  // (deprecated; yard sales do not have sale-level prices)
   contact?: string
   source?: string
 }
@@ -65,7 +64,7 @@ function parseCSVLine(line: string): string[] {
 export function exportToCSV(sales: any[]): string {
   const headers = [
     'title', 'description', 'address', 'city', 'state', 'zip',
-    'start_at', 'end_at', 'tags', 'price_min', 'price_max', 'contact', 'source'
+    'start_at', 'end_at', 'tags', 'contact', 'source'
   ]
 
   const csvRows = [

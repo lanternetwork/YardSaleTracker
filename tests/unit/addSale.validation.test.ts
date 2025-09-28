@@ -31,8 +31,7 @@ describe('Add Sale Validation', () => {
       zip: '94705',
       start_at: '2025-02-01T09:00:00Z',
       end_at: '2025-02-01T17:00:00Z',
-      price_min: 5,
-      price_max: 500,
+      // (deprecated; yard sales do not have sale-level prices)
       contact: '555-123-4567',
       lat: 37.8719,
       lng: -122.2585,
@@ -93,25 +92,7 @@ describe('Add Sale Validation', () => {
     }
   })
 
-  it('should reject invalid price ranges', () => {
-    const invalidPayload = {
-      title: 'Test Sale',
-      address: '123 Main St, San Francisco, CA',
-      price_min: 100,
-      price_max: 50, // Max less than min
-      tags: [],
-      photos: []
-    }
-
-    const result = SaleSchema.safeParse(invalidPayload)
-    expect(result.success).toBe(true) // Zod doesn't validate business logic
-    
-    // Business logic validation would need to be added separately
-    if (result.success) {
-      expect(result.data.price_min).toBe(100)
-      expect(result.data.price_max).toBe(50)
-    }
-  })
+  // (deprecated; yard sales do not have sale-level prices)
 
   it('should handle optional fields correctly', () => {
     const payloadWithOptionals = {
@@ -163,8 +144,7 @@ describe('Add Sale Validation', () => {
     const payloadWithNumbers = {
       title: 'Test Sale',
       address: '123 Main St, San Francisco, CA',
-      price_min: 10.50,
-      price_max: 100.99,
+      // (deprecated; yard sales do not have sale-level prices)
       lat: 37.7749,
       lng: -122.4194,
       tags: [],
@@ -175,8 +155,7 @@ describe('Add Sale Validation', () => {
     expect(result.success).toBe(true)
     
     if (result.success) {
-      expect(result.data.price_min).toBe(10.50)
-      expect(result.data.price_max).toBe(100.99)
+      // (deprecated; yard sales do not have sale-level prices)
       expect(result.data.lat).toBe(37.7749)
       expect(result.data.lng).toBe(-122.4194)
     }
@@ -186,7 +165,7 @@ describe('Add Sale Validation', () => {
     const invalidPayload = {
       title: 'Test Sale',
       address: '123 Main St, San Francisco, CA',
-      price_min: 'not-a-number',
+      // (deprecated; yard sales do not have sale-level prices)
       tags: [],
       photos: []
     }
@@ -195,12 +174,7 @@ describe('Add Sale Validation', () => {
     expect(result.success).toBe(false)
     
     if (!result.success) {
-      expect(result.error.errors).toContainEqual(
-        expect.objectContaining({
-          path: ['price_min'],
-          message: expect.stringContaining('Expected number')
-        })
-      )
+        // (deprecated; yard sales do not have sale-level prices)
     }
   })
 })

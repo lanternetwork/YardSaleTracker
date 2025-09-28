@@ -55,11 +55,6 @@ export default function SaleCard({ sale }: { sale: Sale }) {
           {new Date(sale.start_at).toLocaleString()}
         </div>
       )}
-      {sale.price_min && sale.price_max && (
-        <div className="text-sm font-medium text-amber-600">
-          ${sale.price_min} - ${sale.price_max}
-        </div>
-      )}
       <Link 
         className="text-amber-600 font-medium hover:text-amber-700" 
         href={`/sale/${sale.id}`}

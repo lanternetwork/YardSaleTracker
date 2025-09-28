@@ -126,8 +126,7 @@ export default function AddSaleForm() {
         address: String(formData.get('address') || ''),
         start_at: String(formData.get('start_at') || ''),
         end_at: String(formData.get('end_at') || ''),
-        price_min: formData.get('price_min') ? Number(formData.get('price_min')) : undefined,
-        price_max: formData.get('price_max') ? Number(formData.get('price_max')) : undefined,
+        // (deprecated; yard sales do not have sale-level prices)
         contact: String(formData.get('contact') || ''),
         lat: coords?.lat,
         lng: coords?.lng,
@@ -232,28 +231,6 @@ export default function AddSaleForm() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Min Price ($)</label>
-          <input 
-            type="number" 
-            name="price_min" 
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Max Price ($)</label>
-          <input 
-            type="number" 
-            name="price_max" 
-            min="0"
-            step="0.01"
-            placeholder="100.00"
-            className="w-full rounded border px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-          />
-        </div>
       </div>
 
       <div>
