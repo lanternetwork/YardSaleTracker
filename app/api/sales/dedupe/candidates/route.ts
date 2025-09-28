@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
       }
 
       const distance = calculateDistance(
-        newSale.lat, newSale.lng,
-        candidate.lat, candidate.lng
+        newSale.lat!, newSale.lng!,
+        candidate.lat!, candidate.lng!
       )
 
       if (distance > maxDistance) {
