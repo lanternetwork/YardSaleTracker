@@ -4,7 +4,7 @@
  */
 
 import { createSupabaseServer } from '@/lib/supabase/server'
-import { type DedupeCandidate } from './dedupe-utils'
+import { type DedupeCandidate, calculateStringSimilarity } from './dedupe-utils'
 
 // Re-export for server-side use
 export type { DedupeCandidate }
