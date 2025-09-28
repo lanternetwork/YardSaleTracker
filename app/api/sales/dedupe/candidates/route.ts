@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
 
       // Check date overlap
       if (!dateRangesOverlap(
-        newSale.date_start, newSale.date_end,
-        candidate.date_start, candidate.date_end
+        newSale.date_start!, newSale.date_end,
+        candidate.date_start!, candidate.date_end
       )) {
         return false
       }
