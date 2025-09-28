@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const lngDelta = maxDistance / (111000 * Math.cos(newSale.lat * Math.PI / 180))
 
     const { data: candidates, error } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .select('*')
       .eq('status', 'published')
       .gte('lat', newSale.lat - latDelta)

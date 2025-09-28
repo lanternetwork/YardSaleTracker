@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     
     // Create draft sale
     const { data: sale, error } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .insert({
         title: saleData.title,
         description: saleData.description,

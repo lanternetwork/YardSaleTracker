@@ -15,7 +15,7 @@ export async function GET(
     const supabase = createSupabaseServer()
     
     const { data: sale, error } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .select('*')
       .eq('id', params.id)
       .single()
@@ -65,7 +65,7 @@ export async function PATCH(
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         const { data: sale } = await supabase
-          .from('sales')
+          .from('yard_sales')
           .select('owner_id')
           .eq('id', params.id)
           .single()
@@ -79,7 +79,7 @@ export async function PATCH(
     }
 
     const { data: sale, error } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .update({
         ...updates,
         updated_at: new Date().toISOString()
@@ -115,7 +115,7 @@ export async function DELETE(
     }
 
     const { data: sale } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .select('owner_id')
       .eq('id', params.id)
       .single()
@@ -125,7 +125,7 @@ export async function DELETE(
     }
 
     const { error } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .delete()
       .eq('id', params.id)
 

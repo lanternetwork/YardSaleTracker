@@ -4,26 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { findDuplicateCandidates, recordNegativeMatch } from '@/lib/sales/dedupe'
 import { formatRevealTimeRemaining } from '@/lib/sales/privacy'
-
-interface Sale {
-  id: string
-  title: string
-  description?: string
-  address: string
-  lat?: number
-  lng?: number
-  date_start: string
-  time_start: string
-  privacy_mode: 'exact' | 'block_until_24h'
-  status: string
-}
-
-interface DedupeCandidate {
-  sale: Sale
-  distance: number
-  similarity: number
-  reason: string
-}
+import { Sale, DedupeCandidate } from '@/lib/sales/dedupe-utils'
 
 export default function PublishFlow() {
   const params = useParams()

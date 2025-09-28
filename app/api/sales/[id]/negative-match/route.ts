@@ -31,7 +31,7 @@ export async function POST(
     
     // Check if user owns the first sale
     const { data: saleA, error: saleAError } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .select('id, owner_id')
       .eq('id', params.id)
       .single()
@@ -45,7 +45,7 @@ export async function POST(
     
     // Check if user owns the second sale
     const { data: saleB, error: saleBError } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .select('id, owner_id')
       .eq('id', sale_id_b)
       .single()

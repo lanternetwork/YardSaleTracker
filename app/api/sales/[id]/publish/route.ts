@@ -22,7 +22,7 @@ export async function POST(
 
     // Get the sale
     const { data: sale, error: saleError } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .select('*')
       .eq('id', params.id)
       .single()
@@ -62,7 +62,7 @@ export async function POST(
 
     // Update sale to published status and assign ownership
     const { data: updatedSale, error: updateError } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .update({
         status: 'published',
         owner_id: user.id,
