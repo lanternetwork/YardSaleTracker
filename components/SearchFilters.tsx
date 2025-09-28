@@ -20,6 +20,8 @@ export default function SearchFilters({
   const pathname = usePathname()
   const [f, setF] = useState<Filters>(defaultFilters)
   const [showMore, setShowMore] = useState(showAdvanced)
+  const [zipCode, setZipCode] = useState('')
+  const [isGeocoding, setIsGeocoding] = useState(false)
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -32,6 +34,12 @@ export default function SearchFilters({
     }
     setF(urlFilters)
     onChange(urlFilters)
+    
+    // Initialize ZIP from URL
+    const zip = searchParams.get('zip')
+    if (zip) {
+      setZipCode(zip)
+    }
   }, [searchParams, onChange])
 
   function set<K extends keyof Filters>(k: K, v: any) { 
@@ -64,7 +72,40 @@ export default function SearchFilters({
   const clearFilters = () => {
     setF(defaultFilters)
     onChange(defaultFilters)
+    setZipCode('')
     router.replace(pathname, { scroll: false })
+  }
+
+  const geocodeZip = async (zip: string) => {
+    if (!/^\d{5}$/.test(zip)) {
+      alert('Please enter a valid 5-digit ZIP code')
+      return
+    }
+
+    setIsGeocoding(true)
+    try {
+      const response = await fetch(`/api/geocode/zip?zip=${zip}`)
+      if (!response.ok) {
+        throw new Error('Geocoding failed')
+      }
+      
+      const data = await response.json()
+      
+      // Update URL with new coordinates
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('zip', zip)
+      params.set('lat', data.lat.toString())
+      params.set('lng', data.lng.toString())
+      
+      const newUrl = `${pathname}?${params.toString()}`
+      router.replace(newUrl, { scroll: false })
+      
+    } catch (error) {
+      console.error('ZIP geocoding error:', error)
+      alert('Could not find location for that ZIP code')
+    } finally {
+      setIsGeocoding(false)
+    }
   }
 
   const hasActiveFilters = f.q || f.maxKm !== 25 || f.dateFrom || f.dateTo || (f.tags && f.tags.length > 0)
@@ -103,6 +144,39 @@ export default function SearchFilters({
       {/* Advanced filters */}
       {showMore && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-neutral-50 rounded-lg">
+          {/* ZIP Code input */}
+          <div>
+            <label className="block text-sm font-medium mb-1">ZIP Code</label>
+            <div className="flex gap-1">
+              <input 
+                type="text"
+                className="flex-1 px-2 py-1 rounded border text-sm" 
+                placeholder="12345"
+                value={zipCode}
+                onChange={e => setZipCode(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    geocodeZip(zipCode)
+                  }
+                }}
+                onBlur={() => {
+                  if (zipCode && /^\d{5}$/.test(zipCode)) {
+                    geocodeZip(zipCode)
+                  }
+                }}
+                maxLength={5}
+                pattern="\d{5}"
+              />
+              <button
+                className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50"
+                onClick={() => geocodeZip(zipCode)}
+                disabled={isGeocoding || !zipCode}
+              >
+                {isGeocoding ? '...' : 'Go'}
+              </button>
+            </div>
+          </div>
+
           {/* Distance filter */}
           <div>
             <label className="block text-sm font-medium mb-1">Max Distance</label>
