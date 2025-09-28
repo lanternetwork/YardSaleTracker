@@ -46,8 +46,8 @@ export default function SaleCard({ sale }: { sale: Sale }) {
         {sale.city && sale.state && <div>{sale.city}, {sale.state}</div>}
       </div>
       
-      {maskedLocation?.is_masked && maskedLocation.reveal_time && (
-        <PrivacyCountdown revealTime={maskedLocation.reveal_time} />
+      {maskedLocation?.is_masked && (
+        <PrivacyCountdown sale={sale} />
       )}
       
       {sale.start_at && (
