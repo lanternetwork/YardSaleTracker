@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     const candidatesWithScores = validCandidates.map(candidate => {
       const distance = calculateDistance(
         newSale.lat!, newSale.lng!,
-        candidate.lat, candidate.lng
+        candidate.lat!, candidate.lng!
       )
 
       const similarity = calculateStringSimilarity(newSale.title, candidate.title)
