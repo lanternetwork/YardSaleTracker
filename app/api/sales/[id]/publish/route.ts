@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { findDuplicateCandidates } from '@/lib/sales/dedupe'
 
