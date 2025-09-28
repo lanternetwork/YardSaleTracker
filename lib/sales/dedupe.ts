@@ -4,18 +4,10 @@
  */
 
 import { createSupabaseServer } from '@/lib/supabase/server'
+import { type DedupeCandidate } from './dedupe-utils'
 
-export interface DedupeCandidate {
-  id: string
-  title: string
-  date_start: string
-  date_end?: string
-  time_start?: string
-  time_end?: string
-  distance: number // in meters
-  similarity: number // 0-1 trigram similarity
-  url?: string
-}
+// Re-export for server-side use
+export type { DedupeCandidate }
 
 export interface DedupeOptions {
   lat: number

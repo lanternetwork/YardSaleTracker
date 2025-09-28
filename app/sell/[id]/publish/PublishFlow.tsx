@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { findDuplicateCandidates, recordNegativeMatch } from '@/lib/sales/dedupe'
 import { formatRevealTimeRemaining } from '@/lib/sales/privacy'
 import { Sale, DedupeCandidate } from '@/lib/sales/dedupe-utils'
 
@@ -30,9 +29,23 @@ export default function PublishFlow() {
       const saleData = await response.json()
       setSale(saleData)
       
-      // Check for duplicates
-      const duplicateCandidates = await findDuplicateCandidates(saleData)
-      setCandidates(duplicateCandidates)
+      // Check for duplicates via API
+      const duplicateResponse = await fetch('/api/sales/dedupe/candidates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lat: saleData.lat,
+          lng: saleData.lng,
+          title: saleData.title,
+          date_start: saleData.date_start,
+          date_end: saleData.date_end
+        })
+      })
+      
+      if (duplicateResponse.ok) {
+        const duplicateCandidates = await duplicateResponse.json()
+        setCandidates(duplicateCandidates)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sale')
     } finally {
@@ -42,9 +55,16 @@ export default function PublishFlow() {
 
   const handleNotDuplicate = async (candidateId: string) => {
     try {
-      await recordNegativeMatch(saleId, candidateId)
-      // Remove from candidates list
-      setCandidates(prev => prev.filter(c => c.sale.id !== candidateId))
+      const response = await fetch(`/api/sales/${saleId}/not-duplicate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otherSaleId: candidateId })
+      })
+      
+      if (response.ok) {
+        // Remove from candidates list
+        setCandidates(prev => prev.filter(c => c.id !== candidateId))
+      }
     } catch (err) {
       console.error('Failed to record negative match:', err)
     }

@@ -7,7 +7,7 @@ import TimePresetSelector from '@/components/TimePresetSelector'
 import { type TimePreset } from '@/lib/date/presets'
 import DedupePrompt from '@/components/DedupePrompt'
 import PrivacyCountdown from '@/components/PrivacyCountdown'
-import { type DedupeCandidate } from '@/lib/sales/dedupe'
+import { type DedupeCandidate } from '@/lib/sales/dedupe-utils'
 
 interface WizardStep {
   id: string

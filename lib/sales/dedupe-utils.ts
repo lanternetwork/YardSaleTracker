@@ -13,10 +13,15 @@ export interface Sale {
 }
 
 export interface DedupeCandidate {
-  sale: Sale
-  distance: number
-  similarity: number
-  reason: string
+  id: string
+  title: string
+  date_start: string
+  date_end?: string
+  time_start?: string
+  time_end?: string
+  distance: number // in meters
+  similarity: number // 0-1 trigram similarity
+  url?: string
 }
 
 /**

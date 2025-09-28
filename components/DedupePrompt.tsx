@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { type DedupeCandidate } from '@/lib/sales/dedupe'
+import { type DedupeCandidate } from '@/lib/sales/dedupe-utils'
 
 interface DedupePromptProps {
   candidates: DedupeCandidate[]
