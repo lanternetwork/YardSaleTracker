@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { SignJWT } from 'jose'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
+const DRAFT_SECRET = process.env.DRAFT_SECRET || 'fallback-draft-secret'
 
 interface SaleData {
   title: string
@@ -59,16 +59,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create sale' }, { status: 500 })
     }
 
-    // Create signed token for draft access
-    const token = await new SignJWT({ saleId: sale.id })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('7d')
-      .sign(new TextEncoder().encode(JWT_SECRET))
+    // Create simple token for draft access
+    const token = createHash('sha256')
+      .update(`${sale.id}:${DRAFT_SECRET}`)
+      .digest('hex')
 
     // Set HttpOnly cookie for draft access
     const cookieStore = cookies()
-    cookieStore.set('draft_session', token, {
+    cookieStore.set('draft_session', `${sale.id}:${token}`, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

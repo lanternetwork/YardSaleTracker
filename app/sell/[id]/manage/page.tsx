@@ -1,4 +1,5 @@
 import { isStabilize } from '@/lib/config/flags'
+import dynamic from 'next/dynamic'
 
 // Stabilize Mode guard
 if (isStabilize) {
@@ -25,8 +26,6 @@ if (isStabilize) {
 }
 
 // Full manage implementation
-import dynamic from 'next/dynamic'
-
 const SaleManager = dynamic(() => import('./SaleManager'), {
   ssr: false,
   loading: () => (

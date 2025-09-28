@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { jwtVerify } from 'jose'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
+const DRAFT_SECRET = process.env.DRAFT_SECRET || 'fallback-draft-secret'
 
 export async function GET(
   request: NextRequest,
@@ -49,11 +49,12 @@ export async function PATCH(
     
     if (draftToken) {
       try {
-        const { payload } = await jwtVerify(
-          draftToken,
-          new TextEncoder().encode(JWT_SECRET)
-        )
-        hasAccess = payload.saleId === params.id
+        const [saleId, token] = draftToken.split(':')
+        const expectedToken = createHash('sha256')
+          .update(`${saleId}:${DRAFT_SECRET}`)
+          .digest('hex')
+        
+        hasAccess = saleId === params.id && token === expectedToken
       } catch (error) {
         // Token invalid, check auth
       }

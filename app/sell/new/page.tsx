@@ -1,4 +1,5 @@
 import { isStabilize } from '@/lib/config/flags'
+import dynamic from 'next/dynamic'
 
 // Stabilize Mode guard - lightweight placeholder
 if (isStabilize) {
@@ -25,8 +26,6 @@ if (isStabilize) {
 }
 
 // Full wizard implementation (when not in stabilize mode)
-import dynamic from 'next/dynamic'
-
 const SaleWizard = dynamic(() => import('./SaleWizard'), {
   ssr: false,
   loading: () => (
