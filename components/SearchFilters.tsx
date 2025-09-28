@@ -83,13 +83,29 @@ export default function SearchFilters({
     }
 
     setIsGeocoding(true)
+    
+    // Show immediate feedback
+    console.log('Geocoding ZIP:', zip)
+    
     try {
-      const response = await fetch(`/api/geocode/zip?zip=${zip}`)
+      const startTime = Date.now()
+      const response = await fetch(`/api/geocode/zip?zip=${zip}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      const geocodeTime = Date.now() - startTime
+      console.log(`Geocoding took ${geocodeTime}ms`)
+      
       if (!response.ok) {
-        throw new Error('Geocoding failed')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Geocoding failed')
       }
       
       const data = await response.json()
+      console.log('Geocoding result:', data)
       
       // Update URL with new coordinates
       const params = new URLSearchParams(searchParams.toString())
@@ -98,11 +114,14 @@ export default function SearchFilters({
       params.set('lng', data.lng.toString())
       
       const newUrl = `${pathname}?${params.toString()}`
-      router.replace(newUrl, { scroll: false })
+      console.log('Updating URL to:', newUrl)
+      
+      // Use router.push instead of replace for better UX
+      router.push(newUrl, { scroll: false })
       
     } catch (error) {
       console.error('ZIP geocoding error:', error)
-      alert('Could not find location for that ZIP code')
+      alert(`Could not find location for ZIP code ${zip}. Please try a different ZIP code.`)
     } finally {
       setIsGeocoding(false)
     }
@@ -168,11 +187,18 @@ export default function SearchFilters({
                 pattern="\d{5}"
               />
               <button
-                className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50"
+                className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center gap-1"
                 onClick={() => geocodeZip(zipCode)}
                 disabled={isGeocoding || !zipCode}
               >
-                {isGeocoding ? '...' : 'Go'}
+                {isGeocoding ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                    <span>...</span>
+                  </>
+                ) : (
+                  'Go'
+                )}
               </button>
             </div>
           </div>

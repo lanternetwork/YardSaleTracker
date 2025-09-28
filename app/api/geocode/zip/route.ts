@@ -11,10 +11,12 @@ interface GeocodeResult {
   country?: string
 }
 
-// Simple in-memory rate limiter
+// Simple in-memory rate limiter and cache
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
+const geocodeCache = new Map<string, { result: GeocodeResult; timestamp: number }>()
 const RATE_LIMIT = 10 // requests per minute
 const RATE_WINDOW = 60 * 1000 // 1 minute
+const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
@@ -33,6 +35,18 @@ function checkRateLimit(ip: string): boolean {
   
   current.count++
   return true
+}
+
+function getCachedResult(zip: string): GeocodeResult | null {
+  const cached = geocodeCache.get(zip)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result
+  }
+  return null
+}
+
+function setCachedResult(zip: string, result: GeocodeResult): void {
+  geocodeCache.set(zip, { result, timestamp: Date.now() })
 }
 
 export async function GET(request: NextRequest) {
@@ -56,14 +70,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid US ZIP code format' }, { status: 400 })
     }
     
+    // Check cache first
+    const cached = getCachedResult(zip)
+    if (cached) {
+      console.log(`Cache hit for ZIP ${zip}`)
+      return NextResponse.json(cached)
+    }
+    
+    console.log(`Cache miss for ZIP ${zip}, fetching from Nominatim`)
+    
     // Geocode using Nominatim
     const nominatimUrl = `https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=${country}&format=json&limit=1`
     
+    const startTime = Date.now()
     const response = await fetch(nominatimUrl, {
       headers: {
         'User-Agent': 'LootAura/1.0 (contact@lootaura.com)'
       }
     })
+    
+    const fetchTime = Date.now() - startTime
+    console.log(`Nominatim request took ${fetchTime}ms`)
     
     if (!response.ok) {
       throw new Error(`Nominatim request failed: ${response.status}`)
@@ -85,6 +112,9 @@ export async function GET(request: NextRequest) {
       state: result.address?.state,
       country: result.address?.country_code?.toUpperCase()
     }
+    
+    // Cache the result
+    setCachedResult(zip, geocodeResult)
     
     return NextResponse.json(geocodeResult)
     
