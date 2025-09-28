@@ -330,7 +330,7 @@ export default function CustomClusteredMap({ points }: { points: Marker[] }) {
           setPreviewTotal(cluster.sales.length)
           setShowPreview(true)
         })
-        console.log('Single marker shown:', (marker as any).getTitle())
+        console.log('Initial setup: Single marker shown:', (marker as any).getTitle())
       } else {
         // Cluster marker
         const clusterMarker = new google.maps.Marker({
