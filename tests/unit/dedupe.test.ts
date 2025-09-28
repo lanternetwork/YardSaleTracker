@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { calculateDistance, dateRangesOverlap } from '@/lib/sales/dedupe'
+import { calculateDistance, dateRangesOverlap } from '@/lib/sales/dedupe-utils'
 
 describe('Deduplication', () => {
   describe('calculateDistance', () => {

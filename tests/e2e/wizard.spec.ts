@@ -8,7 +8,7 @@ test.describe('Sale Wizard', () => {
     // Check if stabilize mode is active
     const stabilizeNotice = page.locator('text=Stabilize mode active in preview')
     if (await stabilizeNotice.isVisible()) {
-      test.skip('Stabilize mode is active - skipping wizard test')
+      test.skip(true, 'Stabilize mode is active - skipping wizard test')
     }
 
     // Fill out the wizard
@@ -77,7 +77,7 @@ test.describe('Sale Wizard', () => {
     // Skip if stabilize mode
     const stabilizeNotice = page.locator('text=Stabilize mode active in preview')
     if (await stabilizeNotice.isVisible()) {
-      test.skip('Stabilize mode is active - skipping validation test')
+      test.skip(true, 'Stabilize mode is active - skipping validation test')
     }
 
     // Try to proceed without filling required fields
