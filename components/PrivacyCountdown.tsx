@@ -1,14 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { formatRevealTimeRemaining, shouldMask } from '@/lib/sales/privacy'
+import { formatRevealTimeRemaining, shouldMask, type Sale } from '@/lib/sales/privacy'
 
 interface PrivacyCountdownProps {
-  sale: {
-    privacy_mode?: 'exact' | 'block_until_24h'
-    date_start?: string
-    time_start?: string
-  }
+  sale: Sale
   className?: string
 }
 
