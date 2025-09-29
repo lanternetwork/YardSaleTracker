@@ -23,7 +23,7 @@ export default async function Explore({ searchParams }: ExplorePageProps) {
   const headersList = await headers()
   
   // Get initial center from IP or URL params
-  let center = getInitialCenter(headersList)
+  let center = await getInitialCenter(headersList)
   let radius = 25 // Default radius in miles
   
   // Override with URL params if present

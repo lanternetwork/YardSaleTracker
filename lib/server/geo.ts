@@ -10,7 +10,7 @@ export interface GeoLocation {
   country?: string
 }
 
-export function getInitialCenter(headers: Headers): GeoLocation {
+export async function getInitialCenter(headers: Headers): Promise<GeoLocation> {
   // Try to get location from Vercel IP headers
   const lat = headers.get('x-vercel-ip-latitude')
   const lng = headers.get('x-vercel-ip-longitude')
