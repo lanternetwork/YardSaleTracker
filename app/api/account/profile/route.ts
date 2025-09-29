@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { display_name, avatar_url, home_zip } = await request.json()
+    const { display_name, avatar_url } = await request.json()
 
     // Upsert profile
     const { data: profile, error: profileError } = await supabase
@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         display_name,
         avatar_url,
-        home_zip,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'user_id'

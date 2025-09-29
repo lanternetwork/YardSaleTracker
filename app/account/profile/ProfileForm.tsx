@@ -7,7 +7,6 @@ import Link from 'next/link'
 interface ProfileData {
   display_name: string
   avatar_url: string
-  home_zip: string
 }
 
 export default function ProfileForm() {
@@ -15,8 +14,7 @@ export default function ProfileForm() {
   const { data: profile } = useProfile()
   const [formData, setFormData] = useState<ProfileData>({
     display_name: '',
-    avatar_url: '',
-    home_zip: ''
+    avatar_url: ''
   })
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -25,8 +23,7 @@ export default function ProfileForm() {
     if (profile) {
       setFormData({
         display_name: profile.display_name || '',
-        avatar_url: profile.avatar_url || '',
-        home_zip: profile.home_zip || ''
+        avatar_url: profile.avatar_url || ''
       })
     }
   }, [profile])
@@ -120,24 +117,6 @@ export default function ProfileForm() {
               </p>
             </div>
 
-            <div>
-              <label htmlFor="home_zip" className="block text-sm font-medium text-neutral-700 mb-2">
-                Home ZIP Code
-              </label>
-              <input
-                type="text"
-                id="home_zip"
-                value={formData.home_zip}
-                onChange={handleChange('home_zip')}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-                placeholder="12345"
-                pattern="[0-9]{5}"
-                maxLength={5}
-              />
-              <p className="text-sm text-neutral-500 mt-1">
-                Used as default location for new sales and search
-              </p>
-            </div>
 
             <div className="flex gap-4">
               <button

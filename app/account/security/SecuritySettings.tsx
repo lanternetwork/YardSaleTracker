@@ -73,6 +73,9 @@ export default function SecuritySettings() {
     }
   }
 
+  // Check if user is already connected via Google
+  const isGoogleConnected = user?.app_metadata?.providers?.includes('google')
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <div className="max-w-2xl mx-auto py-8 px-4">
@@ -133,12 +136,19 @@ export default function SecuritySettings() {
                     <div className="text-sm text-neutral-600">Connected via Google OAuth</div>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleReconnect('google')}
-                  className="px-3 py-1 text-sm border border-neutral-300 rounded hover:bg-neutral-50"
-                >
-                  Reconnect
-                </button>
+                {!isGoogleConnected && (
+                  <button
+                    onClick={() => handleReconnect('google')}
+                    className="px-3 py-1 text-sm border border-neutral-300 rounded hover:bg-neutral-50"
+                  >
+                    Connect
+                  </button>
+                )}
+                {isGoogleConnected && (
+                  <span className="px-3 py-1 text-sm text-green-600 bg-green-100 rounded">
+                    Connected
+                  </span>
+                )}
               </div>
             </div>
           </div>

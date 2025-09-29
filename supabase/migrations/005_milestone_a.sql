@@ -107,7 +107,7 @@ DROP POLICY IF EXISTS "yard_sales_delete_policy" ON public.yard_sales;
 -- Create RLS policies for yard_sales
 CREATE POLICY "yard_sales_select_policy" ON public.yard_sales
     FOR SELECT USING (
-        status = 'active' OR 
+        status = 'published' OR 
         (auth.uid() IS NOT NULL AND owner_id = auth.uid())
     );
 

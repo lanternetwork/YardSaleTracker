@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { default_privacy_mode, default_radius } = await request.json()
+    const { default_privacy_mode } = await request.json()
 
     // Get current profile to merge preferences
     const { data: currentProfile, error: fetchError } = await supabase
@@ -31,8 +31,7 @@ export async function POST(request: NextRequest) {
     const currentPreferences = currentProfile?.preferences || {}
     const updatedPreferences = {
       ...currentPreferences,
-      default_privacy_mode,
-      default_radius
+      default_privacy_mode
     }
 
     // Upsert profile with merged preferences

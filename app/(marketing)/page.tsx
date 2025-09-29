@@ -10,7 +10,7 @@ export default function Landing() {
             <a href="/explore" className="rounded-lg bg-amber-500 px-5 py-3 font-semibold">Find Sales</a>
           </div>
           <div className="mt-4 flex justify-center gap-4">
-            <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore#map">View Map</a>
+            <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore?tab=map">View Map</a>
             <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore#add">Post Your Sale</a>
           </div>
         </div>

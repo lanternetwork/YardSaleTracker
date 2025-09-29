@@ -99,11 +99,13 @@ export default function ExploreClient({
       
       <NavTabs />
       
-      <div className="mb-6">
-        <SearchFilters 
-          onChange={setFilters} 
-        />
-      </div>
+      {tab !== 'add' && (
+        <div className="mb-6">
+          <SearchFilters 
+            onChange={setFilters} 
+          />
+        </div>
+      )}
 
       {tab === 'list' && (
         <div>

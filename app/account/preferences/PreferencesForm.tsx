@@ -6,14 +6,12 @@ import Link from 'next/link'
 
 interface PreferencesData {
   default_privacy_mode: 'exact' | 'block_until_24h'
-  default_radius: number
 }
 
 export default function PreferencesForm() {
   const { data: profile } = useProfile()
   const [formData, setFormData] = useState<PreferencesData>({
-    default_privacy_mode: 'exact',
-    default_radius: 25
+    default_privacy_mode: 'exact'
   })
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -21,8 +19,7 @@ export default function PreferencesForm() {
   useEffect(() => {
     if (profile?.preferences) {
       setFormData({
-        default_privacy_mode: profile.preferences.default_privacy_mode || 'exact',
-        default_radius: profile.preferences.default_radius || 25
+        default_privacy_mode: profile.preferences.default_privacy_mode || 'exact'
       })
     }
   }, [profile])
@@ -56,8 +53,7 @@ export default function PreferencesForm() {
   }
 
   const handleChange = (field: keyof PreferencesData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const value = field === 'default_radius' ? parseInt(e.target.value) : e.target.value
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData(prev => ({ ...prev, [field]: e.target.value }))
   }
 
   return (
@@ -104,33 +100,12 @@ export default function PreferencesForm() {
               </p>
             </div>
 
-            <div>
-              <label htmlFor="default_radius" className="block text-sm font-medium text-neutral-700 mb-2">
-                Default Search Radius
-              </label>
-              <select
-                id="default_radius"
-                value={formData.default_radius}
-                onChange={handleChange('default_radius')}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
-              >
-                <option value={5}>5 miles</option>
-                <option value={10}>10 miles</option>
-                <option value={25}>25 miles</option>
-                <option value={50}>50 miles</option>
-                <option value={100}>100 miles</option>
-              </select>
-              <p className="text-sm text-neutral-500 mt-1">
-                Default radius for search results and nearby sales
-              </p>
-            </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <h3 className="font-medium text-amber-800 mb-2">How these defaults work</h3>
               <ul className="text-sm text-amber-700 space-y-1">
                 <li>• <strong>Privacy Mode:</strong> Applied to new sales you create</li>
-                <li>• <strong>Search Radius:</strong> Used when no location is specified in search</li>
-                <li>• <strong>Override:</strong> You can always change these for individual sales or searches</li>
+                <li>• <strong>Override:</strong> You can always change this for individual sales</li>
               </ul>
             </div>
 
