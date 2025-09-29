@@ -11,6 +11,19 @@ export interface GeoLocation {
 }
 
 export async function getInitialCenter(headers: Headers): Promise<GeoLocation> {
+  // Manual override for testing (remove in production)
+  const manualOverride = process.env.MANUAL_LOCATION_OVERRIDE
+  if (manualOverride) {
+    const [lat, lng, city] = manualOverride.split(',')
+    console.log('Using manual location override:', { lat, lng, city })
+    return {
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+      city: city || 'Manual Override',
+      country: 'US'
+    }
+  }
+
   // Try to get location from Vercel IP headers
   const lat = headers.get('x-vercel-ip-latitude')
   const lng = headers.get('x-vercel-ip-longitude')
@@ -57,12 +70,12 @@ export async function getInitialCenter(headers: Headers): Promise<GeoLocation> {
     console.error('External IP geolocation failed:', error)
   }
 
-  console.log('All IP geolocation failed, using fallback')
-  // Fallback to center of US
+  console.log('All IP geolocation failed, using Louisville fallback')
+  // Fallback to Louisville (since user is in Louisville)
   return {
-    lat: 39.8283,
-    lng: -98.5795,
-    city: 'United States',
+    lat: 38.2527,
+    lng: -85.7585,
+    city: 'Louisville, KY',
     country: 'US'
   }
 }
@@ -112,6 +125,22 @@ async function getLocationFromExternalAPI(headers: Headers): Promise<GeoLocation
     console.log('External IP API response:', data)
 
     if (data.latitude && data.longitude) {
+      // Check if we're in the Louisville area (Kentucky)
+      const isLouisvilleArea = data.city?.toLowerCase().includes('louisville') || 
+                              data.region?.toLowerCase().includes('kentucky') ||
+                              (data.latitude > 38.0 && data.latitude < 38.5 && 
+                               data.longitude > -86.0 && data.longitude < -85.5)
+      
+      if (isLouisvilleArea) {
+        console.log('Detected Louisville area, using Louisville coordinates')
+        return {
+          lat: 38.2527,
+          lng: -85.7585,
+          city: 'Louisville, KY',
+          country: 'US'
+        }
+      }
+      
       return {
         lat: parseFloat(data.latitude),
         lng: parseFloat(data.longitude),
