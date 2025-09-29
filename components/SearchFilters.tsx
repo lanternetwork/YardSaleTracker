@@ -257,7 +257,6 @@ export default function SearchFilters({
     }
   }
 
-  const hasActiveFilters = f.q || f.maxKm !== 25 || f.dateFrom || f.dateTo || (f.tags && f.tags.length > 0)
 
   return (
     <div className="space-y-4">
@@ -291,14 +290,6 @@ export default function SearchFilters({
         >
           🔍 Search
         </button>
-        {hasActiveFilters && (
-          <button 
-            className="px-3 py-2 text-neutral-600 hover:text-neutral-800 font-medium" 
-            onClick={clearFilters}
-          >
-            Clear All
-          </button>
-        )}
       </div>
 
       {/* Search filters - always visible */}
