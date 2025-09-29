@@ -14,7 +14,7 @@ interface GeocodeResult {
 // Simple in-memory rate limiter and cache
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
 const geocodeCache = new Map<string, { result: GeocodeResult; timestamp: number }>()
-const RATE_LIMIT = 10 // requests per minute
+const RATE_LIMIT = 60 // requests per minute (increased from 10)
 const RATE_WINDOW = 60 * 1000 // 1 minute
 const CACHE_TTL = 60 * 60 * 1000 // 1 hour (reduced from 24 hours)
 
@@ -56,13 +56,16 @@ function clearCache(): void {
 
 export async function GET(request: NextRequest) {
   try {
-    // Basic rate limiting
+    const { searchParams } = new URL(request.url)
+    
+    // Basic rate limiting (bypass in development)
     const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
-    if (!checkRateLimit(ip)) {
+    const bypassRateLimit = searchParams.get('bypass') === 'true' || process.env.NODE_ENV === 'development'
+    
+    if (!bypassRateLimit && !checkRateLimit(ip)) {
+      console.log(`Rate limit exceeded for IP: ${ip}`)
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
     }
-    
-    const { searchParams } = new URL(request.url)
     const zip = searchParams.get('zip')
     const country = searchParams.get('country') || 'US'
     const bypassCache = searchParams.get('bypass') === 'true'
