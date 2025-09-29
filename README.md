@@ -13,6 +13,8 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 - 🛡️ **Stabilize Mode**: Preview safety switch to disable heavy features during development
 - ⏰ **Time Presets**: Quick date/time selection for common yard sale schedules
 - 💾 **Autosave Drafts**: Secure draft persistence for anonymous users without account creation
+- 🗺️ **Smart ZIP Search**: Enhanced geocoding with PO Box support and map re-centering
+- 📍 **Accurate IP Geolocation**: Multi-source location detection with fallback APIs
 
 ### Map Clustering Features
 - **Zoom-aware clustering**: Blue circles that appear/disappear based on zoom level
@@ -34,6 +36,23 @@ A modern, mobile-first web application for discovering, posting, and managing ya
 - **Real-time Feedback**: Live "Saving..." and "Saved" status indicators
 - **Persistence**: Drafts survive page reloads and browser sessions
 - **Publish Flow**: Sign-in required only when publishing; drafts are claimed to user account
+
+### ZIP Code Search & Geocoding
+- **PO Box Support**: Handles PO Box-only ZIP codes (e.g., 90078) with fallback locations
+- **Multiple Search Strategies**: Tries post office, city, and state-based searches
+- **Cache Bypass**: Repeated searches work reliably with cache invalidation
+- **Map Re-centering**: Forces map updates even with identical coordinates
+- **Rate Limiting**: 60 requests/minute with development bypass
+- **Error Handling**: Graceful fallbacks for geocoding failures
+- **Visual Feedback**: Console logging and success indicators
+
+### IP Geolocation System
+- **Primary Source**: Vercel IP headers for fast, server-side detection
+- **Fallback API**: ipapi.co integration for improved accuracy
+- **Multi-Header Support**: x-forwarded-for, x-real-ip, cf-connecting-ip
+- **Debugging**: Comprehensive logging for geolocation troubleshooting
+- **Error Handling**: Graceful fallback to center of US
+- **Accuracy**: Better location detection for regional areas (e.g., Louisville vs Cincinnati)
 
 ## Getting Started
 
@@ -140,6 +159,26 @@ Optional:
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
 - `CRAIGSLIST_INGEST_TOKEN`
 - Feature flags (see `env.example`)
+
+## Troubleshooting
+
+### ZIP Code Search Issues
+- **"Could not find location"**: Check console for geocoding debug logs
+- **Repeated searches don't work**: Ensure cache bypass is enabled (`?bypass=true`)
+- **Map doesn't re-center**: Coordinates may be identical; check for tiny offset in URL
+- **Rate limiting**: Increase rate limit or use development bypass
+
+### IP Geolocation Issues
+- **Wrong default location**: Check console for IP geolocation debug logs
+- **Cincinnati instead of Louisville**: External API fallback should provide better accuracy
+- **No location detected**: Verify Vercel IP headers are available
+- **Slow loading**: External API calls are cached and have rate limits
+
+### Common Solutions
+- **Clear browser cache**: For stale geocoding results
+- **Check console logs**: Comprehensive debugging information available
+- **Verify API keys**: Google Maps API key for map functionality
+- **Test with different ZIP codes**: Verify geocoding works for various locations
 
 ## Contributing
 

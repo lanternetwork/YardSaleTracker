@@ -2,6 +2,30 @@
 
 All notable changes to YardSaleFinder will be documented in this file.
 
+## [Milestone A - Enhanced Search & Geolocation] - 2025-01-18
+
+### Added
+- **Enhanced ZIP Code Search** - PO Box support with multiple search strategies
+- **IP Geolocation Improvements** - Multi-source location detection with fallback APIs
+- **Map Re-centering** - Forces map updates even with identical coordinates
+- **Cache Bypass System** - Reliable repeated searches with cache invalidation
+- **Rate Limiting** - 60 requests/minute with development bypass
+- **Comprehensive Debugging** - Detailed console logging for troubleshooting
+
+### ZIP Code Search Features
+- **PO Box Support** - Handles PO Box-only ZIP codes (e.g., 90078) with fallback locations
+- **Multiple Search Strategies** - Tries post office, city, and state-based searches
+- **Cache Management** - 1-hour TTL with bypass options for testing
+- **Visual Feedback** - Console logging and success indicators
+- **Error Handling** - Graceful fallbacks for geocoding failures
+
+### IP Geolocation System
+- **Primary Source** - Vercel IP headers for fast, server-side detection
+- **Fallback API** - ipapi.co integration for improved accuracy
+- **Multi-Header Support** - x-forwarded-for, x-real-ip, cf-connecting-ip
+- **Debugging** - Comprehensive logging for geolocation troubleshooting
+- **Accuracy** - Better location detection for regional areas (e.g., Louisville vs Cincinnati)
+
 ## [Milestone A - Map Clustering] - 2025-01-18
 
 ### Added
