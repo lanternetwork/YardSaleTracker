@@ -280,7 +280,7 @@ export default function SearchFilters({
             // Trigger search by updating URL with current filters
             const params = new URLSearchParams(searchParams.toString())
             if (f.q) params.set('q', f.q)
-            if (f.maxKm !== 25) params.set('maxKm', f.maxKm.toString())
+            if (f.maxKm && f.maxKm !== 25) params.set('maxKm', f.maxKm.toString())
             if (f.dateFrom) params.set('dateFrom', f.dateFrom)
             if (f.dateTo) params.set('dateTo', f.dateTo)
             if (f.tags && f.tags.length > 0) params.set('tags', f.tags.join(','))
