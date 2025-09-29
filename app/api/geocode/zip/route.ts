@@ -119,11 +119,21 @@ export async function GET(request: NextRequest) {
         if (responseData && responseData.length > 0) {
           // Filter for US results if country is US
           if (country === 'US') {
-            const usResults = responseData.filter((result: any) => 
-              result.address?.country_code === 'us' || 
-              result.address?.country === 'United States' ||
-              result.display_name?.includes('United States')
-            )
+            const usResults = responseData.filter((result: any) => {
+              // Check for explicit US indicators
+              const isExplicitUS = result.address?.country_code === 'us' || 
+                                  result.address?.country === 'United States' ||
+                                  result.display_name?.includes('United States')
+              
+              // For US ZIP codes, also accept results without explicit country info
+              // if they have US state codes or are from the first search approach (which includes country=US)
+              const isLikelyUS = i === 0 || // First approach includes country=US
+                               result.address?.state_code?.length === 2 || // US state codes are 2 letters
+                               result.address?.state?.length > 0 // Has a state field
+              
+              return isExplicitUS || isLikelyUS
+            })
+            
             if (usResults.length > 0) {
               data = usResults
               console.log(`Found ${usResults.length} US results with approach ${i + 1}`)
@@ -159,7 +169,9 @@ export async function GET(request: NextRequest) {
     if (country === 'US') {
       const isUSResult = result.address?.country_code === 'us' || 
                        result.address?.country === 'United States' ||
-                       result.display_name?.includes('United States')
+                       result.display_name?.includes('United States') ||
+                       result.address?.state_code?.length === 2 || // US state codes are 2 letters
+                       result.address?.state?.length > 0 // Has a state field
       
       if (!isUSResult) {
         console.log(`Result is not from US, rejecting:`, result.address)

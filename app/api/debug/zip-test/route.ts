@@ -30,11 +30,20 @@ export async function GET(request: NextRequest) {
       const data = await response.json()
       
       // Filter for US results
-      const usResults = data?.filter((result: any) => 
-        result.address?.country_code === 'us' || 
-        result.address?.country === 'United States' ||
-        result.display_name?.includes('United States')
-      ) || []
+      const usResults = data?.filter((result: any) => {
+        // Check for explicit US indicators
+        const isExplicitUS = result.address?.country_code === 'us' || 
+                            result.address?.country === 'United States' ||
+                            result.display_name?.includes('United States')
+        
+        // For US ZIP codes, also accept results without explicit country info
+        // if they have US state codes or are from the first search approach (which includes country=US)
+        const isLikelyUS = i === 0 || // First approach includes country=US
+                         result.address?.state_code?.length === 2 || // US state codes are 2 letters
+                         result.address?.state?.length > 0 // Has a state field
+        
+        return isExplicitUS || isLikelyUS
+      }) || []
       
       results.push({
         approach: i + 1,
