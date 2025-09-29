@@ -10,17 +10,15 @@ const COMMON_TAGS = [
 ]
 
 export default function SearchFilters({ 
-  onChange,
-  showAdvanced = false
+  onChange
 }: { 
   onChange: (f: Filters) => void
-  showAdvanced?: boolean
 }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const [f, setF] = useState<Filters>(defaultFilters)
-  const [showMore, setShowMore] = useState(showAdvanced)
+  const [showMore, setShowMore] = useState(true) // Always show filters
   const [zipCode, setZipCode] = useState('')
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [isGettingLocation, setIsGettingLocation] = useState(false)
@@ -278,9 +276,20 @@ export default function SearchFilters({
         </div>
         <button 
           className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-medium"
-          onClick={() => setShowMore(!showMore)}
+          onClick={() => {
+            // Trigger search by updating URL with current filters
+            const params = new URLSearchParams(searchParams.toString())
+            if (f.q) params.set('q', f.q)
+            if (f.maxKm !== 25) params.set('maxKm', f.maxKm.toString())
+            if (f.dateFrom) params.set('dateFrom', f.dateFrom)
+            if (f.dateTo) params.set('dateTo', f.dateTo)
+            if (f.tags && f.tags.length > 0) params.set('tags', f.tags.join(','))
+            
+            const newUrl = `${pathname}?${params.toString()}`
+            router.push(newUrl)
+          }}
         >
-          {showMore ? 'Less' : 'More'} Filters
+          🔍 Search
         </button>
         {hasActiveFilters && (
           <button 
@@ -292,9 +301,8 @@ export default function SearchFilters({
         )}
       </div>
 
-      {/* Advanced filters */}
-      {showMore && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-neutral-50 rounded-lg">
+      {/* Search filters - always visible */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-neutral-50 rounded-lg">
           {/* ZIP Code input */}
           <div>
             <label className="block text-sm font-medium mb-1">ZIP Code</label>
@@ -396,7 +404,6 @@ export default function SearchFilters({
           </div>
 
         </div>
-      )}
 
       {/* Tags */}
       <div>

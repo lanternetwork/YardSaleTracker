@@ -102,7 +102,6 @@ export default function ExploreClient({
       <div className="mb-6">
         <SearchFilters 
           onChange={setFilters} 
-          showAdvanced={tab === 'list'} 
         />
       </div>
 
