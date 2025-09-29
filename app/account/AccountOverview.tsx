@@ -67,7 +67,7 @@ export default function AccountOverview() {
                       )}
                     </div>
                     <p className="text-sm text-neutral-600 mt-1">
-                      {hasProfile ? 'Your profile is set up' : 'Add your display name and home ZIP'}
+                      {hasProfile ? 'Your profile is set up' : 'Add your display name and avatar'}
                     </p>
                     <Link
                       href="/account/profile"
