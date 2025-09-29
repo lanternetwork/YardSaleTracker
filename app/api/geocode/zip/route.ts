@@ -16,7 +16,7 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
 const geocodeCache = new Map<string, { result: GeocodeResult; timestamp: number }>()
 const RATE_LIMIT = 10 // requests per minute
 const RATE_WINDOW = 60 * 1000 // 1 minute
-const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const CACHE_TTL = 60 * 60 * 1000 // 1 hour (reduced from 24 hours)
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
@@ -49,6 +49,11 @@ function setCachedResult(zip: string, result: GeocodeResult): void {
   geocodeCache.set(zip, { result, timestamp: Date.now() })
 }
 
+function clearCache(): void {
+  geocodeCache.clear()
+  console.log('Geocoding cache cleared')
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Basic rate limiting
@@ -60,12 +65,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const zip = searchParams.get('zip')
     const country = searchParams.get('country') || 'US'
+    const bypassCache = searchParams.get('bypass') === 'true'
+    const clearCache = searchParams.get('clear') === 'true'
     
     if (!zip) {
       return NextResponse.json({ error: 'ZIP code is required' }, { status: 400 })
     }
     
     console.log(`Geocoding request for ZIP ${zip}, country ${country}`)
+    
+    // Clear cache if requested
+    if (clearCache) {
+      clearCache()
+    }
     
     // Validate US ZIP format
     if (country === 'US' && !/^\d{5}$/.test(zip)) {
@@ -105,11 +117,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(geocodeResult)
     }
     
-    // Check cache first
-    const cached = getCachedResult(zip)
-    if (cached) {
-      console.log(`Cache hit for ZIP ${zip}`)
-      return NextResponse.json(cached)
+    // Check cache first (unless bypassing)
+    if (!bypassCache) {
+      const cached = getCachedResult(zip)
+      if (cached) {
+        console.log(`Cache hit for ZIP ${zip}:`, cached)
+        return NextResponse.json(cached)
+      }
+    } else {
+      console.log(`Bypassing cache for ZIP ${zip}`)
     }
     
     console.log(`Cache miss for ZIP ${zip}, fetching from Nominatim`)

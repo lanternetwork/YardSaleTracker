@@ -76,7 +76,7 @@ export default function SearchFilters({
     router.replace(pathname, { scroll: false })
   }
 
-  const geocodeZip = async (zip: string) => {
+  const geocodeZip = async (zip: string, bypassCache = false) => {
     if (!/^\d{5}$/.test(zip)) {
       alert('Please enter a valid 5-digit ZIP code')
       return
@@ -85,11 +85,14 @@ export default function SearchFilters({
     setIsGeocoding(true)
     
     // Show immediate feedback
-    console.log('Geocoding ZIP:', zip)
+    console.log('Geocoding ZIP:', zip, bypassCache ? '(bypassing cache)' : '')
     
     try {
       const startTime = Date.now()
-      const response = await fetch(`/api/geocode/zip?zip=${zip}`, {
+      const url = `/api/geocode/zip?zip=${zip}${bypassCache ? '&bypass=true' : ''}`
+      console.log('Fetching from URL:', url)
+      
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +178,7 @@ export default function SearchFilters({
                 onChange={e => setZipCode(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
-                    geocodeZip(zipCode)
+                    geocodeZip(zipCode, true) // Always bypass cache on Enter
                   }
                 }}
                 onBlur={() => {
@@ -188,7 +191,7 @@ export default function SearchFilters({
               />
               <button
                 className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center gap-1"
-                onClick={() => geocodeZip(zipCode)}
+                onClick={() => geocodeZip(zipCode, true)} // Always bypass cache on button click
                 disabled={isGeocoding || !zipCode}
               >
                 {isGeocoding ? (
