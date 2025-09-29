@@ -125,8 +125,14 @@ export default function SearchFilters({
       params.set('lat', data.lat.toString())
       params.set('lng', data.lng.toString())
       
+      // Add timestamp to force URL change even with same coordinates
+      params.set('t', Date.now().toString())
+      
       const newUrl = `${pathname}?${params.toString()}`
       console.log('Updating URL to:', newUrl)
+      
+      // Show success feedback
+      console.log(`✅ ZIP code ${zip} geocoded successfully to ${data.city}, ${data.state}`)
       
       // Use router.push instead of replace for better UX
       router.push(newUrl, { scroll: false })
@@ -200,7 +206,10 @@ export default function SearchFilters({
               />
               <button
                 className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center gap-1"
-                onClick={() => geocodeZip(zipCode, true)} // Always bypass cache on button click
+                onClick={() => {
+                  console.log('🔍 ZIP code search button clicked')
+                  geocodeZip(zipCode, true) // Always bypass cache on button click
+                }}
                 disabled={isGeocoding || !zipCode}
               >
                 {isGeocoding ? (
