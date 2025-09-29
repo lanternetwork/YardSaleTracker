@@ -155,6 +155,41 @@ export default function SearchFilters({
       // Show success feedback
       console.log(`✅ ZIP code ${zip} geocoded successfully to ${data.city}, ${data.state}`)
       
+      // Show visual feedback to user
+      const button = document.querySelector('[data-zip-search-button]') as HTMLButtonElement
+      if (button) {
+        const originalText = button.textContent
+        button.textContent = '✓ Found!'
+        button.style.backgroundColor = '#10b981' // green
+        setTimeout(() => {
+          button.textContent = originalText
+          button.style.backgroundColor = '#f59e0b' // amber
+        }, 2000)
+      }
+      
+      // Show toast notification
+      const toast = document.createElement('div')
+      toast.textContent = `📍 Found ${data.city}, ${data.state}`
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease-out;
+      `
+      document.body.appendChild(toast)
+      setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-in'
+        setTimeout(() => document.body.removeChild(toast), 300)
+      }, 3000)
+      
       // Use router.push instead of replace for better UX
       router.push(newUrl, { scroll: false })
       
@@ -227,6 +262,7 @@ export default function SearchFilters({
                 pattern="\d{5}"
               />
               <button
+                data-zip-search-button
                 className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center gap-1"
                 onClick={() => {
                   console.log('🔍 ZIP code search button clicked for ZIP:', zipCode)
