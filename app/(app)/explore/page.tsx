@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
-import { headers } from 'next/headers'
-import { getInitialCenter } from '@/lib/server/geo'
+import { headers, cookies } from 'next/headers'
+import { getInitialCenter } from '@/lib/location/center'
 import { querySalesByRadius, getDefaultDateRange } from '@/lib/server/salesQuery'
 import ExploreClient from './ExploreClient'
 
@@ -21,22 +21,17 @@ interface ExplorePageProps {
 
 export default async function Explore({ searchParams }: ExplorePageProps) {
   const headersList = await headers()
+  const cookieStore = await cookies()
   
-  // Get initial center from IP or URL params
-  let center = await getInitialCenter(headersList)
-  let radius = 25 // Default radius in miles
+  // Get initial center using preference order: URL → cookie → account → IP → fallback
+  const center = await getInitialCenter({
+    headers: headersList,
+    url: new URL(`https://example.com?${new URLSearchParams(searchParams as any).toString()}`),
+    cookies: Object.fromEntries(cookieStore.getAll().map(c => [c.name, c.value])),
+    user: null // TODO: Add user authentication
+  })
   
-  // Override with URL params if present
-  if (searchParams.lat && searchParams.lng) {
-    center = {
-      lat: parseFloat(searchParams.lat),
-      lng: parseFloat(searchParams.lng)
-    }
-  }
-  
-  if (searchParams.radius) {
-    radius = parseFloat(searchParams.radius)
-  }
+  const radius = center.radius
   
   // Get date range
   const { dateFrom, dateTo } = getDefaultDateRange()

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { defaultFilters, Filters } from '@/state/filters'
+import { trackCenterCorrection } from '@/lib/analytics/events'
 
 const COMMON_TAGS = [
   'antiques', 'furniture', 'clothing', 'books', 'toys', 'electronics',
@@ -10,10 +11,14 @@ const COMMON_TAGS = [
 
 export default function SearchFilters({ 
   onChange,
-  showAdvanced = false
+  showAdvanced = false,
+  centerSource,
+  centerCity
 }: { 
   onChange: (f: Filters) => void
   showAdvanced?: boolean
+  centerSource?: string
+  centerCity?: string
 }) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -22,6 +27,7 @@ export default function SearchFilters({
   const [showMore, setShowMore] = useState(showAdvanced)
   const [zipCode, setZipCode] = useState('')
   const [isGeocoding, setIsGeocoding] = useState(false)
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
   
   // Debug state changes
   useEffect(() => {
@@ -83,6 +89,73 @@ export default function SearchFilters({
     onChange(defaultFilters)
     setZipCode('')
     router.replace(pathname, { scroll: false })
+  }
+
+  const useDeviceLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser')
+      return
+    }
+
+    setIsGettingLocation(true)
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        
+        // Update URL with new coordinates
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('lat', latitude.toString())
+        params.set('lng', longitude.toString())
+        params.delete('zip') // Clear ZIP since we're using precise coordinates
+        
+        // Update cookie
+        const centerData = {
+          lat: latitude,
+          lng: longitude,
+          radius: f.maxKm || 25,
+          ts: Date.now()
+        }
+        document.cookie = `la_center=${JSON.stringify(centerData)}; path=/; max-age=${90 * 24 * 60 * 60}`
+        
+        // Navigate to new URL
+        const newUrl = `${pathname}?${params.toString()}`
+        router.push(newUrl)
+        
+        setIsGettingLocation(false)
+        
+        // Track analytics
+        trackCenterCorrection({
+          from: centerSource || 'unknown',
+          to: 'device'
+        })
+      },
+      (error) => {
+        console.error('Geolocation error:', error)
+        let message = 'Unable to get your location'
+        if (error.code === error.PERMISSION_DENIED) {
+          message = 'Location access denied'
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = 'Location unavailable'
+        } else if (error.code === error.TIMEOUT) {
+          message = 'Location request timed out'
+        }
+        
+        // Show non-blocking message
+        const toast = document.createElement('div')
+        toast.className = 'fixed top-4 right-4 bg-red-100 text-red-800 px-4 py-2 rounded shadow-lg z-50'
+        toast.textContent = message
+        document.body.appendChild(toast)
+        setTimeout(() => toast.remove(), 3000)
+        
+        setIsGettingLocation(false)
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 8000,
+        maximumAge: 300000 // 5 minutes
+      }
+    )
   }
 
   const geocodeZip = async (zip: string, bypassCache = false) => {
@@ -160,6 +233,12 @@ export default function SearchFilters({
       // Show success feedback
       console.log(`✅ ZIP code ${zip} geocoded successfully to ${data.city}, ${data.state}`)
       
+      // Track analytics
+      trackCenterCorrection({
+        from: centerSource || 'unknown',
+        to: 'zip'
+      })
+      
       // Simple success feedback without DOM manipulation
       console.log(`🎉 ZIP code search completed successfully!`)
       
@@ -178,6 +257,32 @@ export default function SearchFilters({
 
   return (
     <div className="space-y-4">
+      {/* Correction banner for IP/fallback sources */}
+      {(centerSource === 'ip' || centerSource === 'fallback') && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-600">📍</span>
+            <span className="text-blue-800 text-sm">
+              Not your area? Enter ZIP
+              {centerCity && ` (Near ${centerCity})`}
+            </span>
+          </div>
+          <button
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
+            onClick={() => {
+              // Focus the ZIP input when it's shown
+              const zipInput = document.querySelector('input[placeholder="12345"]') as HTMLInputElement
+              if (zipInput) {
+                zipInput.focus()
+                zipInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }
+            }}
+          >
+            Change
+          </button>
+        </div>
+      )}
+      
       {/* Main search bar */}
       <div className="flex gap-2 items-center">
         <div className="flex-1 relative">
@@ -253,6 +358,23 @@ export default function SearchFilters({
                 )}
               </button>
             </div>
+            {/* Device location button */}
+            <button
+              className="mt-2 px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center gap-1 disabled:opacity-50"
+              onClick={useDeviceLocation}
+              disabled={isGeocoding || isGettingLocation}
+            >
+              {isGettingLocation ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-600"></div>
+                  Getting location...
+                </>
+              ) : (
+                <>
+                  📍 Use device location (optional)
+                </>
+              )}
+            </button>
           </div>
 
           {/* Distance filter */}

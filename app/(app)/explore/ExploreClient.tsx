@@ -10,6 +10,7 @@ import AddSaleForm from '@/components/AddSaleForm'
 import ImportSales from '@/components/ImportSales'
 import DiagnosticsCard from '@/components/DiagnosticsCard'
 import { Filters } from '@/state/filters'
+import { trackCenterSource } from '@/lib/analytics/events'
 
 const CustomClusteredMap = dynamicImport(() => import('@/components/CustomClusteredMap'), {
   ssr: false,
@@ -27,7 +28,7 @@ const CustomClusteredMap = dynamicImport(() => import('@/components/CustomCluste
 interface ExploreClientProps {
   initialSales: any[]
   initialMapPoints: any[]
-  initialCenter: { lat: number; lng: number }
+  initialCenter: { lat: number; lng: number; source: string; city?: string; zip?: string }
   initialRadius: number
   searchParams: {
     tab?: string
@@ -68,6 +69,11 @@ export default function ExploreClient({
   const [sales] = useState(initialSales)
   const [mapPoints] = useState(initialMapPoints)
 
+  // Track center source on first paint
+  useEffect(() => {
+    trackCenterSource({ source: initialCenter.source as any })
+  }, [initialCenter.source])
+
   // Update center when URL params change
   useEffect(() => {
     if (searchParams.lat && searchParams.lng) {
@@ -91,7 +97,12 @@ export default function ExploreClient({
       <NavTabs />
       
       <div className="mb-6">
-        <SearchFilters onChange={setFilters} showAdvanced={tab === 'list'} />
+        <SearchFilters 
+          onChange={setFilters} 
+          showAdvanced={tab === 'list'} 
+          centerSource={initialCenter.source}
+          centerCity={initialCenter.city}
+        />
       </div>
 
       {tab === 'list' && (
