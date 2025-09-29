@@ -44,9 +44,17 @@ export type SaleItem = {
 
 export type Profile = {
   id: string
+  user_id: string
   display_name?: string
   avatar_url?: string
+  home_zip?: string
+  preferences?: {
+    default_privacy_mode?: 'exact' | 'block_until_24h'
+    default_radius?: number
+    [key: string]: any
+  }
   created_at?: string
+  updated_at?: string
 }
 
 export type Favorite = {

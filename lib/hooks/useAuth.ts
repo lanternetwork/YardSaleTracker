@@ -29,7 +29,7 @@ export function useProfile() {
       const { data, error } = await sb
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single()
 
       if (error && error.code !== 'PGRST116') { // Not found error
@@ -60,7 +60,7 @@ export function useUpdateProfile() {
 
       const { data, error } = await sb
         .from('profiles')
-        .upsert({ id: user.id, ...parsed.data })
+        .upsert({ user_id: user.id, ...parsed.data })
         .select()
         .single()
 
