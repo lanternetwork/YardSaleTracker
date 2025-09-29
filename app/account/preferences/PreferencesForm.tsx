@@ -53,7 +53,7 @@ export default function PreferencesForm() {
   }
 
   const handleChange = (field: keyof PreferencesData) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }))
+    setFormData(prev => ({ ...prev, [field]: e.target.value as any }))
   }
 
   return (
