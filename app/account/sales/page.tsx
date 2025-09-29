@@ -1,17 +1,17 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServer } from '@/lib/supabase/server'
-import AccountOverview from './AccountOverview'
+import MySalesList from './MySalesList'
 
 export const runtime = 'nodejs'
 
-export default async function AccountPage() {
+export default async function MySalesPage() {
   const supabase = createSupabaseServer()
   
   const { data: { user }, error } = await supabase.auth.getUser()
   
   if (error || !user) {
-    redirect('/signin?returnTo=/account')
+    redirect('/signin?returnTo=/account/sales')
   }
 
-  return <AccountOverview />
+  return <MySalesList />
 }
