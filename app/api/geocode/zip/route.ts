@@ -113,7 +113,8 @@ export async function GET(request: NextRequest) {
         console.log(`Nominatim response ${i + 1} for ZIP ${zip}:`, {
           status: response.status,
           dataLength: responseData?.length || 0,
-          data: responseData
+          firstResult: responseData?.[0] || null,
+          allResults: responseData
         })
         
         if (responseData && responseData.length > 0) {
@@ -131,7 +132,16 @@ export async function GET(request: NextRequest) {
                                result.address?.state_code?.length === 2 || // US state codes are 2 letters
                                result.address?.state?.length > 0 // Has a state field
               
-              return isExplicitUS || isLikelyUS
+              const isUS = isExplicitUS || isLikelyUS
+              console.log(`Result filtering for approach ${i + 1}:`, {
+                result: result.display_name,
+                address: result.address,
+                isExplicitUS,
+                isLikelyUS,
+                isUS
+              })
+              
+              return isUS
             })
             
             if (usResults.length > 0) {
@@ -157,6 +167,7 @@ export async function GET(request: NextRequest) {
     
     if (!data || data.length === 0) {
       console.log(`No results found for ZIP ${zip} with any approach`)
+      console.log(`Last error:`, lastError)
       return NextResponse.json({ 
         error: `ZIP code ${zip} not found. This might be a new or non-standard ZIP code.` 
       }, { status: 404 })
