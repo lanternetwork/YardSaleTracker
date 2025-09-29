@@ -72,7 +72,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'ZIP code is required' }, { status: 400 })
     }
     
-    console.log(`Geocoding request for ZIP ${zip}, country ${country}`)
+    console.log(`=== API GEOCODING DEBUG ===`)
+    console.log(`ZIP: ${zip}, Country: ${country}`)
+    console.log(`Bypass Cache: ${bypassCache}`)
+    console.log(`Clear Cache: ${shouldClearCache}`)
+    console.log(`Request URL: ${request.url}`)
+    console.log(`============================`)
     
     // Clear cache if requested
     if (shouldClearCache) {
@@ -123,6 +128,8 @@ export async function GET(request: NextRequest) {
       if (cached) {
         console.log(`Cache hit for ZIP ${zip}:`, cached)
         return NextResponse.json(cached)
+      } else {
+        console.log(`Cache miss for ZIP ${zip}`)
       }
     } else {
       console.log(`Bypassing cache for ZIP ${zip}`)

@@ -82,6 +82,14 @@ export default function SearchFilters({
       return
     }
 
+    console.log('=== GEOCODING DEBUG ===')
+    console.log('ZIP Code:', zip)
+    console.log('Bypass Cache:', bypassCache)
+    console.log('Current URL:', window.location.href)
+    console.log('Current Search Params:', searchParams.toString())
+    console.log('Is Geocoding:', isGeocoding)
+    console.log('========================')
+
     setIsGeocoding(true)
     
     // Show immediate feedback
@@ -89,7 +97,8 @@ export default function SearchFilters({
     
     try {
       const startTime = Date.now()
-      const url = `/api/geocode/zip?zip=${zip}${bypassCache ? '&bypass=true' : ''}`
+      const timestamp = Date.now()
+      const url = `/api/geocode/zip?zip=${zip}${bypassCache ? '&bypass=true' : ''}&t=${timestamp}`
       console.log('Fetching from URL:', url)
       
       const response = await fetch(url, {
