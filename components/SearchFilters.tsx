@@ -22,6 +22,15 @@ export default function SearchFilters({
   const [showMore, setShowMore] = useState(showAdvanced)
   const [zipCode, setZipCode] = useState('')
   const [isGeocoding, setIsGeocoding] = useState(false)
+  
+  // Debug state changes
+  useEffect(() => {
+    console.log('🔄 isGeocoding state changed to:', isGeocoding)
+  }, [isGeocoding])
+  
+  useEffect(() => {
+    console.log('📝 zipCode state changed to:', zipCode)
+  }, [zipCode])
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -77,8 +86,19 @@ export default function SearchFilters({
   }
 
   const geocodeZip = async (zip: string, bypassCache = false) => {
+    console.log('🚀 GEOCODING FUNCTION CALLED')
+    console.log('ZIP Code:', zip)
+    console.log('Bypass Cache:', bypassCache)
+    console.log('Is Geocoding:', isGeocoding)
+    
     if (!/^\d{5}$/.test(zip)) {
+      console.log('❌ Invalid ZIP code format')
       alert('Please enter a valid 5-digit ZIP code')
+      return
+    }
+
+    if (isGeocoding) {
+      console.log('⏳ Already geocoding, skipping request')
       return
     }
 
@@ -90,6 +110,7 @@ export default function SearchFilters({
     console.log('Is Geocoding:', isGeocoding)
     console.log('========================')
 
+    console.log('🔄 Setting isGeocoding to true')
     setIsGeocoding(true)
     
     // Show immediate feedback
@@ -193,6 +214,7 @@ export default function SearchFilters({
                 onChange={e => setZipCode(e.target.value)}
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
+                    console.log('⌨️ Enter key pressed for ZIP:', zipCode)
                     geocodeZip(zipCode, true) // Always bypass cache on Enter
                   }
                 }}
@@ -207,7 +229,8 @@ export default function SearchFilters({
               <button
                 className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center gap-1"
                 onClick={() => {
-                  console.log('🔍 ZIP code search button clicked')
+                  console.log('🔍 ZIP code search button clicked for ZIP:', zipCode)
+                  console.log('Button disabled?', isGeocoding || !zipCode)
                   geocodeZip(zipCode, true) // Always bypass cache on button click
                 }}
                 disabled={isGeocoding || !zipCode}
