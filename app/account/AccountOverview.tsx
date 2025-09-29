@@ -19,7 +19,7 @@ export default function AccountOverview() {
   ]
 
   const hasDefaults = profile?.preferences && Object.keys(profile.preferences).length > 0
-  const hasProfile = profile?.display_name || profile?.home_zip
+  const hasProfile = profile?.display_name || profile?.avatar_url
 
   return (
     <div className="min-h-screen bg-neutral-50">
