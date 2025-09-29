@@ -105,7 +105,7 @@ export default function SearchFilters({
     console.log('=== GEOCODING DEBUG ===')
     console.log('ZIP Code:', zip)
     console.log('Bypass Cache:', bypassCache)
-    console.log('Current URL:', window.location.href)
+    console.log('Current URL:', typeof window !== 'undefined' ? window.location.href : 'SSR')
     console.log('Current Search Params:', searchParams.toString())
     console.log('Is Geocoding:', isGeocoding)
     console.log('========================')
@@ -155,50 +155,8 @@ export default function SearchFilters({
       // Show success feedback
       console.log(`✅ ZIP code ${zip} geocoded successfully to ${data.city}, ${data.state}`)
       
-      // Show visual feedback to user (with error handling)
-      try {
-        const button = document.querySelector('[data-zip-search-button]') as HTMLButtonElement
-        if (button) {
-          const originalText = button.textContent
-          button.textContent = '✓ Found!'
-          button.style.backgroundColor = '#10b981' // green
-          setTimeout(() => {
-            if (button) {
-              button.textContent = originalText
-              button.style.backgroundColor = '#f59e0b' // amber
-            }
-          }, 2000)
-        }
-        
-        // Show toast notification (with error handling)
-        const toast = document.createElement('div')
-        toast.textContent = `📍 Found ${data.city || 'Unknown'}, ${data.state || 'Unknown'}`
-        toast.style.cssText = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #10b981;
-          color: white;
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          z-index: 1000;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        `
-        
-        if (document.body) {
-          document.body.appendChild(toast)
-          setTimeout(() => {
-            if (toast.parentNode) {
-              toast.parentNode.removeChild(toast)
-            }
-          }, 3000)
-        }
-      } catch (error) {
-        console.error('Error showing visual feedback:', error)
-        // Continue with normal flow even if visual feedback fails
-      }
+      // Simple success feedback without DOM manipulation
+      console.log(`🎉 ZIP code search completed successfully!`)
       
       // Use router.push instead of replace for better UX
       router.push(newUrl, { scroll: false })
@@ -272,7 +230,6 @@ export default function SearchFilters({
                 pattern="\d{5}"
               />
               <button
-                data-zip-search-button
                 className="px-2 py-1 bg-amber-500 text-white rounded text-sm hover:bg-amber-600 disabled:opacity-50 flex items-center gap-1"
                 onClick={() => {
                   console.log('🔍 ZIP code search button clicked for ZIP:', zipCode)
