@@ -70,6 +70,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid US ZIP code format' }, { status: 400 })
     }
     
+    // Check for known PO Box ZIP codes
+    const poBoxZips = ['90078', '90079', '90080', '90081', '90082', '90083', '90084', '90085', '90086', '90087']
+    if (country === 'US' && poBoxZips.includes(zip)) {
+      console.log(`ZIP ${zip} is a known PO Box-only ZIP code`)
+    }
+    
     // Check cache first
     const cached = getCachedResult(zip)
     if (cached) {
@@ -168,9 +174,37 @@ export async function GET(request: NextRequest) {
     if (!data || data.length === 0) {
       console.log(`No results found for ZIP ${zip} with any approach`)
       console.log(`Last error:`, lastError)
-      return NextResponse.json({ 
-        error: `ZIP code ${zip} not found. This might be a new or non-standard ZIP code.` 
-      }, { status: 404 })
+      
+      // For PO Box ZIP codes, try to find the post office location
+      if (country === 'US') {
+        console.log(`Trying post office lookup for ZIP ${zip}`)
+        try {
+          const postOfficeResponse = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=post office ${zip} USA&format=json&limit=1`,
+            {
+              headers: {
+                'User-Agent': 'LootAura/1.0 (contact@lootaura.com)'
+              }
+            }
+          )
+          
+          if (postOfficeResponse.ok) {
+            const postOfficeData = await postOfficeResponse.json()
+            if (postOfficeData && postOfficeData.length > 0) {
+              console.log(`Found post office for ZIP ${zip}:`, postOfficeData[0])
+              data = postOfficeData
+            }
+          }
+        } catch (error) {
+          console.log(`Post office lookup failed for ZIP ${zip}:`, error)
+        }
+      }
+      
+      if (!data || data.length === 0) {
+        return NextResponse.json({ 
+          error: `ZIP code ${zip} not found. This might be a PO Box-only ZIP code or a new/non-standard ZIP code.` 
+        }, { status: 404 })
+      }
     }
     
     const result = data[0]
