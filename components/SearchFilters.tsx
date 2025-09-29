@@ -421,37 +421,6 @@ export default function SearchFilters({
         )}
       </div>
 
-      {/* Active filters summary */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 text-sm">
-          <span className="text-neutral-600">Active filters:</span>
-          {f.q && (
-            <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded">
-              Search: "{f.q}"
-            </span>
-          )}
-          {f.maxKm !== 25 && (
-            <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded">
-              Within {Math.round(f.maxKm! * 0.621371)} miles
-            </span>
-          )}
-          {f.dateFrom && (
-            <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded">
-              From {new Date(f.dateFrom).toLocaleDateString()}
-            </span>
-          )}
-          {f.dateTo && (
-            <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded">
-              To {new Date(f.dateTo).toLocaleDateString()}
-            </span>
-          )}
-          {f.tags && f.tags.length > 0 && (
-            <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded">
-              {f.tags.length} categories
-            </span>
-          )}
-        </div>
-      )}
     </div>
   )
 }
