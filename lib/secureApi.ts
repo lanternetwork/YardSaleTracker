@@ -60,8 +60,7 @@ export function sanitizeSaleInput(input: any) {
     zip: sanitizeText(input.zip, 20),
     contact: sanitizeText(input.contact, 200),
     tags: sanitizeTags(input.tags || []),
-    price_min: typeof input.price_min === 'number' ? input.price_min : undefined,
-    price_max: typeof input.price_max === 'number' ? input.price_max : undefined,
+    // (deprecated; yard sales do not have sale-level prices)
     lat: typeof input.lat === 'number' ? input.lat : undefined,
     lng: typeof input.lng === 'number' ? input.lng : undefined,
     start_at: input.start_at,

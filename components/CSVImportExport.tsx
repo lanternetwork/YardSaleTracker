@@ -89,8 +89,7 @@ export default function CSVImportExport() {
             zip: row.zip,
             start_at: row.start_at,
             end_at: row.end_at,
-            price_min: row.price_min ? parseFloat(row.price_min) : undefined,
-            price_max: row.price_max ? parseFloat(row.price_max) : undefined,
+            // (deprecated; yard sales do not have sale-level prices)
             contact: row.contact,
             lat,
             lng,
@@ -140,7 +139,7 @@ export default function CSVImportExport() {
       <div className="bg-neutral-50 p-4 rounded-lg">
         <h3 className="text-lg font-semibold mb-3">Import Sales from CSV</h3>
         <p className="text-sm text-neutral-600 mb-4">
-          Upload a CSV file with sales data. Expected columns: title, description, address, city, state, zip, start_at, end_at, price_min, price_max, contact, tags, source
+          Upload a CSV file with sales data. Expected columns: title, description, address, city, state, zip, start_at, end_at, contact, tags, source
         </p>
         
         <div className="space-y-4">
@@ -223,9 +222,7 @@ export default function CSVImportExport() {
                           {row.start_at && new Date(row.start_at).toLocaleDateString()}
                         </td>
                         <td className="px-3 py-2 text-neutral-600">
-                          {row.price_min && row.price_max && (
-                            <div>${row.price_min} - ${row.price_max}</div>
-                          )}
+                          {/* (deprecated; yard sales do not have sale-level prices) */}
                         </td>
                       </tr>
                     ))}

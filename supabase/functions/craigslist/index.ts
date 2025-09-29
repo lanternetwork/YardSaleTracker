@@ -1,3 +1,4 @@
+// @ts-ignore - Deno import
 import { serve } from "https://deno.land/std/http/server.ts"
 
 interface ScrapedSale {
@@ -7,8 +8,7 @@ interface ScrapedSale {
   address?: string
   start_at?: string
   end_at?: string
-  price_min?: number
-  price_max?: number
+  // (deprecated; yard sales do not have sale-level prices)
   contact?: string
   source: string
   url?: string
@@ -86,7 +86,7 @@ function parseCraigslistList(html: string, limit: number = 20): ParsedItem[] {
   return results
 }
 
-serve(async (req) => {
+serve(async (req: any) => {
   const correlationId = `deno_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   
   try {
@@ -147,22 +147,14 @@ serve(async (req) => {
       
       // Convert to ScrapedSale format
       const results: ScrapedSale[] = parsedItems.map(item => {
-        // Extract price range from single price
-        let price_min: number | undefined
-        let price_max: number | undefined
-        
-        if (item.price !== null) {
-          price_min = item.price
-          price_max = item.price
-        }
+        // (deprecated; yard sales do not have sale-level prices)
         
         return {
           id: item.id,
           title: item.title,
           description: `Found on Craigslist ${city}`,
           start_at: item.postedAt,
-          price_min,
-          price_max,
+          // (deprecated; yard sales do not have sale-level prices)
           source: 'craigslist',
           url: item.url
         }
@@ -191,11 +183,11 @@ serve(async (req) => {
     }
     
   } catch (error) {
-    console.log(`[SCRAPER] [ERROR] [${correlationId}] Scraper error: ${error.message}`)
+    console.log(`[SCRAPER] [ERROR] [${correlationId}] Scraper error: ${(error as Error).message}`)
     
     return new Response(JSON.stringify({ 
       error: "Failed to scrape data",
-      message: error.message,
+      message: (error as Error).message,
       results: []
     }), { 
       status: 500,

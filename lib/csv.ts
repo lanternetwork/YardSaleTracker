@@ -10,8 +10,7 @@ export interface CSVRow {
   start_at?: string
   end_at?: string
   tags?: string
-  price_min?: string
-  price_max?: string
+  // (deprecated; yard sales do not have sale-level prices)
   contact?: string
   source?: string
 }
@@ -27,7 +26,7 @@ export function parseCSV(csvText: string): CSVRow[] {
     const values = parseCSVLine(lines[i])
     if (values.length !== headers.length) continue
 
-    const row: CSVRow = {}
+    const row: CSVRow = { title: '' }
     headers.forEach((header, index) => {
       const value = values[index]?.trim().replace(/"/g, '')
       if (value) {
@@ -65,7 +64,7 @@ function parseCSVLine(line: string): string[] {
 export function exportToCSV(sales: any[]): string {
   const headers = [
     'title', 'description', 'address', 'city', 'state', 'zip',
-    'start_at', 'end_at', 'tags', 'price_min', 'price_max', 'contact', 'source'
+    'start_at', 'end_at', 'tags', 'contact', 'source'
   ]
 
   const csvRows = [

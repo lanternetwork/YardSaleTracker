@@ -1,9 +1,10 @@
 import { Metadata } from 'next'
 import { Sale } from '@/lib/types'
+import { APP_NAME, DEFAULT_DESCRIPTION } from '@/lib/config/branding'
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
-const siteName = 'YardSaleFinder'
-const description = 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!'
+const siteName = APP_NAME
+const description = DEFAULT_DESCRIPTION
 
 export function createPageMetadata({
   title,
@@ -106,7 +107,7 @@ export function createAddSaleMetadata(): Metadata {
 export function createSignInMetadata(): Metadata {
   return createPageMetadata({
     title: 'Sign In',
-    description: 'Sign in to your YardSaleFinder account to save favorites and manage your sales.',
+    description: `Sign in to your ${APP_NAME} account to save favorites and manage your sales.`,
     path: '/signin'
   })
 }

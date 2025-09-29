@@ -1,14 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
-import { Profile } from '@/lib/types'
+import { Profile, Sale } from '@/lib/types'
 import { ProfileSchema } from '@/lib/zodSchemas'
-
-const sb = createSupabaseBrowser()
 
 export function useAuth() {
   return useQuery({
     queryKey: ['auth'],
     queryFn: async () => {
+      const sb = createSupabaseBrowser()
       const { data: { user }, error } = await sb.auth.getUser()
       if (error) {
         throw new Error(error.message)
@@ -26,10 +25,11 @@ export function useProfile() {
     queryFn: async () => {
       if (!user) return null
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single()
 
       if (error && error.code !== 'PGRST116') { // Not found error
@@ -47,6 +47,7 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (profileData: Partial<Profile>) => {
+      const sb = createSupabaseBrowser()
       const { data: { user } } = await sb.auth.getUser()
       if (!user) {
         throw new Error('Not authenticated')
@@ -59,7 +60,7 @@ export function useUpdateProfile() {
 
       const { data, error } = await sb
         .from('profiles')
-        .upsert({ id: user.id, ...parsed.data })
+        .upsert({ user_id: user.id, ...parsed.data })
         .select()
         .single()
 
@@ -80,6 +81,7 @@ export function useSignIn() {
 
   return useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb.auth.signInWithPassword({
         email,
         password
@@ -103,6 +105,7 @@ export function useSignUp() {
 
   return useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb.auth.signUp({
         email,
         password
@@ -125,6 +128,7 @@ export function useSignOut() {
 
   return useMutation({
     mutationFn: async () => {
+      const sb = createSupabaseBrowser()
       const { error } = await sb.auth.signOut()
       if (error) {
         throw new Error(error.message)
@@ -144,6 +148,7 @@ export function useFavorites() {
     queryFn: async () => {
       if (!user) return []
 
+      const sb = createSupabaseBrowser()
       const { data, error } = await sb
         .from('favorites')
         .select(`
@@ -156,7 +161,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) || []
+      return data?.map((fav: any) => fav.yard_sales).filter(Boolean) as unknown as Sale[] || []
     },
     enabled: !!user,
   })
@@ -172,6 +177,7 @@ export function useToggleFavorite() {
         throw new Error('Please sign in to save favorites')
       }
 
+      const sb = createSupabaseBrowser()
       if (isFavorited) {
         const { error } = await sb
           .from('favorites')

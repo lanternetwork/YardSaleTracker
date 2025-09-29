@@ -75,7 +75,7 @@ test.describe('Complete User Flow', () => {
 
     // Test reset filters
     await page.getByRole('button', { name: 'Clear All' }).click()
-    await expect(page.getByDisplayValue('')).toBeVisible()
+    await expect(page.locator('input[value=""]')).toBeVisible()
   })
 
   test('importer path: mock /api/scrape, import items, verify appear', async ({ page }) => {
@@ -208,7 +208,7 @@ test.describe('Complete User Flow', () => {
     await page.goto('/explore?tab=add')
     
     // Check for proper labels
-    const titleInput = page.getByPlaceholderText('Sale title')
+    const titleInput = page.getByPlaceholder('Sale title')
     await expect(titleInput).toBeVisible()
     
     // Test form validation with keyboard

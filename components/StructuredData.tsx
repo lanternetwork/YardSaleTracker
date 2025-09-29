@@ -31,12 +31,7 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
           longitude: sale.lng
         } : undefined
       },
-      offers: sale.price_min && sale.price_max ? {
-        '@type': 'Offer',
-        price: sale.price_min,
-        priceCurrency: 'USD',
-        priceRange: `${sale.price_min}-${sale.price_max}`
-      } : undefined,
+      // (deprecated; yard sales do not have sale-level prices)
       organizer: {
         '@type': 'Organization',
         name: 'YardSaleFinder',
@@ -64,17 +59,7 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
       name: sale.title,
       description: sale.description,
       image: sale.photos || [],
-      offers: sale.price_min && sale.price_max ? {
-        '@type': 'AggregateOffer',
-        lowPrice: sale.price_min,
-        highPrice: sale.price_max,
-        priceCurrency: 'USD',
-        availability: 'https://schema.org/InStock',
-        seller: {
-          '@type': 'Organization',
-          name: 'YardSaleFinder'
-        }
-      } : undefined,
+      // (deprecated; yard sales do not have sale-level prices)
       category: 'Yard Sale Items',
       keywords: sale.tags?.join(', '),
       url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'}/sale/${sale.id}`

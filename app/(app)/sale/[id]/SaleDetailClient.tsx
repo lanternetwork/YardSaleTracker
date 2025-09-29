@@ -24,7 +24,15 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
 
   const mapPoints = useMemo(() => 
     sale.lat && sale.lng 
-      ? [{ id: sale.id, title: sale.title, lat: sale.lat, lng: sale.lng }]
+      ? [{ 
+          id: sale.id, 
+          title: sale.title, 
+          lat: sale.lat, 
+          lng: sale.lng,
+          address: sale.address || '',
+          privacy_mode: sale.privacy_mode || 'exact',
+          date_start: sale.date_start || ''
+        }]
       : []
   , [sale])
 
@@ -112,14 +120,6 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
             </div>
           )}
 
-          {sale.price_min && sale.price_max && (
-            <div>
-              <h3 className="font-semibold text-neutral-900">Price Range</h3>
-              <p className="text-neutral-600">
-                ${sale.price_min} - ${sale.price_max}
-              </p>
-            </div>
-          )}
 
           {sale.contact && (
             <div>

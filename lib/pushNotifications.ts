@@ -46,13 +46,13 @@ export class PushNotificationService {
       
       const subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!)
+        applicationServerKey: this.urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) as unknown as ArrayBuffer
       })
 
       return {
         endpoint: subscription.endpoint,
-        p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')!),
-        auth: this.arrayBufferToBase64(subscription.getKey('auth')!)
+        p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')! as ArrayBuffer),
+        auth: this.arrayBufferToBase64(subscription.getKey('auth')! as ArrayBuffer)
       }
     } catch (error) {
       console.error('Error subscribing to push notifications:', error)

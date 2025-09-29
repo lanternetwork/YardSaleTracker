@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.com wss://*.supabase.co",
+    "connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.supabase.co https://*.supabase.com wss://*.supabase.co",
     "frame-src 'self' https://maps.google.com",
     "object-src 'none'",
     "base-uri 'self'",

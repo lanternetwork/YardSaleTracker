@@ -12,8 +12,7 @@ export interface SaleMinimal {
   end_at?: string
   lat?: number
   lng?: number
-  price_min?: number
-  price_max?: number
+  // (deprecated; yard sales do not have sale-level prices)
   tags: string[]
   photos: string[]
   source: 'craigslist'
@@ -26,22 +25,14 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
   // Extract tags from title keywords
   const tags = extractTagsFromTitle(item.title)
   
-  // Set price range from single price
-  let price_min: number | undefined
-  let price_max: number | undefined
-  
-  if (item.price !== null && item.price !== undefined) {
-    price_min = item.price
-    price_max = item.price
-  }
+  // (deprecated; yard sales do not have sale-level prices)
   
   // Create normalized sale object
   const normalized: SaleMinimal = {
     title: item.title,
     description: `Found on Craigslist ${city}`,
     start_at: item.postedAt,
-    price_min,
-    price_max,
+    // (deprecated; yard sales do not have sale-level prices)
     tags,
     photos: [],
     source: 'craigslist'
@@ -54,10 +45,10 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     if (value !== undefined && value !== null) {
       if (Array.isArray(value) && value.length === 0) {
         // Include empty arrays
-        result[key as keyof SaleMinimal] = value
+        result[key as keyof SaleMinimal] = value as any
       } else if (!Array.isArray(value) && value !== '') {
         // Include non-empty strings and other values
-        result[key as keyof SaleMinimal] = value
+        result[key as keyof SaleMinimal] = value as any
       }
     }
   })
