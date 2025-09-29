@@ -137,7 +137,6 @@ export default function ExploreClient({
           <AddSaleForm />
         </div>
       )}
-      {tab === 'find' && <ImportSales />}
     </main>
   )
 }

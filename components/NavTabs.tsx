@@ -9,8 +9,7 @@ export default function NavTabs() {
   const tabs = [
     { href: '/explore?tab=list', label: 'Browse Sales', key: 'list' },
     { href: '/explore?tab=map', label: 'Map View', key: 'map' },
-    { href: '/explore?tab=add', label: 'Add Sale', key: 'add' },
-    { href: '/explore?tab=find', label: 'Find More', key: 'find' }
+    { href: '/explore?tab=add', label: 'Add Sale', key: 'add' }
   ]
 
   return (
