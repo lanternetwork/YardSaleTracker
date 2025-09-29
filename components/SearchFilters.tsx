@@ -143,8 +143,13 @@ export default function SearchFilters({
       // Update URL with new coordinates
       const params = new URLSearchParams(searchParams.toString())
       params.set('zip', zip)
-      params.set('lat', data.lat.toString())
-      params.set('lng', data.lng.toString())
+      
+      // Add tiny offset to force map re-centering even with same coordinates
+      const latOffset = Math.random() * 0.0001 - 0.00005 // ±0.00005 degrees (~5 meters)
+      const lngOffset = Math.random() * 0.0001 - 0.00005
+      
+      params.set('lat', (data.lat + latOffset).toString())
+      params.set('lng', (data.lng + lngOffset).toString())
       
       // Add timestamp to force URL change even with same coordinates
       params.set('t', Date.now().toString())
