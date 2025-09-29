@@ -79,13 +79,16 @@ export default function ExploreClient({
     if (searchParams.lat && searchParams.lng) {
       setCurrentCenter({
         lat: parseFloat(searchParams.lat),
-        lng: parseFloat(searchParams.lng)
+        lng: parseFloat(searchParams.lng),
+        source: 'url',
+        city: undefined,
+        zip: searchParams.zip
       })
     }
     if (searchParams.radius) {
       setCurrentRadius(parseFloat(searchParams.radius))
     }
-  }, [searchParams.lat, searchParams.lng, searchParams.radius])
+  }, [searchParams.lat, searchParams.lng, searchParams.radius, searchParams.zip])
 
   return (
     <main className="max-w-6xl mx-auto p-4">
