@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const zip = searchParams.get('zip')
     const country = searchParams.get('country') || 'US'
     const bypassCache = searchParams.get('bypass') === 'true'
-    const clearCache = searchParams.get('clear') === 'true'
+    const shouldClearCache = searchParams.get('clear') === 'true'
     
     if (!zip) {
       return NextResponse.json({ error: 'ZIP code is required' }, { status: 400 })
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     console.log(`Geocoding request for ZIP ${zip}, country ${country}`)
     
     // Clear cache if requested
-    if (clearCache) {
+    if (shouldClearCache) {
       clearCache()
     }
     
