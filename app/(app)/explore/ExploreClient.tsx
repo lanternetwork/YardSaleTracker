@@ -103,8 +103,6 @@ export default function ExploreClient({
         <SearchFilters 
           onChange={setFilters} 
           showAdvanced={tab === 'list'} 
-          centerSource={initialCenter.source}
-          centerCity={initialCenter.city}
         />
       </div>
 

@@ -11,14 +11,10 @@ const COMMON_TAGS = [
 
 export default function SearchFilters({ 
   onChange,
-  showAdvanced = false,
-  centerSource,
-  centerCity
+  showAdvanced = false
 }: { 
   onChange: (f: Filters) => void
   showAdvanced?: boolean
-  centerSource?: string
-  centerCity?: string
 }) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -93,11 +89,14 @@ export default function SearchFilters({
 
   const useDeviceLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser')
+      showToast('Geolocation is not supported by this browser', 'error')
       return
     }
 
     setIsGettingLocation(true)
+
+    // Show a friendly message about location access
+    showToast('Requesting location access...', 'info')
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -123,10 +122,11 @@ export default function SearchFilters({
         router.push(newUrl)
         
         setIsGettingLocation(false)
+        showToast('Location updated successfully!', 'success')
         
         // Track analytics
         trackCenterCorrection({
-          from: centerSource || 'unknown',
+          from: 'unknown',
           to: 'device'
         })
       },
@@ -134,28 +134,34 @@ export default function SearchFilters({
         console.error('Geolocation error:', error)
         let message = 'Unable to get your location'
         if (error.code === error.PERMISSION_DENIED) {
-          message = 'Location access denied'
+          message = 'Location access denied. Please allow location access in your browser settings.'
         } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = 'Location unavailable'
+          message = 'Location unavailable. Please try again.'
         } else if (error.code === error.TIMEOUT) {
-          message = 'Location request timed out'
+          message = 'Location request timed out. Please try again.'
         }
         
-        // Show non-blocking message
-        const toast = document.createElement('div')
-        toast.className = 'fixed top-4 right-4 bg-red-100 text-red-800 px-4 py-2 rounded shadow-lg z-50'
-        toast.textContent = message
-        document.body.appendChild(toast)
-        setTimeout(() => toast.remove(), 3000)
-        
+        showToast(message, 'error')
         setIsGettingLocation(false)
       },
       {
         enableHighAccuracy: false,
-        timeout: 8000,
+        timeout: 10000, // Increased timeout
         maximumAge: 300000 // 5 minutes
       }
     )
+  }
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    const toast = document.createElement('div')
+    const bgColor = type === 'error' ? 'bg-red-100 text-red-800' : 
+                   type === 'success' ? 'bg-green-100 text-green-800' : 
+                   'bg-blue-100 text-blue-800'
+    
+    toast.className = `fixed top-4 right-4 ${bgColor} px-4 py-2 rounded shadow-lg z-50 text-sm`
+    toast.textContent = message
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 4000)
   }
 
   const geocodeZip = async (zip: string, bypassCache = false) => {
@@ -235,7 +241,7 @@ export default function SearchFilters({
       
       // Track analytics
       trackCenterCorrection({
-        from: centerSource || 'unknown',
+        from: 'unknown',
         to: 'zip'
       })
       
@@ -257,32 +263,6 @@ export default function SearchFilters({
 
   return (
     <div className="space-y-4">
-      {/* Correction banner for IP/fallback sources */}
-      {(centerSource === 'ip' || centerSource === 'fallback') && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-blue-600">📍</span>
-            <span className="text-blue-800 text-sm">
-              Not your area? Enter ZIP
-              {centerCity && ` (Near ${centerCity})`}
-            </span>
-          </div>
-          <button
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
-            onClick={() => {
-              // Focus the ZIP input when it's shown
-              const zipInput = document.querySelector('input[placeholder="12345"]') as HTMLInputElement
-              if (zipInput) {
-                zipInput.focus()
-                zipInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
-              }
-            }}
-          >
-            Change
-          </button>
-        </div>
-      )}
-      
       {/* Main search bar */}
       <div className="flex gap-2 items-center">
         <div className="flex-1 relative">
