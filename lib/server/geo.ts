@@ -24,6 +24,16 @@ export async function getInitialCenter(headers: Headers): Promise<GeoLocation> {
     }
   }
 
+  // TEMPORARY: Force Louisville for testing (remove after IP geolocation is fixed)
+  console.log('Using hardcoded Louisville coordinates for testing')
+  return {
+    lat: 38.2527,
+    lng: -85.7585,
+    city: 'Louisville, KY',
+    country: 'US'
+  }
+
+  /* COMMENTED OUT FOR TESTING - UNCOMMENT AFTER IP GEOLOCATION IS FIXED
   // Try to get location from Vercel IP headers
   const lat = headers.get('x-vercel-ip-latitude')
   const lng = headers.get('x-vercel-ip-longitude')
@@ -78,6 +88,7 @@ export async function getInitialCenter(headers: Headers): Promise<GeoLocation> {
     city: 'Louisville, KY',
     country: 'US'
   }
+  */
 }
 
 /**
