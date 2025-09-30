@@ -18,7 +18,7 @@ export function GlobalProvider({ children }) {
         if (res.count) setUnreadCount(res.count);
       });
     }
-  }, [getUnreadMessageCount, session]);
+  }, [session]);
 
   return (
     <GlobalContext.Provider

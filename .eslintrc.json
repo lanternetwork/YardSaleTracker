@@ -17,6 +17,10 @@
     "build/",
     "coverage/",
     "supabase/functions/",
+    "app/actions/**",
+    "app-property-pulse/**",
+    "context-property-pulse/**",
+    "public/sw.js",
     "**/*.ts",
     "**/*.tsx"
   ],
