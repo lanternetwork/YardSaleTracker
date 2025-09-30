@@ -35,23 +35,23 @@ const WIZARD_STEPS: WizardStep[] = [
   }
 ]
 
-export default function SellWizardClient() {
+export default function SellWizardClient({ initialData, isEdit = false, saleId }: { initialData?: Partial<SaleInput>; isEdit?: boolean; saleId?: string }) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<Partial<SaleInput>>({
-    title: '',
-    description: '',
-    address: '',
-    city: '',
-    state: '',
-    zip_code: '',
-    date_start: '',
-    time_start: '',
-    date_end: '',
-    time_end: '',
-    price: undefined,
-    tags: [],
-    status: 'draft'
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    address: initialData?.address || '',
+    city: initialData?.city || '',
+    state: initialData?.state || '',
+    zip_code: initialData?.zip_code || '',
+    date_start: initialData?.date_start || '',
+    time_start: initialData?.time_start || '',
+    date_end: initialData?.date_end || '',
+    time_end: initialData?.time_end || '',
+    price: initialData?.price,
+    tags: initialData?.tags || [],
+    status: initialData?.status || 'draft'
   })
   const [photos, setPhotos] = useState<string[]>([])
   const [items, setItems] = useState<Array<{ name: string; price?: number; description?: string; image_url?: string }>>([])
@@ -588,7 +588,7 @@ function ItemsStep({ items, onAdd, onUpdate, onRemove }: {
 
 function ReviewStep({ formData, photos, items }: {
   formData: Partial<SaleInput>,
-  photos: File[],
+  photos: string[],
   items: Array<{ name: string; price?: number; description?: string }>
 }) {
   const formatDate = (dateString: string) => {

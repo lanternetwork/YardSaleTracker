@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import FavoriteButton from './FavoriteButton'
-import OptimizedImage from './OptimizedImage'
 import { Sale } from '@/lib/types'
 
 export default function SaleCard({ sale }: { sale: Sale }) {
-  
+
   return (
     <div className="rounded-xl border p-4 bg-white flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between">
@@ -12,17 +11,7 @@ export default function SaleCard({ sale }: { sale: Sale }) {
         <FavoriteButton saleId={sale.id} initial={false} />
       </div>
       
-      {firstPhoto && (
-        <div className="relative w-full h-48 rounded-lg overflow-hidden">
-          <OptimizedImage
-            src={firstPhoto}
-            alt={sale.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </div>
-      )}
+      {/* Image preview removed: photos are not part of the Sale schema */}
       
       <p className="text-sm text-neutral-600 line-clamp-2">{sale.description}</p>
       <div className="text-sm text-neutral-700">

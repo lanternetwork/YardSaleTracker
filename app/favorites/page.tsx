@@ -56,7 +56,7 @@ export default async function FavoritesPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  const favoriteSales = favorites?.map(fav => fav.sales).filter(Boolean) || []
+  const favoriteSales = ((favorites?.map((fav: any) => fav.sales).flat().filter(Boolean) as unknown) as import('@/lib/types').Sale[]) || []
 
   return (
     <div className="min-h-screen bg-gray-50">

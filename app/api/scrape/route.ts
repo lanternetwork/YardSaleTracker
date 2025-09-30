@@ -72,8 +72,7 @@ export async function POST(req: Request) {
         correlationId, 
         city: body.city, 
         query: body.query,
-        operation: 'api_proxy',
-        resultCount: data.results?.length || 0
+        operation: 'api_proxy'
       })
       
       return NextResponse.json(data)

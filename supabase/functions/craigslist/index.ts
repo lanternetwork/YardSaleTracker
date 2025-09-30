@@ -191,11 +191,12 @@ serve(async (req) => {
     }
     
   } catch (error) {
-    console.log(`[SCRAPER] [ERROR] [${correlationId}] Scraper error: ${error.message}`)
+    const message = error instanceof Error ? error.message : String(error)
+    console.log(`[SCRAPER] [ERROR] [${correlationId}] Scraper error: ${message}`)
     
     return new Response(JSON.stringify({ 
       error: "Failed to scrape data",
-      message: error.message,
+      message,
       results: []
     }), { 
       status: 500,

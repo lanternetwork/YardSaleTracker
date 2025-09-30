@@ -98,7 +98,7 @@ export async function createSale(input: SaleInput): Promise<ActionResult> {
             key, 
             value || []
           ])
-        )
+        ) as Record<string, string[]>
       }
     }
     
@@ -155,7 +155,7 @@ export async function updateSale(id: string, input: Partial<SaleInput>): Promise
             key, 
             value || []
           ])
-        )
+        ) as Record<string, string[]>
       }
     }
     
@@ -241,7 +241,7 @@ export async function createItem(saleId: string, input: ItemInput): Promise<Acti
             key, 
             value || []
           ])
-        )
+        ) as Record<string, string[]>
       }
     }
     

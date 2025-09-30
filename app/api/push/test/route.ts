@@ -66,9 +66,10 @@ export async function POST(request: NextRequest) {
             payload
           )
           return { success: true, endpoint: sub.endpoint }
-        } catch (error) {
-          console.error('Error sending notification:', error)
-          return { success: false, endpoint: sub.endpoint, error: error.message }
+        } catch (err) {
+          console.error('Error sending notification:', err)
+          const message = err instanceof Error ? err.message : String(err)
+          return { success: false, endpoint: sub.endpoint, error: message }
         }
       })
     )
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Test notification error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

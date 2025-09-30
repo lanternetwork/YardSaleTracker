@@ -62,7 +62,24 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     }
   })
   
-  return result as SaleMinimal
+  // Ensure required properties exist on the final object
+  return {
+    title: result.title || normalized.title,
+    description: result.description,
+    address: result.address,
+    city: result.city,
+    state: result.state,
+    zip: result.zip,
+    start_at: result.start_at,
+    end_at: result.end_at,
+    lat: result.lat,
+    lng: result.lng,
+    price_min: result.price_min,
+    price_max: result.price_max,
+    tags: (result.tags as string[]) || [],
+    photos: (result.photos as string[]) || [],
+    source: 'craigslist'
+  }
 }
 
 /**

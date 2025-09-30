@@ -14,8 +14,8 @@ interface HomeClientProps {
 
 export default function HomeClient({ initialSales, user }: HomeClientProps) {
   const [sales, setSales] = useState<Sale[]>(initialSales)
-  const [locationLoading, setLocationLoading] = useState(false)
-  const [locationError, setLocationError] = useState<string | null>(null)
+  const [locationLoading] = useState(false)
+  const [locationError] = useState<string | null>(null)
   const { location, searchWithLocation, setSearchRadius } = useLocationSearch()
 
   const handleLocationUpdate = async (newLocation: { lat: number; lng: number }) => {
@@ -34,10 +34,7 @@ export default function HomeClient({ initialSales, user }: HomeClientProps) {
     }
   }
 
-  const handleLocationClick = () => {
-    // This will be handled by the location hook
-    // The actual location update will be triggered by the hook
-  }
+  const handleLocationClick = () => {}
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -86,9 +83,9 @@ export default function HomeClient({ initialSales, user }: HomeClientProps) {
         {/* Location Button */}
         <div className="flex justify-center">
           <UseLocationButton
-            onClick={handleLocationClick}
-            loading={locationLoading}
-            error={locationError}
+            onClick={() => handleLocationUpdate(location || { lat: 38.2527, lng: -85.7585 })}
+            loading={false}
+            error={null}
           />
         </div>
       </div>
