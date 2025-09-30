@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SaleInput } from '@/lib/data'
+import CloudinaryUploadWidget from '@/components/upload/CloudinaryUploadWidget'
+import ImageThumbnailGrid from '@/components/upload/ImageThumbnailGrid'
 
 interface WizardStep {
   id: string
@@ -51,8 +53,8 @@ export default function SellWizardClient() {
     tags: [],
     status: 'draft'
   })
-  const [photos, setPhotos] = useState<File[]>([])
-  const [items, setItems] = useState<Array<{ name: string; price?: number; description?: string }>>([])
+  const [photos, setPhotos] = useState<string[]>([])
+  const [items, setItems] = useState<Array<{ name: string; price?: number; description?: string; image_url?: string }>>([])
   const [loading, setLoading] = useState(false)
 
   const handleInputChange = (field: keyof SaleInput, value: any) => {
@@ -74,12 +76,18 @@ export default function SellWizardClient() {
   const handleSubmit = async () => {
     setLoading(true)
     try {
+      // Prepare sale data with cover image
+      const saleData = {
+        ...formData,
+        cover_image_url: photos.length > 0 ? photos[0] : undefined
+      }
+
       const response = await fetch('/api/sales', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(saleData),
       })
 
       if (response.ok) {
@@ -95,9 +103,8 @@ export default function SellWizardClient() {
     }
   }
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || [])
-    setPhotos(prev => [...prev, ...files])
+  const handlePhotoUpload = (urls: string[]) => {
+    setPhotos(prev => [...prev, ...urls])
   }
 
   const handleRemovePhoto = (index: number) => {
@@ -416,8 +423,8 @@ function DetailsStep({ formData, onChange }: { formData: Partial<SaleInput>, onC
 }
 
 function PhotosStep({ photos, onUpload, onRemove }: { 
-  photos: File[], 
-  onUpload: (event: React.ChangeEvent<HTMLInputElement>) => void,
+  photos: string[], 
+  onUpload: (urls: string[]) => void,
   onRemove: (index: number) => void 
 }) {
   return (
@@ -430,37 +437,23 @@ function PhotosStep({ photos, onUpload, onRemove }: {
           Add photos to showcase your items. You can upload up to 10 photos.
         </p>
         
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={onUpload}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        <CloudinaryUploadWidget 
+          onUpload={onUpload}
+          maxFiles={10 - photos.length}
+          className="mb-6"
         />
       </div>
 
       {photos.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-3">Uploaded Photos ({photos.length}/10)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {photos.map((photo, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={URL.createObjectURL(photo)}
-                  alt={`Upload ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-                <button
-                  onClick={() => onRemove(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-sm font-medium text-gray-700 mb-3">
+            Uploaded Photos ({photos.length}/10)
+          </h3>
+          <ImageThumbnailGrid 
+            images={photos}
+            onRemove={onRemove}
+            maxImages={10}
+          />
         </div>
       )}
     </div>
@@ -468,7 +461,7 @@ function PhotosStep({ photos, onUpload, onRemove }: {
 }
 
 function ItemsStep({ items, onAdd, onUpdate, onRemove }: {
-  items: Array<{ name: string; price?: number; description?: string }>,
+  items: Array<{ name: string; price?: number; description?: string; image_url?: string }>,
   onAdd: () => void,
   onUpdate: (index: number, field: string, value: any) => void,
   onRemove: (index: number) => void
@@ -553,6 +546,37 @@ function ItemsStep({ items, onAdd, onUpdate, onRemove }: {
                   rows={2}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+
+              {/* Item Image Upload */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Item Photo (Optional)
+                </label>
+                <CloudinaryUploadWidget 
+                  onUpload={(urls) => onUpdate(index, 'image_url', urls[0])}
+                  maxFiles={1}
+                  className="mb-3"
+                />
+                {item.image_url && (
+                  <div className="mt-2">
+                    <div className="relative inline-block">
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                      />
+                      <button
+                        onClick={() => onUpdate(index, 'image_url', undefined)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
