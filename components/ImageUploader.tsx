@@ -13,7 +13,7 @@ export default function ImageUploader({
   maxImages = 5, 
   existingImages = [] 
 }: ImageUploaderProps) {
-  const sb = createSupabaseBrowser()
+  const sb = createSupabaseBrowserClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)

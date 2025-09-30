@@ -25,7 +25,7 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const { user } = useAuth()
-  const supabase = createSupabaseBrowser()
+  const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     fetchReviews()

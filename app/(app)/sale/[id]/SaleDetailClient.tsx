@@ -20,7 +20,7 @@ interface SaleDetailClientProps {
 export function SaleDetailClient({ sale }: SaleDetailClientProps) {
   const [averageRating, setAverageRating] = useState(0)
   const [totalReviews, setTotalReviews] = useState(0)
-  const supabase = createSupabaseBrowser()
+  const supabase = createSupabaseBrowserClient()
 
   const mapPoints = useMemo(() => 
     sale.lat && sale.lng 
@@ -94,37 +94,30 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {sale.start_at && (
+          {sale.date_start && (
             <div>
-              <h3 className="font-semibold text-neutral-900">Start Time</h3>
+              <h3 className="font-semibold text-neutral-900">Start Date & Time</h3>
               <p className="text-neutral-600">
-                {new Date(sale.start_at).toLocaleString()}
+                {new Date(`${sale.date_start}T${sale.time_start}`).toLocaleString()}
               </p>
             </div>
           )}
           
-          {sale.end_at && (
+          {sale.date_end && (
             <div>
-              <h3 className="font-semibold text-neutral-900">End Time</h3>
+              <h3 className="font-semibold text-neutral-900">End Date & Time</h3>
               <p className="text-neutral-600">
-                {new Date(sale.end_at).toLocaleString()}
+                {new Date(`${sale.date_end}T${sale.time_end}`).toLocaleString()}
               </p>
             </div>
           )}
 
-          {sale.price_min && sale.price_max && (
+          {sale.price && (
             <div>
-              <h3 className="font-semibold text-neutral-900">Price Range</h3>
+              <h3 className="font-semibold text-neutral-900">Price</h3>
               <p className="text-neutral-600">
-                ${sale.price_min} - ${sale.price_max}
+                ${sale.price}
               </p>
-            </div>
-          )}
-
-          {sale.contact && (
-            <div>
-              <h3 className="font-semibold text-neutral-900">Contact</h3>
-              <p className="text-neutral-600">{sale.contact}</p>
             </div>
           )}
         </div>

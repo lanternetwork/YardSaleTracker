@@ -61,6 +61,7 @@ export async function getSalesExample() {
       city: 'Louisville',
       categories: ['Furniture'],
       dateRange: 'weekend',
+      distanceKm: 25,
       limit: 20,
       offset: 0
     })

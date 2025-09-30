@@ -138,7 +138,7 @@ function getDateRange(dateRange?: 'today' | 'weekend' | 'any') {
 }
 
 // Data functions
-export async function getSales(params: GetSalesParams = {}) {
+export async function getSales(params: GetSalesParams = { distanceKm: 25, limit: 50, offset: 0 }) {
   try {
     const validatedParams = GetSalesParamsSchema.parse(params)
     const supabase = createSupabaseServerClient()

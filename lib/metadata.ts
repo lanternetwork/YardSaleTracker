@@ -66,8 +66,8 @@ export function createPageMetadata({
 
 export function createSaleMetadata(sale: Sale): Metadata {
   const title = sale.title
-  const description = sale.description || `Yard sale at ${sale.address || sale.city || 'your area'}. ${sale.start_at ? `Starts ${new Date(sale.start_at).toLocaleDateString()}` : ''}`
-  const image = sale.photos?.[0] || '/og-sale.jpg'
+  const description = sale.description || `Yard sale at ${sale.address || sale.city || 'your area'}. ${sale.date_start ? `Starts ${new Date(sale.date_start).toLocaleDateString()}` : ''}`
+  const image = '/og-sale.jpg' // photos field doesn't exist in new schema
   const path = `/sale/${sale.id}`
 
   return createPageMetadata({

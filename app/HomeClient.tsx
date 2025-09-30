@@ -79,9 +79,9 @@ export default function HomeClient({ initialSales, user }: HomeClientProps) {
         {/* Location Button */}
         <div className="flex justify-center">
           <UseLocationButton
-            onLocationUpdate={handleLocationUpdate}
-            variant="primary"
-            size="lg"
+            onClick={handleLocationUpdate}
+            loading={locationLoading}
+            error={locationError}
           />
         </div>
       </div>

@@ -180,7 +180,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) as Sale[]
+      return data?.map((fav: any) => fav.yard_sales).filter(Boolean) as Sale[]
     },
   })
 }

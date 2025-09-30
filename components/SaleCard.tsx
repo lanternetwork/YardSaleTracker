@@ -30,14 +30,14 @@ export default function SaleCard({ sale }: { sale: Sale }) {
         {sale.address && <div>{sale.address}</div>}
         {sale.city && sale.state && <div>{sale.city}, {sale.state}</div>}
       </div>
-      {sale.start_at && (
+      {sale.date_start && (
         <div className="text-sm text-neutral-600">
-          {new Date(sale.start_at).toLocaleString()}
+          {new Date(`${sale.date_start}T${sale.time_start}`).toLocaleString()}
         </div>
       )}
-      {sale.price_min && sale.price_max && (
+      {sale.price && (
         <div className="text-sm font-medium text-amber-600">
-          ${sale.price_min} - ${sale.price_max}
+          ${sale.price}
         </div>
       )}
       <Link 

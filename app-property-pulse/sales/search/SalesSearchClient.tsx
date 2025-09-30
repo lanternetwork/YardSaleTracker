@@ -130,9 +130,9 @@ export default function SalesSearchClient({
             <h3 className="font-medium text-gray-700">Location</h3>
             
             <UseLocationButton
-              onLocationUpdate={handleLocationUpdate}
-              variant="primary"
-              size="md"
+              onClick={handleLocationUpdate}
+              loading={locationLoading}
+              error={locationError}
             />
             
             {location && (

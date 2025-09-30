@@ -27,7 +27,8 @@ export default async function SalesSearchPage({ searchParams }: SalesSearchPageP
     distanceKm: distance,
     city,
     categories,
-    limit: 50
+    limit: 50,
+    offset: 0
   })
 
   return (
