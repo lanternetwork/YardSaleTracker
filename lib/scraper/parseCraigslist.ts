@@ -13,27 +13,27 @@ export interface ParsedItem {
 export function parseCraigslistList(html: string, limit: number = 20): ParsedItem[] {
   const results: ParsedItem[] = []
   
-  // Parse each result-row individually
-  const resultRowRegex = /<div class="result-row"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g
+  // Parse each result-row individually - more flexible regex
+  const resultRowRegex = /<div class="result-row"[^>]*data-pid="[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g
   let rowMatch
   let count = 0
   
   while ((rowMatch = resultRowRegex.exec(html)) !== null && count < limit) {
     const rowHtml = rowMatch[1]
     
-    // Extract title and link
-    const titleMatch = rowHtml.match(/<a[^>]*class="(?:result-title|posting-title)[^"]*"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/)
+    // Extract title and link - more flexible pattern
+    const titleMatch = rowHtml.match(/<a[^>]*class="[^"]*result-title[^"]*"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/)
     if (!titleMatch) continue
     
     const link = titleMatch[1]
     const title = titleMatch[2].trim()
     
-    // Extract date
-    const dateMatch = rowHtml.match(/<(?:time|span)[^>]*class="(?:result-date|posting-date)[^"]*"[^>]*datetime="([^"]+)"[^>]*>/)
+    // Extract date - more flexible pattern
+    const dateMatch = rowHtml.match(/<(?:time|span)[^>]*class="[^"]*result-date[^"]*"[^>]*datetime="([^"]+)"[^>]*>/)
     const date = dateMatch ? dateMatch[1] : new Date().toISOString()
     
-    // Extract price
-    const priceMatch = rowHtml.match(/<span[^>]*class="(?:result-price|posting-price)[^"]*"[^>]*>([^<]+)<\/span>/)
+    // Extract price - more flexible pattern
+    const priceMatch = rowHtml.match(/<span[^>]*class="[^"]*result-price[^"]*"[^>]*>([^<]+)<\/span>/)
     const priceText = priceMatch ? priceMatch[1].trim() : ''
     
     // Parse price
