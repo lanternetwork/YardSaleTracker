@@ -13,60 +13,49 @@ export interface ParsedItem {
 export function parseCraigslistList(html: string, limit: number = 20): ParsedItem[] {
   const results: ParsedItem[] = []
   
-  // Regex patterns for different possible markup structures
-  const titleRegex = /<a[^>]*class="(?:result-title|posting-title)"[^>]*>([^<]+)<\/a>/g
-  const dateRegex = /<(?:time|span)[^>]*class="(?:result-date|posting-date)"[^>]*datetime="([^"]+)"[^>]*>/g
-  const priceRegex = /<span[^>]*class="(?:result-price|posting-price)"[^>]*>([^<]+)<\/span>/g
-  const linkRegex = /<a[^>]*class="(?:result-title|posting-title)"[^>]*href="([^"]+)"[^>]*>/g
+  // Parse each result-row individually
+  const resultRowRegex = /<div class="result-row"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g
+  let rowMatch
+  let count = 0
   
-  const titles: string[] = []
-  const dates: string[] = []
-  const prices: string[] = []
-  const links: string[] = []
-  
-  let match
-  while ((match = titleRegex.exec(html)) !== null) {
-    titles.push(match[1].trim())
-  }
-  
-  while ((match = dateRegex.exec(html)) !== null) {
-    dates.push(match[1])
-  }
-  
-  while ((match = priceRegex.exec(html)) !== null) {
-    prices.push(match[1].trim())
-  }
-  
-  while ((match = linkRegex.exec(html)) !== null) {
-    links.push(match[1])
-  }
-  
-  // Combine the data
-  for (let i = 0; i < Math.min(titles.length, limit); i++) {
-    const title = titles[i]
-    const date = dates[i] || new Date().toISOString()
-    const price = prices[i] || ''
-    const link = links[i] || ''
+  while ((rowMatch = resultRowRegex.exec(html)) !== null && count < limit) {
+    const rowHtml = rowMatch[1]
     
-    // Extract price range
+    // Extract title and link
+    const titleMatch = rowHtml.match(/<a[^>]*class="(?:result-title|posting-title)[^"]*"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/)
+    if (!titleMatch) continue
+    
+    const link = titleMatch[1]
+    const title = titleMatch[2].trim()
+    
+    // Extract date
+    const dateMatch = rowHtml.match(/<(?:time|span)[^>]*class="(?:result-date|posting-date)[^"]*"[^>]*datetime="([^"]+)"[^>]*>/)
+    const date = dateMatch ? dateMatch[1] : new Date().toISOString()
+    
+    // Extract price
+    const priceMatch = rowHtml.match(/<span[^>]*class="(?:result-price|posting-price)[^"]*"[^>]*>([^<]+)<\/span>/)
+    const priceText = priceMatch ? priceMatch[1].trim() : ''
+    
+    // Parse price
     let parsedPrice: number | null = null
-    
-    if (price && price !== 'FREE') {
-      const priceMatch = price.match(/\$(\d+)/g)
-      if (priceMatch) {
-        const prices = priceMatch.map(p => parseInt(p.replace('$', '')))
-        parsedPrice = Math.min(...prices) // Use minimum price for single value
+    if (priceText && priceText !== 'FREE') {
+      const priceNumbers = priceText.match(/\$(\d+)/g)
+      if (priceNumbers) {
+        const prices = priceNumbers.map(p => parseInt(p.replace('$', '')))
+        parsedPrice = Math.min(...prices)
       }
     }
     
     results.push({
-      id: `cl_${Date.now()}_${i}`, // Generate stable ID for testing
-      title: title.replace(/<[^>]*>/g, ''), // Remove HTML tags
+      id: `cl_${Date.now()}_${count}`,
+      title: title,
       url: link.startsWith('http') ? link : `https://sfbay.craigslist.org${link}`,
       postedAt: date,
       price: parsedPrice,
-      city: null // Will be set by caller
+      city: null
     })
+    
+    count++
   }
   
   return results

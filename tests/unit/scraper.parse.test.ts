@@ -113,10 +113,11 @@ describe('Craigslist Parser', () => {
     const html = readCraigslistFixture('gms_basic.html')
     const results = parseCraigslistList(html, 3)
     
-    // Redact IDs for stable snapshots
+    // Redact IDs and timestamps for stable snapshots
     const normalized = results.map(item => ({
       ...item,
-      id: 'REDACTED_ID'
+      id: 'REDACTED_ID',
+      postedAt: 'REDACTED_DATE'
     }))
     
     expect(normalized).toMatchSnapshot()
