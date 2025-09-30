@@ -31,7 +31,7 @@ export default function AddSaleForm() {
     loader.load().then(() => {
       if (!addressRef.current) return
 
-      const autocomplete = new google.maps.places.Autocomplete(addressRef.current, {
+      const autocomplete = new (window as any).google.maps.places.Autocomplete(addressRef.current, {
         fields: ['formatted_address', 'geometry', 'address_components']
       })
 

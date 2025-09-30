@@ -8,8 +8,22 @@ export function createSupabaseServerClient() {
   const schema = getSchema();
 
   return createServerClient(url, anon, {
-    cookies,
-    headers,
+    cookies: {
+      get(name: string) {
+        return cookies().get(name)?.value;
+      },
+      set(name: string, value: string, options: any) {
+        cookies().set(name, value, options);
+      },
+      remove(name: string, options: any) {
+        cookies().set(name, '', { ...options, maxAge: 0 });
+      },
+    },
+    headers: {
+      get(name: string) {
+        return headers().get(name);
+      },
+    },
     db: { schema },
   });
 }
