@@ -1,35 +1,42 @@
 import { Suspense } from 'react'
-import { getSales } from '@/lib/data'
+import { getSales } from '@/lib/data/sales'
 import SalesClient from './SalesClient'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 interface SalesPageProps {
   searchParams: {
     lat?: string
     lng?: string
-    distance?: string
+    distanceKm?: string
     city?: string
     categories?: string
-    q?: string
+    dateFrom?: string
+    dateTo?: string
+    page?: string
+    pageSize?: string
   }
 }
 
 export default async function SalesPage({ searchParams }: SalesPageProps) {
+  const supabase = createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   // Parse search parameters
   const lat = searchParams.lat ? parseFloat(searchParams.lat) : undefined
   const lng = searchParams.lng ? parseFloat(searchParams.lng) : undefined
-  const distance = searchParams.distance ? parseFloat(searchParams.distance) : 25
+  const distanceKm = searchParams.distanceKm ? parseFloat(searchParams.distanceKm) : 25
   const city = searchParams.city
   const categories = searchParams.categories ? searchParams.categories.split(',') : undefined
-  const query = searchParams.q
+  const pageSize = searchParams.pageSize ? parseInt(searchParams.pageSize) : 50
 
   // Fetch initial sales data
   const initialSales = await getSales({
     lat,
     lng,
-    distanceKm: distance,
+    distanceKm,
     city,
     categories,
-    limit: 24
+    limit: pageSize
   })
 
   return (
@@ -37,14 +44,8 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
       <Suspense fallback={<SalesSkeleton />}>
         <SalesClient 
           initialSales={initialSales}
-          initialFilters={{
-            lat,
-            lng,
-            distance,
-            city: city || '',
-            categories: categories || [],
-            query: query || ''
-          }}
+          initialSearchParams={searchParams}
+          user={user}
         />
       </Suspense>
     </div>

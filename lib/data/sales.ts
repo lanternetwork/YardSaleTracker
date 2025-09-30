@@ -35,13 +35,10 @@ const ItemInputSchema = z.object({
 
 const GetSalesParamsSchema = z.object({
   city: z.string().optional(),
-  distanceKm: z.number().optional(),
+  distanceKm: z.number().default(25),
   lat: z.number().optional(),
   lng: z.number().optional(),
-  dateRange: z.object({
-    start: z.string(),
-    end: z.string(),
-  }).optional(),
+  dateRange: z.enum(['today', 'weekend', 'any']).optional(),
   categories: z.array(z.string()).optional(),
   limit: z.number().default(50),
   offset: z.number().default(0),
@@ -90,12 +87,91 @@ export type GetSalesParams = z.infer<typeof GetSalesParamsSchema>
 export type SaleInput = z.infer<typeof SaleInputSchema>
 export type ItemInput = z.infer<typeof ItemInputSchema>
 
+// Utility functions for distance calculation and display
+export function metersToMiles(meters: number): number {
+  return meters * 0.000621371
+}
+
+export function metersToKilometers(meters: number): number {
+  return meters / 1000
+}
+
+export function formatDistance(meters: number, unit: 'miles' | 'km' = 'miles'): string {
+  if (unit === 'miles') {
+    const miles = metersToMiles(meters)
+    return miles < 1 ? `${Math.round(miles * 10) / 10} mi` : `${Math.round(miles)} mi`
+  } else {
+    const km = metersToKilometers(meters)
+    return km < 1 ? `${Math.round(km * 10) / 10} km` : `${Math.round(km)} km`
+  }
+}
+
+// Helper function to get date range based on dateRange parameter
+function getDateRange(dateRange?: 'today' | 'weekend' | 'any') {
+  if (!dateRange || dateRange === 'any') return null
+  
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  
+  if (dateRange === 'today') {
+    return { start: todayStr, end: todayStr }
+  }
+  
+  if (dateRange === 'weekend') {
+    const dayOfWeek = today.getDay()
+    const daysUntilSaturday = (6 - dayOfWeek) % 7
+    const daysUntilSunday = (7 - dayOfWeek) % 7
+    
+    const saturday = new Date(today)
+    saturday.setDate(today.getDate() + daysUntilSaturday)
+    
+    const sunday = new Date(today)
+    sunday.setDate(today.getDate() + daysUntilSunday)
+    
+    return {
+      start: saturday.toISOString().split('T')[0],
+      end: sunday.toISOString().split('T')[0]
+    }
+  }
+  
+  return null
+}
+
 // Data functions
 export async function getSales(params: GetSalesParams = {}) {
   try {
     const validatedParams = GetSalesParamsSchema.parse(params)
     const supabase = createSupabaseServerClient()
     
+    // Get date range constraints
+    const dateConstraints = getDateRange(validatedParams.dateRange)
+    
+    // If lat/lng provided, use PostGIS spatial query
+    if (validatedParams.lat && validatedParams.lng) {
+      const distanceMeters = validatedParams.distanceKm * 1000
+      
+      // Use PostGIS function for accurate distance filtering and sorting
+      const { data: spatialData, error: spatialError } = await supabase
+        .rpc('search_sales_within_distance', {
+          user_lat: validatedParams.lat,
+          user_lng: validatedParams.lng,
+          distance_meters: distanceMeters,
+          search_city: validatedParams.city || null,
+          search_categories: validatedParams.categories || null,
+          date_start_filter: dateConstraints?.start || null,
+          date_end_filter: dateConstraints?.end || null,
+          limit_count: validatedParams.limit
+        })
+
+      if (spatialError) {
+        console.error('Spatial query error:', spatialError)
+        throw new Error('Failed to perform spatial search')
+      }
+
+      return spatialData as Sale[]
+    }
+    
+    // Fallback to regular query without distance filtering
     let query = supabase
       .from(T.sales)
       .select('*')
@@ -115,35 +191,10 @@ export async function getSales(params: GetSalesParams = {}) {
     }
 
     // Filter by date range
-    if (validatedParams.dateRange) {
+    if (dateConstraints) {
       query = query
-        .gte('date_start', validatedParams.dateRange.start)
-        .lte('date_start', validatedParams.dateRange.end)
-    }
-
-    // Filter by distance using PostGIS (if lat/lng provided)
-    if (validatedParams.lat && validatedParams.lng && validatedParams.distanceKm) {
-      const distanceMeters = validatedParams.distanceKm * 1000
-      
-      // Use PostGIS function for accurate distance filtering
-      const { data: spatialData, error: spatialError } = await supabase
-        .rpc('search_sales_within_distance', {
-          user_lat: validatedParams.lat,
-          user_lng: validatedParams.lng,
-          distance_meters: distanceMeters,
-          search_city: validatedParams.city || null,
-          search_categories: validatedParams.categories || null,
-          date_start_filter: validatedParams.dateRange?.start || null,
-          date_end_filter: validatedParams.dateRange?.end || null,
-          limit_count: validatedParams.limit
-        })
-
-      if (spatialError) {
-        console.error('Spatial query error:', spatialError)
-        throw new Error('Failed to perform spatial search')
-      }
-
-      return spatialData as Sale[]
+        .gte('date_start', dateConstraints.start)
+        .lte('date_start', dateConstraints.end)
     }
 
     const { data, error } = await query

@@ -1,393 +1,257 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Sale } from '@/lib/data'
+import { Sale, GetSalesParams, formatDistance } from '@/lib/data/sales'
 import SalesMap from '@/components/location/SalesMap'
 import UseLocationButton from '@/components/location/UseLocationButton'
-import { useLocationSearch } from '@/lib/location/useLocation'
+import { useLocation } from '@/lib/location/useLocation'
+import SaleCard from '@/components/SaleCard'
+import { User } from '@supabase/supabase-js'
 
 interface SalesClientProps {
   initialSales: Sale[]
-  initialFilters: {
-    lat?: number
-    lng?: number
-    distance: number
-    city: string
-    categories: string[]
-    query: string
+  initialSearchParams: {
+    lat?: string
+    lng?: string
+    distanceKm?: string
+    city?: string
+    categories?: string
+    dateFrom?: string
+    dateTo?: string
+    page?: string
+    pageSize?: string
   }
+  user: User | null
 }
 
-export default function SalesClient({ initialSales, initialFilters }: SalesClientProps) {
+export default function SalesClient({ initialSales, initialSearchParams, user }: SalesClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { location, searchWithLocation, setSearchRadius } = useLocationSearch()
-  
+  const { location, getLocation, loading: locationLoading, error: locationError } = useLocation()
+
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
-  const [filters, setFilters] = useState(initialFilters)
+  const [currentLat, setCurrentLat] = useState<number | undefined>(initialSearchParams.lat ? parseFloat(initialSearchParams.lat) : undefined)
+  const [currentLng, setCurrentLng] = useState<number | undefined>(initialSearchParams.lng ? parseFloat(initialSearchParams.lng) : undefined)
+  const [currentDistance, setCurrentDistance] = useState<number>(initialSearchParams.distanceKm ? parseFloat(initialSearchParams.distanceKm) : 25)
+  const [currentCity, setCurrentCity] = useState<string>(initialSearchParams.city || '')
+  const [currentCategories, setCurrentCategories] = useState<string[]>(initialSearchParams.categories ? initialSearchParams.categories.split(',') : [])
+  const [currentDateRange, setCurrentDateRange] = useState<'today' | 'weekend' | 'any'>('any')
+  const [currentPage, setCurrentPage] = useState<number>(initialSearchParams.page ? parseInt(initialSearchParams.page) : 1)
+  const [pageSize, setPageSize] = useState<number>(initialSearchParams.pageSize ? parseInt(initialSearchParams.pageSize) : 50)
+  const [showFiltersModal, setShowFiltersModal] = useState(false)
 
-  // Update search when location changes
-  useEffect(() => {
-    if (location) {
-      handleLocationSearch()
-    }
-  }, [location])
-
-  const handleLocationSearch = async () => {
-    if (!location) return
-
+  const fetchSales = useCallback(async () => {
     setLoading(true)
+    const params: GetSalesParams = {
+      lat: currentLat,
+      lng: currentLng,
+      distanceKm: currentDistance,
+      city: currentCity || undefined,
+      categories: currentCategories.length > 0 ? currentCategories : undefined,
+      dateRange: currentDateRange !== 'any' ? currentDateRange : undefined,
+      limit: pageSize,
+      offset: (currentPage - 1) * pageSize,
+    }
+
+    const queryString = new URLSearchParams(
+      Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          if (Array.isArray(value)) {
+            acc[key] = value.join(',')
+          } else {
+            acc[key] = String(value)
+          }
+        }
+        return acc
+      }, {} as Record<string, string>)
+    ).toString()
+
     try {
-      const results = await searchWithLocation(async ({ lat, lng, distanceKm }) => {
-        const params = new URLSearchParams()
-        params.set('lat', lat.toString())
-        params.set('lng', lng.toString())
-        params.set('distance', distanceKm.toString())
-        
-        if (filters.city) params.set('city', filters.city)
-        if (filters.categories.length > 0) params.set('categories', filters.categories.join(','))
-        if (filters.query) params.set('q', filters.query)
-
-        const response = await fetch(`/api/sales/search?${params.toString()}`)
-        if (!response.ok) throw new Error('Search failed')
-        
-        return response.json()
-      })
-
-      setSales(results)
-      updateURL({ lat: location.lat, lng: location.lng, distance: filters.distance })
+      const res = await fetch(`/api/sales/search?${queryString}`)
+      const data = await res.json()
+      setSales(data.sales || [])
     } catch (error) {
-      console.error('Search error:', error)
+      console.error('Error fetching sales:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentLat, currentLng, currentDistance, currentCity, currentCategories, currentDateRange, currentPage, pageSize])
 
-  const updateURL = (params: { lat?: number; lng?: number; distance?: number; city?: string; categories?: string[]; query?: string }) => {
-    const newParams = new URLSearchParams(searchParams.toString())
-    
-    if (params.lat !== undefined) newParams.set('lat', params.lat.toString())
-    if (params.lng !== undefined) newParams.set('lng', params.lng.toString())
-    if (params.distance !== undefined) newParams.set('distance', params.distance.toString())
-    if (params.city !== undefined) {
-      if (params.city) newParams.set('city', params.city)
-      else newParams.delete('city')
+  useEffect(() => {
+    fetchSales()
+  }, [fetchSales])
+
+  useEffect(() => {
+    if (location && location.latitude && location.longitude) {
+      setCurrentLat(location.latitude)
+      setCurrentLng(location.longitude)
+      const newSearchParams = new URLSearchParams(searchParams.toString())
+      newSearchParams.set('lat', location.latitude.toString())
+      newSearchParams.set('lng', location.longitude.toString())
+      router.push(`/sales?${newSearchParams.toString()}`)
     }
-    if (params.categories !== undefined) {
-      if (params.categories.length > 0) newParams.set('categories', params.categories.join(','))
-      else newParams.delete('categories')
-    }
-    if (params.query !== undefined) {
-      if (params.query) newParams.set('q', params.query)
-      else newParams.delete('q')
-    }
+  }, [location, router, searchParams])
 
-    router.push(`/sales?${newParams.toString()}`)
+  const handleLocationClick = () => {
+    getLocation()
   }
 
-  const handleLocationUpdate = (location: { lat: number; lng: number }) => {
-    setSearchRadius(25) // Reset to default distance
-    setFilters(prev => ({ ...prev, lat: location.lat, lng: location.lng, distance: 25 }))
-    updateURL({ lat: location.lat, lng: location.lng, distance: 25 })
-  }
+  const handleFilterChange = (newFilters: Partial<GetSalesParams>) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString())
+    if (newFilters.lat !== undefined) newSearchParams.set('lat', newFilters.lat.toString())
+    if (newFilters.lng !== undefined) newSearchParams.set('lng', newFilters.lng.toString())
+    if (newFilters.distanceKm !== undefined) newSearchParams.set('distanceKm', newFilters.distanceKm.toString())
+    if (newFilters.city !== undefined) newSearchParams.set('city', newFilters.city)
+    if (newFilters.categories !== undefined) newSearchParams.set('categories', newFilters.categories.join(','))
+    if (newFilters.dateRange !== undefined) newSearchParams.set('dateRange', newFilters.dateRange)
 
-  const handleDistanceChange = (distance: number) => {
-    setFilters(prev => ({ ...prev, distance }))
-    if (location) {
-      updateURL({ lat: location.lat, lng: location.lng, distance })
-    }
+    router.push(`/sales?${newSearchParams.toString()}`)
   }
-
-  const handleCityChange = (city: string) => {
-    setFilters(prev => ({ ...prev, city }))
-    updateURL({ city: city || undefined })
-  }
-
-  const handleCategoryToggle = (category: string) => {
-    const newCategories = filters.categories.includes(category)
-      ? filters.categories.filter(c => c !== category)
-      : [...filters.categories, category]
-    
-    setFilters(prev => ({ ...prev, categories: newCategories }))
-    updateURL({ categories: newCategories.length > 0 ? newCategories : undefined })
-  }
-
-  const handleQueryChange = (query: string) => {
-    setFilters(prev => ({ ...prev, query }))
-    updateURL({ query: query || undefined })
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    })
-  }
-
-  const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':')
-    const hour = parseInt(hours)
-    const ampm = hour >= 12 ? 'PM' : 'AM'
-    const displayHour = hour % 12 || 12
-    return `${displayHour}:${minutes} ${ampm}`
-  }
-
-  const getPriceDisplay = (price?: number) => {
-    if (price === null || price === undefined) return 'Free'
-    if (price === 0) return 'Free'
-    return `$${price.toLocaleString()}`
-  }
-
-  const currentCenter = location || { lat: 38.2527, lng: -85.7585 }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Browse Sales</h1>
-        
-        {/* Search Bar */}
-        <div className="flex gap-4 mb-6">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search sales, items, or locations..."
-              value={filters.query}
-              onChange={(e) => handleQueryChange(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="md:hidden inline-flex items-center px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors min-h-[44px]"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Filters
-          </button>
-        </div>
-
-        {/* Desktop Filters */}
-        <div className="hidden md:flex gap-4 mb-6">
-          <UseLocationButton
-            onLocationUpdate={handleLocationUpdate}
-            variant="outline"
-            size="md"
-          />
-          
-          {location && (
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">
-                Radius: {filters.distance} km
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="100"
-                value={filters.distance}
-                onChange={(e) => handleDistanceChange(parseInt(e.target.value))}
-                className="w-24"
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Main Content */}
+        <div className="lg:w-2/3">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+            <h1 className="text-3xl font-bold mb-4 sm:mb-0">Sales Search</h1>
+            
+            {/* Location Button */}
+            <div className="w-full sm:w-auto">
+              <UseLocationButton 
+                onClick={handleLocationClick} 
+                loading={locationLoading} 
+                error={locationError} 
               />
             </div>
-          )}
-          
-          <input
-            type="text"
-            placeholder="City (optional)"
-            value={filters.city}
-            onChange={(e) => handleCityChange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        {/* Mobile Filters Modal */}
-        {showFilters && (
-          <div className="md:hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-end">
-            <div className="bg-white rounded-t-lg w-full max-h-[80vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold">Filters</h3>
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <div className="space-y-6">
-                  <UseLocationButton
-                    onLocationUpdate={handleLocationUpdate}
-                    variant="primary"
-                    size="md"
-                  />
-                  
-                  {location && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Search Radius: {filters.distance} km
-                      </label>
-                      <input
-                        type="range"
-                        min="1"
-                        max="100"
-                        value={filters.distance}
-                        onChange={(e) => handleDistanceChange(parseInt(e.target.value))}
-                        className="w-full"
-                      />
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City (optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Enter city name"
-                      value={filters.city}
-                      onChange={(e) => handleCityChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Categories
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        'Furniture', 'Electronics', 'Clothing', 'Toys',
-                        'Books', 'Tools', 'Kitchen', 'Sports',
-                        'Garden', 'Art', 'Collectibles', 'Miscellaneous'
-                      ].map((category) => (
-                        <label key={category} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={filters.categories.includes(category)}
-                            onChange={() => handleCategoryToggle(category)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-700">{category}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Results */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sales Grid */}
-        <div className="lg:col-span-2">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {loading ? 'Searching...' : `${sales.length} sales found`}
-            </h2>
           </div>
 
-          {sales.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No sales found</h3>
-              <p className="text-gray-500">Try adjusting your search criteria</p>
+          {/* Filters */}
+          <div className="mb-6 p-4 border rounded-lg shadow-sm bg-white">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+              <h2 className="text-xl font-semibold mb-2 sm:mb-0">Filters</h2>
+              <button
+                onClick={() => setShowFiltersModal(!showFiltersModal)}
+                className="sm:hidden px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors min-h-[44px]"
+              >
+                {showFiltersModal ? 'Hide Filters' : 'Show Filters'}
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {sales.map((sale) => (
-                <div
-                  key={sale.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setSelectedSale(sale)}
+
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${showFiltersModal ? 'block' : 'hidden sm:grid'}`}>
+              {/* Distance Filter */}
+              <div>
+                <label htmlFor="distance" className="block text-sm font-medium text-gray-700 mb-2">
+                  Distance: {currentDistance} km
+                </label>
+                <input
+                  type="range"
+                  id="distance"
+                  min="1"
+                  max="100"
+                  value={currentDistance}
+                  onChange={(e) => setCurrentDistance(parseFloat(e.target.value))}
+                  onMouseUp={() => handleFilterChange({ distanceKm: currentDistance })}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>1 km</span>
+                  <span>100 km</span>
+                </div>
+              </div>
+
+              {/* City Filter */}
+              <div>
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <input
+                  type="text"
+                  id="city"
+                  value={currentCity}
+                  onChange={(e) => setCurrentCity(e.target.value)}
+                  onBlur={() => handleFilterChange({ city: currentCity })}
+                  placeholder="Enter city name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Date Range Filter */}
+              <div>
+                <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                <select
+                  id="dateRange"
+                  value={currentDateRange}
+                  onChange={(e) => {
+                    const value = e.target.value as 'today' | 'weekend' | 'any'
+                    setCurrentDateRange(value)
+                    handleFilterChange({ dateRange: value })
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-gray-900 line-clamp-2">
-                        {sale.title}
-                      </h3>
-                      {sale.is_featured && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2 flex-shrink-0">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        {sale.city}, {sale.state}
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        {formatDate(sale.date_start)} at {formatTime(sale.time_start)}
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
-                        {getPriceDisplay(sale.price)}
-                      </div>
-                    </div>
-                    
-                    {sale.tags && sale.tags.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {sale.tags.slice(0, 3).map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {sale.tags.length > 3 && (
-                          <span className="text-xs text-gray-500">
-                            +{sale.tags.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                  <option value="any">Any Date</option>
+                  <option value="today">Today</option>
+                  <option value="weekend">This Weekend</option>
+                </select>
+              </div>
             </div>
-          )}
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => fetchSales()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-[44px]"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+
+          {/* Sales Grid */}
+          <div className="mb-6">
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2">Loading sales...</span>
+              </div>
+            ) : sales.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No sales found matching your criteria.</p>
+                <p className="text-gray-400 mt-2">Try adjusting your filters or location.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sales.map((sale) => (
+                  <SaleCard key={sale.id} sale={sale} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Map Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Map View</h3>
-            <div className="h-96 rounded-lg overflow-hidden">
-              <SalesMap
-                sales={sales}
-                center={currentCenter}
-                onSaleClick={setSelectedSale}
-                selectedSaleId={selectedSale?.id}
-              />
+        <div className="lg:w-1/3">
+          <div className="sticky top-4">
+            <div className="bg-white rounded-lg shadow-sm border p-4">
+              <h2 className="text-xl font-semibold mb-4">Map View</h2>
+              <div className="h-[400px] rounded-lg overflow-hidden">
+                <SalesMap
+                  sales={sales}
+                  center={currentLat && currentLng ? { lat: currentLat, lng: currentLng } : { lat: 38.2527, lng: -85.7585 }}
+                  zoom={currentLat && currentLng ? 12 : 10}
+                />
+              </div>
+              
+              {/* Location Info */}
+              {currentLat && currentLng && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Searching within {currentDistance} km</strong> of your location
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Found {sales.length} sales
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
