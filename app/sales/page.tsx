@@ -36,7 +36,8 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
     distanceKm,
     city,
     categories,
-    limit: pageSize
+    limit: pageSize,
+    offset: 0
   })
 
   return (

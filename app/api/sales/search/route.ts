@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
       distanceKm: distance,
       city,
       categories,
-      limit
+      limit,
+      offset: 0
     })
 
     return NextResponse.json(sales)

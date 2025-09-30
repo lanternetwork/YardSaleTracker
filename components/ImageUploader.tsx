@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 interface ImageUploaderProps {
   onUpload: (urls: string[]) => void

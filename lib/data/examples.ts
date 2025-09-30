@@ -24,37 +24,45 @@ export async function getSalesExample() {
     const allSales = await getSales()
     
     // Get sales in a specific city
-    const citySales = await getSales({ city: 'Louisville' })
+    const citySales = await getSales({ 
+      city: 'Louisville',
+      distanceKm: 25,
+      limit: 50,
+      offset: 0
+    })
     
     // Get sales within 25km of a location
     const nearbySales = await getSales({
       lat: 38.2527,
       lng: -85.7585,
-      distanceKm: 25
+      distanceKm: 25,
+      limit: 50,
+      offset: 0
     })
     
     // Get sales in a date range
     const weekendSales = await getSales({
-      dateRange: {
-        start: '2024-01-06',
-        end: '2024-01-07'
-      }
+      dateRange: 'weekend',
+      distanceKm: 25,
+      limit: 50,
+      offset: 0
     })
     
     // Get sales with specific categories
     const furnitureSales = await getSales({
-      categories: ['Furniture', 'Electronics']
+      categories: ['Furniture', 'Electronics'],
+      distanceKm: 25,
+      limit: 50,
+      offset: 0
     })
     
     // Combined filters
     const filteredSales = await getSales({
       city: 'Louisville',
       categories: ['Furniture'],
-      dateRange: {
-        start: '2024-01-06',
-        end: '2024-01-07'
-      },
-      limit: 20
+      dateRange: 'weekend',
+      limit: 20,
+      offset: 0
     })
     
     return {
@@ -104,7 +112,8 @@ export async function createSaleExample() {
       price: 0, // Free
       tags: ['Furniture', 'Electronics', 'Clothing'],
       status: 'published',
-      privacy_mode: 'exact'
+      privacy_mode: 'exact',
+      is_featured: false
     })
     
     return newSale
@@ -195,12 +204,10 @@ export async function complexQueryExample() {
       lat: 38.2527,
       lng: -85.7585,
       distanceKm: 10,
-      dateRange: {
-        start: '2024-01-06',
-        end: '2024-01-07'
-      },
+      dateRange: 'weekend',
       categories: ['Furniture', 'Electronics'],
-      limit: 20
+      limit: 20,
+      offset: 0
     })
     
     return sales

@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 interface Review {

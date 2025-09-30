@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { Profile } from '@/lib/types'
 import { ProfileSchema } from '@/lib/zodSchemas'
 
-const sb = createSupabaseBrowser()
+const sb = createSupabaseBrowserClient()
 
 export function useAuth() {
   return useQuery({

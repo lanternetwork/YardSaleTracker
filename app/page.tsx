@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getSales } from '@/lib/data'
+import { getSales } from '@/lib/data/sales'
 import HomeClient from './HomeClient'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { T } from '@/lib/supabase/tables'
@@ -10,7 +10,8 @@ export default async function HomePage() {
     lat: 38.2527,
     lng: -85.7585,
     distanceKm: 25,
-    limit: 12
+    limit: 12,
+    offset: 0
   })
 
   // Get user if authenticated

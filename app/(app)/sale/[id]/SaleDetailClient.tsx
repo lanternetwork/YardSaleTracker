@@ -11,7 +11,7 @@ import ShareButton from '@/components/ShareButton'
 import ReviewsSection from '@/components/ReviewsSection'
 import PushNotificationButton from '@/components/PushNotificationButton'
 import { Sale } from '@/lib/types'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 interface SaleDetailClientProps {
   sale: Sale
