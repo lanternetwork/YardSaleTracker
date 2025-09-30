@@ -82,17 +82,27 @@ describe('Add Sale Integration', () => {
       lat: testAddress.lat,
       lng: testAddress.lng,
       owner_id: 'test-user-id',
-      created_at: new Date().toISOString()
+      city: 'Test City',
+      state: 'TS',
+      date_start: '2025-01-01',
+      time_start: '09:00',
+      status: 'published',
+      privacy_mode: 'exact',
+      is_featured: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
 
     mockCreateSale.mutateAsync.mockResolvedValue(createdSale)
 
     // Mock the sales list to return the new sale
     vi.mocked(useSales).mockReturnValue({
-      data: [createdSale],
+      data: [createdSale as any],
       isLoading: false,
+      isPending: false,
+      isError: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -116,14 +126,25 @@ describe('Add Sale Integration', () => {
       address: 'Invalid Address',
       lat: null,
       lng: null,
-      owner_id: 'test-user-id'
+      owner_id: 'test-user-id',
+      city: '',
+      state: '',
+      date_start: '2025-01-01',
+      time_start: '09:00',
+      status: 'draft',
+      privacy_mode: 'exact',
+      is_featured: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     })
 
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
+      isPending: false,
+      isError: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -143,8 +164,10 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
+      isPending: false,
+      isError: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -166,8 +189,10 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
+      isPending: false,
+      isError: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -245,17 +270,27 @@ describe('Add Sale Integration', () => {
       lat: testAddress.lat,
       lng: testAddress.lng,
       owner_id: 'test-user-id',
-      created_at: new Date().toISOString()
+      city: 'Test City',
+      state: 'TS',
+      date_start: '2025-01-01',
+      time_start: '09:00',
+      status: 'published',
+      privacy_mode: 'exact',
+      is_featured: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
 
     mockCreateSale.mutateAsync.mockResolvedValue(createdSale)
 
     // Mock the sales list to include the new sale
     vi.mocked(useSales).mockReturnValue({
-      data: [createdSale],
+      data: [createdSale as any],
       isLoading: false,
+      isPending: false,
+      isError: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
