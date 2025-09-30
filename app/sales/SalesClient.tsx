@@ -80,10 +80,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   }, [fetchSales])
 
   useEffect(() => {
-    if (location && location.latitude && location.longitude) {
+    if (location && location.lat && location.lng) {
       updateFilters({
-        lat: location.latitude,
-        lng: location.longitude
+        lat: location.lat,
+        lng: location.lng
       })
     }
   }, [location, updateFilters])
@@ -105,7 +105,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
               <UseLocationButton 
                 onClick={handleLocationClick} 
                 loading={locationLoading} 
-                error={locationError} 
+                error={locationError?.message || null} 
               />
               
               {/* Mobile Filter Trigger */}

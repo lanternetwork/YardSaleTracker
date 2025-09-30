@@ -65,7 +65,12 @@ export async function updateProfile(input: ProfileUpdateInput): Promise<ActionRe
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors
+        fieldErrors: Object.fromEntries(
+          Object.entries(error.flatten().fieldErrors).map(([key, value]) => [
+            key, 
+            value || []
+          ])
+        )
       }
     }
     

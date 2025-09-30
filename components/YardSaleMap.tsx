@@ -14,8 +14,8 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [map, setMap] = useState<google.maps.Map | null>(null)
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([])
+  const [map, setMap] = useState<any>(null)
+  const [markers, setMarkers] = useState<any[]>([])
   
   const loader = useMemo(() => 
     new Loader({ 
@@ -37,7 +37,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     loader.load().then(() => {
       if (!ref.current) return
 
-      const mapInstance = new google.maps.Map(ref.current, { 
+      const mapInstance = new (window as any).google.maps.Map(ref.current, { 
         mapTypeControl: true, 
         streetViewControl: false,
         fullscreenControl: true,
@@ -67,27 +67,27 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
 
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null))
-    const newMarkers: google.maps.Marker[] = []
+    const newMarkers: any[] = []
 
     if (points.length === 0) {
       setMarkers([])
       return
     }
 
-    const bounds = new google.maps.LatLngBounds()
+    const bounds = new (window as any).google.maps.LatLngBounds()
     
     points.forEach(point => {
-      const marker = new google.maps.Marker({ 
+      const marker = new (window as any).google.maps.Marker({ 
         position: { lat: point.lat, lng: point.lng }, 
         title: point.title, 
         map,
         icon: {
           url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-          scaledSize: new google.maps.Size(32, 32)
+          scaledSize: new (window as any).google.maps.Size(32, 32)
         }
       })
       
-      const infoWindow = new google.maps.InfoWindow({ 
+      const infoWindow = new (window as any).google.maps.InfoWindow({ 
         content: `
           <div class="p-2">
             <h3 class="font-semibold text-lg">${point.title}</h3>
@@ -104,7 +104,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       marker.addListener('click', () => {
         // Close other info windows
         markers.forEach(m => {
-          const iw = new google.maps.InfoWindow()
+          const iw = new (window as any).google.maps.InfoWindow()
           iw.close()
         })
         infoWindow.open({ map, anchor: marker })
@@ -126,9 +126,9 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds)
       // Ensure minimum zoom level
-      const listener = google.maps.event.addListener(map, 'idle', () => {
+      const listener = (window as any).google.maps.event.addListener(map, 'idle', () => {
         if (map.getZoom()! > 15) map.setZoom(15)
-        google.maps.event.removeListener(listener)
+        (window as any).google.maps.event.removeListener(listener)
       })
     }
   }, [map, points])
@@ -141,7 +141,7 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
     btn.textContent = '📍 Near Me'
     btn.className = 'bg-white px-3 py-2 rounded shadow hover:bg-neutral-50 font-medium text-sm'
     btn.style.margin = '8px'
-    map.controls[google.maps.ControlPosition.TOP_LEFT].push(btn)
+    map.controls[(window as any).google.maps.ControlPosition.TOP_LEFT].push(btn)
     
     btn.onclick = () => {
       btn.textContent = '📍 Locating...'
@@ -149,18 +149,18 @@ export default function YardSaleMap({ points }: { points: Marker[] }) {
       
       navigator.geolocation.getCurrentPosition(
         pos => {
-          const center = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude)
+          const center = new (window as any).google.maps.LatLng(pos.coords.latitude, pos.coords.longitude)
           map.setCenter(center)
           map.setZoom(12)
           
           // Add user location marker
-          new google.maps.Marker({ 
+          new (window as any).google.maps.Marker({ 
             position: center, 
             map, 
             title: 'Your Location',
             icon: {
               url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-              scaledSize: new google.maps.Size(32, 32)
+              scaledSize: new (window as any).google.maps.Size(32, 32)
             }
           })
           

@@ -4,7 +4,6 @@ import OptimizedImage from './OptimizedImage'
 import { Sale } from '@/lib/types'
 
 export default function SaleCard({ sale }: { sale: Sale }) {
-  const firstPhoto = sale.photos?.[0]
   
   return (
     <div className="rounded-xl border p-4 bg-white flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow">

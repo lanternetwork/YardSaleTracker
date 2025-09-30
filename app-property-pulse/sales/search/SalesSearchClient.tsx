@@ -29,6 +29,8 @@ export default function SalesSearchClient({
   
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [searchFilters, setSearchFilters] = useState({
     city: initialCity || '',
@@ -95,6 +97,11 @@ export default function SalesSearchClient({
     updateURL({ lat: location.lat, lng: location.lng, distance: 25 })
   }
 
+  const handleLocationClick = () => {
+    // This will be handled by the location hook
+    // The actual location update will be triggered by the hook
+  }
+
   const handleDistanceChange = (distance: number) => {
     setSearchFilters(prev => ({ ...prev, distance }))
     if (location) {
@@ -130,7 +137,7 @@ export default function SalesSearchClient({
             <h3 className="font-medium text-gray-700">Location</h3>
             
             <UseLocationButton
-              onClick={handleLocationUpdate}
+              onClick={handleLocationClick}
               loading={locationLoading}
               error={locationError}
             />

@@ -14,6 +14,8 @@ interface HomeClientProps {
 
 export default function HomeClient({ initialSales, user }: HomeClientProps) {
   const [sales, setSales] = useState<Sale[]>(initialSales)
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationError, setLocationError] = useState<string | null>(null)
   const { location, searchWithLocation, setSearchRadius } = useLocationSearch()
 
   const handleLocationUpdate = async (newLocation: { lat: number; lng: number }) => {
@@ -30,6 +32,11 @@ export default function HomeClient({ initialSales, user }: HomeClientProps) {
     } catch (error) {
       console.error('Location search failed:', error)
     }
+  }
+
+  const handleLocationClick = () => {
+    // This will be handled by the location hook
+    // The actual location update will be triggered by the hook
   }
 
   const formatDate = (dateString: string) => {
@@ -79,7 +86,7 @@ export default function HomeClient({ initialSales, user }: HomeClientProps) {
         {/* Location Button */}
         <div className="flex justify-center">
           <UseLocationButton
-            onClick={handleLocationUpdate}
+            onClick={handleLocationClick}
             loading={locationLoading}
             error={locationError}
           />

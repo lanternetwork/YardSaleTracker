@@ -93,7 +93,12 @@ export async function createSale(input: SaleInput): Promise<ActionResult> {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors
+        fieldErrors: Object.fromEntries(
+          Object.entries(error.flatten().fieldErrors).map(([key, value]) => [
+            key, 
+            value || []
+          ])
+        )
       }
     }
     
@@ -145,7 +150,12 @@ export async function updateSale(id: string, input: Partial<SaleInput>): Promise
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors
+        fieldErrors: Object.fromEntries(
+          Object.entries(error.flatten().fieldErrors).map(([key, value]) => [
+            key, 
+            value || []
+          ])
+        )
       }
     }
     
@@ -226,7 +236,12 @@ export async function createItem(saleId: string, input: ItemInput): Promise<Acti
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors
+        fieldErrors: Object.fromEntries(
+          Object.entries(error.flatten().fieldErrors).map(([key, value]) => [
+            key, 
+            value || []
+          ])
+        )
       }
     }
     
@@ -259,7 +274,7 @@ export async function deleteItem(id: string): Promise<ActionResult> {
     }
 
     // Check if user owns the sale
-    if (item.sales.owner_id !== user.id) {
+    if (item.sales[0]?.owner_id !== user.id) {
       return { success: false, error: 'Access denied' }
     }
     

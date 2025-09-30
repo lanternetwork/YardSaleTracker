@@ -145,10 +145,10 @@ export function useFavorites() {
       if (!user) return []
 
       const { data, error } = await sb
-        .from('favorites')
+        .from('lootaura_v2.favorites')
         .select(`
           sale_id,
-          yard_sales (*)
+          sales:sale_id (*)
         `)
         .eq('user_id', user.id)
 
@@ -156,7 +156,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map((fav: any) => fav.yard_sales).filter(Boolean) as Sale[] || []
+      return data?.map((fav: any) => fav.sales).filter(Boolean) as Sale[] || []
     },
     enabled: !!user,
   })
