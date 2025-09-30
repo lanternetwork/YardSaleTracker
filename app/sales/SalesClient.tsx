@@ -7,6 +7,9 @@ import SalesMap from '@/components/location/SalesMap'
 import UseLocationButton from '@/components/location/UseLocationButton'
 import { useLocation } from '@/lib/location/useLocation'
 import SaleCard from '@/components/SaleCard'
+import FiltersModal from '@/components/filters/FiltersModal'
+import FilterTrigger from '@/components/filters/FilterTrigger'
+import { useFilters } from '@/lib/hooks/useFilters'
 import { User } from '@supabase/supabase-js'
 
 interface SalesClientProps {
@@ -29,30 +32,23 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const router = useRouter()
   const searchParams = useSearchParams()
   const { location, getLocation, loading: locationLoading, error: locationError } = useLocation()
+  const { filters, updateFilters, hasActiveFilters } = useFilters()
 
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)
-  const [currentLat, setCurrentLat] = useState<number | undefined>(initialSearchParams.lat ? parseFloat(initialSearchParams.lat) : undefined)
-  const [currentLng, setCurrentLng] = useState<number | undefined>(initialSearchParams.lng ? parseFloat(initialSearchParams.lng) : undefined)
-  const [currentDistance, setCurrentDistance] = useState<number>(initialSearchParams.distanceKm ? parseFloat(initialSearchParams.distanceKm) : 25)
-  const [currentCity, setCurrentCity] = useState<string>(initialSearchParams.city || '')
-  const [currentCategories, setCurrentCategories] = useState<string[]>(initialSearchParams.categories ? initialSearchParams.categories.split(',') : [])
-  const [currentDateRange, setCurrentDateRange] = useState<'today' | 'weekend' | 'any'>('any')
-  const [currentPage, setCurrentPage] = useState<number>(initialSearchParams.page ? parseInt(initialSearchParams.page) : 1)
-  const [pageSize, setPageSize] = useState<number>(initialSearchParams.pageSize ? parseInt(initialSearchParams.pageSize) : 50)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
     const params: GetSalesParams = {
-      lat: currentLat,
-      lng: currentLng,
-      distanceKm: currentDistance,
-      city: currentCity || undefined,
-      categories: currentCategories.length > 0 ? currentCategories : undefined,
-      dateRange: currentDateRange !== 'any' ? currentDateRange : undefined,
-      limit: pageSize,
-      offset: (currentPage - 1) * pageSize,
+      lat: filters.lat,
+      lng: filters.lng,
+      distanceKm: filters.distance,
+      city: filters.city,
+      categories: filters.categories.length > 0 ? filters.categories : undefined,
+      dateRange: filters.dateRange !== 'any' ? filters.dateRange : undefined,
+      limit: 50,
+      offset: 0,
     }
 
     const queryString = new URLSearchParams(
@@ -77,7 +73,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     } finally {
       setLoading(false)
     }
-  }, [currentLat, currentLng, currentDistance, currentCity, currentCategories, currentDateRange, currentPage, pageSize])
+  }, [filters])
 
   useEffect(() => {
     fetchSales()
@@ -85,29 +81,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   useEffect(() => {
     if (location && location.latitude && location.longitude) {
-      setCurrentLat(location.latitude)
-      setCurrentLng(location.longitude)
-      const newSearchParams = new URLSearchParams(searchParams.toString())
-      newSearchParams.set('lat', location.latitude.toString())
-      newSearchParams.set('lng', location.longitude.toString())
-      router.push(`/sales?${newSearchParams.toString()}`)
+      updateFilters({
+        lat: location.latitude,
+        lng: location.longitude
+      })
     }
-  }, [location, router, searchParams])
+  }, [location, updateFilters])
 
   const handleLocationClick = () => {
     getLocation()
-  }
-
-  const handleFilterChange = (newFilters: Partial<GetSalesParams>) => {
-    const newSearchParams = new URLSearchParams(searchParams.toString())
-    if (newFilters.lat !== undefined) newSearchParams.set('lat', newFilters.lat.toString())
-    if (newFilters.lng !== undefined) newSearchParams.set('lng', newFilters.lng.toString())
-    if (newFilters.distanceKm !== undefined) newSearchParams.set('distanceKm', newFilters.distanceKm.toString())
-    if (newFilters.city !== undefined) newSearchParams.set('city', newFilters.city)
-    if (newFilters.categories !== undefined) newSearchParams.set('categories', newFilters.categories.join(','))
-    if (newFilters.dateRange !== undefined) newSearchParams.set('dateRange', newFilters.dateRange)
-
-    router.push(`/sales?${newSearchParams.toString()}`)
   }
 
   return (
@@ -118,91 +100,21 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <h1 className="text-3xl font-bold mb-4 sm:mb-0">Sales Search</h1>
             
-            {/* Location Button */}
-            <div className="w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {/* Location Button */}
               <UseLocationButton 
                 onClick={handleLocationClick} 
                 loading={locationLoading} 
                 error={locationError} 
               />
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="mb-6 p-4 border rounded-lg shadow-sm bg-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-              <h2 className="text-xl font-semibold mb-2 sm:mb-0">Filters</h2>
-              <button
-                onClick={() => setShowFiltersModal(!showFiltersModal)}
-                className="sm:hidden px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors min-h-[44px]"
-              >
-                {showFiltersModal ? 'Hide Filters' : 'Show Filters'}
-              </button>
-            </div>
-
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${showFiltersModal ? 'block' : 'hidden sm:grid'}`}>
-              {/* Distance Filter */}
-              <div>
-                <label htmlFor="distance" className="block text-sm font-medium text-gray-700 mb-2">
-                  Distance: {currentDistance} km
-                </label>
-                <input
-                  type="range"
-                  id="distance"
-                  min="1"
-                  max="100"
-                  value={currentDistance}
-                  onChange={(e) => setCurrentDistance(parseFloat(e.target.value))}
-                  onMouseUp={() => handleFilterChange({ distanceKm: currentDistance })}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>1 km</span>
-                  <span>100 km</span>
-                </div>
-              </div>
-
-              {/* City Filter */}
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                <input
-                  type="text"
-                  id="city"
-                  value={currentCity}
-                  onChange={(e) => setCurrentCity(e.target.value)}
-                  onBlur={() => handleFilterChange({ city: currentCity })}
-                  placeholder="Enter city name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Date Range Filter */}
-              <div>
-                <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                <select
-                  id="dateRange"
-                  value={currentDateRange}
-                  onChange={(e) => {
-                    const value = e.target.value as 'today' | 'weekend' | 'any'
-                    setCurrentDateRange(value)
-                    handleFilterChange({ dateRange: value })
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="any">Any Date</option>
-                  <option value="today">Today</option>
-                  <option value="weekend">This Weekend</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => fetchSales()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-h-[44px]"
-              >
-                Apply Filters
-              </button>
+              
+              {/* Mobile Filter Trigger */}
+              <FilterTrigger
+                isOpen={showFiltersModal}
+                onToggle={() => setShowFiltersModal(!showFiltersModal)}
+                activeFiltersCount={hasActiveFilters ? 1 : 0}
+                className="sm:hidden"
+              />
             </div>
           </div>
 
@@ -228,24 +140,28 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
           </div>
         </div>
 
-        {/* Map Sidebar */}
-        <div className="lg:w-1/3">
-          <div className="sticky top-4">
+        {/* Desktop Filters Sidebar */}
+        <div className="hidden lg:block lg:w-1/3">
+          <div className="sticky top-4 space-y-6">
+            {/* Filters */}
+            <FiltersModal isOpen={true} onClose={() => {}} />
+            
+            {/* Map */}
             <div className="bg-white rounded-lg shadow-sm border p-4">
               <h2 className="text-xl font-semibold mb-4">Map View</h2>
               <div className="h-[400px] rounded-lg overflow-hidden">
                 <SalesMap
                   sales={sales}
-                  center={currentLat && currentLng ? { lat: currentLat, lng: currentLng } : { lat: 38.2527, lng: -85.7585 }}
-                  zoom={currentLat && currentLng ? 12 : 10}
+                  center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : { lat: 38.2527, lng: -85.7585 }}
+                  zoom={filters.lat && filters.lng ? 12 : 10}
                 />
               </div>
               
               {/* Location Info */}
-              {currentLat && currentLng && (
+              {filters.lat && filters.lng && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    <strong>Searching within {currentDistance} km</strong> of your location
+                    <strong>Searching within {filters.distance} miles</strong> of your location
                   </p>
                   <p className="text-xs text-blue-600 mt-1">
                     Found {sales.length} sales
@@ -256,6 +172,12 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
           </div>
         </div>
       </div>
+
+      {/* Mobile Filters Modal */}
+      <FiltersModal 
+        isOpen={showFiltersModal} 
+        onClose={() => setShowFiltersModal(false)} 
+      />
     </div>
   )
 }
