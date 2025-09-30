@@ -19,11 +19,6 @@ export function createSupabaseServerClient() {
         cookies().set(name, '', { ...options, maxAge: 0 });
       },
     },
-    headers: {
-      get(name: string) {
-        return headers().get(name);
-      },
-    },
     db: { schema },
   });
 }
