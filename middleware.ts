@@ -1,85 +1,72 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { apiRateLimiter, authRateLimiter, searchRateLimiter, uploadRateLimiter } from '@/lib/rateLimiter'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Rate limiting
-  if (pathname.startsWith('/api/')) {
-    let rateLimitResult
-
-    if (pathname.startsWith('/api/auth/')) {
-      rateLimitResult = await authRateLimiter.checkLimit(request)
-    } else if (pathname.startsWith('/api/search/')) {
-      rateLimitResult = await searchRateLimiter.checkLimit(request)
-    } else if (pathname.startsWith('/api/upload/')) {
-      rateLimitResult = await uploadRateLimiter.checkLimit(request)
-    } else {
-      rateLimitResult = await apiRateLimiter.checkLimit(request)
-    }
-
-    if (!rateLimitResult.success) {
-      return new NextResponse(
-        JSON.stringify({
-          error: 'Too many requests',
-          retryAfter: rateLimitResult.retryAfter
-        }),
-        {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': rateLimitResult.retryAfter?.toString() || '60',
-            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-            'X-RateLimit-Reset': new Date(rateLimitResult.resetTime).toISOString()
-          }
-        }
-      )
-    }
-  }
-
-  // Security headers
-  const response = NextResponse.next()
-
-  // Content Security Policy
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: https: blob:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.com wss://*.supabase.co",
-    "frame-src 'self' https://maps.google.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests"
-  ].join('; ')
-
-  response.headers.set('Content-Security-Policy', csp)
-
-  // Other security headers
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const cookieStore = cookies()
   
-  // HSTS (only in production)
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name) => cookieStore.get(name)?.value,
+        set: (name, value, options) => {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove: (name, options) => {
+          cookieStore.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Protected routes that require authentication
+  const protectedRoutes = ['/sell', '/favorites', '/account']
+  const isProtectedRoute = protectedRoutes.some(route => 
+    req.nextUrl.pathname.startsWith(route)
+  )
+
+  // If accessing a protected route without authentication
+  if (isProtectedRoute && !user) {
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('redirectTo', req.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  // XSS Protection
-  response.headers.set('X-XSS-Protection', '1; mode=block')
+  // If user is authenticated, auto-upsert profile on first request
+  if (user) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
 
-  // Rate limit headers
-  if (pathname.startsWith('/api/')) {
-    response.headers.set('X-RateLimit-Limit', '100')
-    response.headers.set('X-RateLimit-Remaining', '99')
+      // If no profile exists, create one
+      if (!profile) {
+        await supabase
+          .from('profiles')
+          .upsert({
+            user_id: user.id,
+            display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+            avatar_url: user.user_metadata?.avatar_url || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+      }
+    } catch (error) {
+      console.error('Error upserting profile:', error)
+      // Don't block the request if profile creation fails
+    }
   }
 
-  return response
+  return res
 }
 
 export const config = {

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { updateProfile, type ProfileUpdateInput } from './_actions'
 
 interface AccountClientProps {
   user: any
@@ -10,13 +11,14 @@ interface AccountClientProps {
 
 export default function AccountClient({ user, profile }: AccountClientProps) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [formData, setFormData] = useState({
     display_name: profile?.display_name || '',
     avatar_url: profile?.avatar_url || '',
     bio: profile?.bio || ''
   })
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -24,29 +26,26 @@ export default function AccountClient({ user, profile }: AccountClientProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setMessage(null)
+    setFieldErrors({})
 
-    try {
-      const response = await fetch('/api/account/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
+    startTransition(async () => {
+      try {
+        const result = await updateProfile(formData as ProfileUpdateInput)
 
-      if (response.ok) {
-        setMessage({ type: 'success', text: 'Profile updated successfully!' })
-      } else {
-        const error = await response.json()
-        setMessage({ type: 'error', text: error.message || 'Failed to update profile' })
+        if (result.success) {
+          setMessage({ type: 'success', text: 'Profile updated successfully!' })
+        } else {
+          if (result.fieldErrors) {
+            setFieldErrors(result.fieldErrors)
+          } else {
+            setMessage({ type: 'error', text: result.error || 'Failed to update profile' })
+          }
+        }
+      } catch (error) {
+        setMessage({ type: 'error', text: 'An error occurred. Please try again.' })
       }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'An error occurred. Please try again.' })
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const handleSignOut = async () => {
@@ -124,9 +123,14 @@ export default function AccountClient({ user, profile }: AccountClientProps) {
                   value={formData.display_name}
                   onChange={(e) => handleInputChange('display_name', e.target.value)}
                   placeholder="Your display name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    fieldErrors.display_name ? 'border-red-300' : 'border-gray-300'
+                  }`}
                   required
                 />
+                {fieldErrors.display_name && (
+                  <p className="mt-1 text-sm text-red-600">{fieldErrors.display_name[0]}</p>
+                )}
               </div>
 
               {/* Bio */}
@@ -139,8 +143,13 @@ export default function AccountClient({ user, profile }: AccountClientProps) {
                   onChange={(e) => handleInputChange('bio', e.target.value)}
                   placeholder="Tell us about yourself..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    fieldErrors.bio ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {fieldErrors.bio && (
+                  <p className="mt-1 text-sm text-red-600">{fieldErrors.bio[0]}</p>
+                )}
                 <p className="text-sm text-gray-500 mt-1">
                   A brief description about yourself (optional)
                 </p>
@@ -161,10 +170,10 @@ export default function AccountClient({ user, profile }: AccountClientProps) {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={isPending}
                   className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                 >
-                  {loading ? (
+                  {isPending ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Saving...
