@@ -13,7 +13,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   // Skip E2E tests in CI due to webServer timeout issues
-  projects: process.env.CI ? [] : [
+  projects: process.env.CI === 'true' ? [] : [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
@@ -36,11 +36,11 @@ export default defineConfig({
     },
   ],
   // Only start webServer when not in CI
-  ...(process.env.CI ? {} : {
+  ...(process.env.CI === 'true' ? {} : {
     webServer: {
       command: 'npm run dev',
       url: 'http://localhost:3000',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.CI !== 'true',
       timeout: 120 * 1000, // 2 minutes
       stdout: 'pipe',
       stderr: 'pipe',
