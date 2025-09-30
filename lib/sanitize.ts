@@ -178,6 +178,8 @@ export function sanitizeTags(input: string[]): string[] {
     .map(tag => sanitizeText(tag.trim(), 50))
     .filter(tag => {
       if (tag.length === 0) return false
+      // Filter out very long strings (likely spam)
+      if (tag.length > 30) return false
       // Filter out XSS attempts
       const xssPatterns = [
         /alert\s*\(/i, 

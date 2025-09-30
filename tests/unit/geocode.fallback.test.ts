@@ -163,7 +163,11 @@ describe('Geocoding Fallback', () => {
 
     await geocodeAddress(testAddress.address)
     
-    const nominatimCall = (global.fetch as any).mock.calls[1]
+    const fetchCalls = (global.fetch as any).mock?.calls || []
+    expect(fetchCalls.length).toBeGreaterThanOrEqual(2)
+    
+    const nominatimCall = fetchCalls[1]
+    expect(nominatimCall).toBeDefined()
     expect(nominatimCall[0]).toContain('nominatim.openstreetmap.org')
     expect(nominatimCall[0]).toContain(`email=${encodeURIComponent('test@example.com')}`)
   })
@@ -189,6 +193,9 @@ describe('Geocoding Fallback', () => {
         }]
       })
     })
+    
+    // Reset call count before testing
+    vi.clearAllMocks()
 
     // First call
     const result1 = await geocodeAddress(testAddress.address)
