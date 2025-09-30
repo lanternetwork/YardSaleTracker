@@ -179,7 +179,14 @@ export function sanitizeTags(input: string[]): string[] {
     .filter(tag => {
       if (tag.length === 0) return false
       // Filter out XSS attempts
-      const xssPatterns = [/alert\s*\(/i, /xss/i, /<script/i, /javascript:/i]
+      const xssPatterns = [
+        /alert\s*\(/i, 
+        /xss/i, 
+        /<script/i, 
+        /javascript:/i,
+        /on\w+\s*=/i,
+        /<[^>]*>/i
+      ]
       return !xssPatterns.some(pattern => pattern.test(tag))
     })
     .slice(0, 10) // Limit to 10 tags
@@ -199,7 +206,8 @@ export function sanitizeSearchQuery(input: string): string {
     /<script[^>]*>.*?<\/script>/gi,
     /javascript:/gi,
     /on\w+\s*=/gi,
-    /alert\s*\(/gi
+    /alert\s*\(/gi,
+    /<[^>]*>/gi
   ]
   
   for (const pattern of xssPatterns) {
