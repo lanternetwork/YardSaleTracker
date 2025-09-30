@@ -310,7 +310,6 @@ export default function ImportSales() {
             ))}
           </div>
         </div>
-        </div>
       )}
     </div>
   )
