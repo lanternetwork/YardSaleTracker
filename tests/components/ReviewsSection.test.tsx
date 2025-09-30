@@ -7,16 +7,29 @@ const mockSupabase = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
-        order: vi.fn(() => ({
-          then: vi.fn()
+        order: vi.fn(() => Promise.resolve({
+          data: [],
+          error: null
         }))
       }))
     }))
   })),
-  rpc: vi.fn(() => ({
-    then: vi.fn()
+  rpc: vi.fn(() => Promise.resolve({
+    data: null,
+    error: null
   }))
 }
+
+// Mock the async operations to resolve immediately
+const mockFetchReviews = vi.fn().mockResolvedValue({
+  data: [],
+  error: null
+})
+
+const mockFetchUserReview = vi.fn().mockResolvedValue({
+  data: null,
+  error: null
+})
 
 vi.mock('@/lib/supabase/client', () => ({
   createSupabaseBrowserClient: () => mockSupabase
@@ -34,7 +47,7 @@ describe('ReviewsSection', () => {
     vi.clearAllMocks()
   })
 
-  it('renders with rating summary', () => {
+  it('renders with rating summary', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -43,8 +56,11 @@ describe('ReviewsSection', () => {
       />
     )
     
-    expect(screen.getByText('4.5')).toBeInTheDocument()
-    expect(screen.getByText('10 reviews')).toBeInTheDocument()
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.getByText('4.5')).toBeInTheDocument()
+      expect(screen.getByText('10 reviews')).toBeInTheDocument()
+    })
   })
 
   it('renders star rating correctly', () => {
@@ -63,7 +79,7 @@ describe('ReviewsSection', () => {
     expect(filledStars).toHaveLength(4)
   })
 
-  it('renders review form for authenticated users', () => {
+  it('renders review form for authenticated users', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -72,8 +88,11 @@ describe('ReviewsSection', () => {
       />
     )
     
-    expect(screen.getByText('Write a Review')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /submit review/i })).toBeInTheDocument()
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.getByText('Write a Review')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /submit review/i })).toBeInTheDocument()
+    })
   })
 
   it('validates rating selection', async () => {
@@ -85,14 +104,17 @@ describe('ReviewsSection', () => {
       />
     )
     
-    const submitButton = screen.getByRole('button', { name: /submit review/i })
-    fireEvent.click(submitButton)
+    // Wait for loading to complete
+    await waitFor(() => {
+      const submitButton = screen.getByRole('button', { name: /submit review/i })
+      fireEvent.click(submitButton)
 
-    // Should not submit without rating
-    expect(submitButton).toBeDisabled()
+      // Should not submit without rating
+      expect(submitButton).toBeDisabled()
+    })
   })
 
-  it('allows rating selection', () => {
+  it('allows rating selection', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -101,18 +123,21 @@ describe('ReviewsSection', () => {
       />
     )
     
-    const stars = screen.getAllByRole('button')
-    const thirdStar = stars[2] // 3rd star
-    fireEvent.click(thirdStar)
+    // Wait for loading to complete
+    await waitFor(() => {
+      const stars = screen.getAllByRole('button')
+      const thirdStar = stars[2] // 3rd star
+      fireEvent.click(thirdStar)
 
-    // Should show 3 filled stars
-    const filledStars = screen.getAllByText('★').filter(star => 
-      star.className.includes('text-amber-400')
-    )
-    expect(filledStars).toHaveLength(3)
+      // Should show 3 filled stars
+      const filledStars = screen.getAllByText('★').filter(star => 
+        star.className.includes('text-amber-400')
+      )
+      expect(filledStars).toHaveLength(3)
+    })
   })
 
-  it('allows comment input', () => {
+  it('allows comment input', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -121,13 +146,16 @@ describe('ReviewsSection', () => {
       />
     )
     
-    const commentInput = screen.getByPlaceholderText(/share your experience/i)
-    fireEvent.change(commentInput, { target: { value: 'Great sale!' } })
+    // Wait for loading to complete
+    await waitFor(() => {
+      const commentInput = screen.getByPlaceholderText(/share your experience/i)
+      fireEvent.change(commentInput, { target: { value: 'Great sale!' } })
 
-    expect(commentInput).toHaveValue('Great sale!')
+      expect(commentInput).toHaveValue('Great sale!')
+    })
   })
 
-  it('shows loading state', () => {
+  it('shows loading state initially', () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 

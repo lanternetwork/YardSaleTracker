@@ -10,6 +10,10 @@ describe('Geocoding Fallback', () => {
     vi.resetModules()
     process.env = { ...originalEnv }
     vi.clearAllMocks()
+    // Reset fetch mock
+    if (global.fetch) {
+      vi.mocked(global.fetch).mockClear()
+    }
   })
 
   afterEach(() => {

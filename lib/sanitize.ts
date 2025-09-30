@@ -176,7 +176,12 @@ export function sanitizeTags(input: string[]): string[] {
   return input
     .filter(tag => typeof tag === 'string' && tag.trim().length > 0)
     .map(tag => sanitizeText(tag.trim(), 50))
-    .filter(tag => tag.length > 0 && !tag.includes('alert') && !tag.includes('xss'))
+    .filter(tag => {
+      if (tag.length === 0) return false
+      // Filter out XSS attempts
+      const xssPatterns = [/alert\s*\(/i, /xss/i, /<script/i, /javascript:/i]
+      return !xssPatterns.some(pattern => pattern.test(tag))
+    })
     .slice(0, 10) // Limit to 10 tags
 }
 
@@ -188,6 +193,18 @@ export function sanitizeSearchQuery(input: string): string {
 
   // Remove potentially dangerous characters
   sanitized = sanitized.replace(/[<>'"&]/g, '')
+
+  // Remove XSS patterns
+  const xssPatterns = [
+    /<script[^>]*>.*?<\/script>/gi,
+    /javascript:/gi,
+    /on\w+\s*=/gi,
+    /alert\s*\(/gi
+  ]
+  
+  for (const pattern of xssPatterns) {
+    sanitized = sanitized.replace(pattern, '')
+  }
 
   return sanitized.trim()
 }

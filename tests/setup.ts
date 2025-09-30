@@ -26,6 +26,7 @@ export { server }
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
 process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = 'test-maps-key'
+process.env.SUPABASE_SERVICE_ROLE = 'test-service-role-1234567890'
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -42,7 +43,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock Supabase
 vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => ({
+  createSupabaseBrowserClient: () => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
       signInWithPassword: vi.fn(),
