@@ -206,7 +206,7 @@ export function sanitizeSearchQuery(input: string): string {
     /<script[^>]*>.*?<\/script>/gi,
     /javascript:/gi,
     /on\w+\s*=/gi,
-    /alert\s*\(/gi,
+    /alert\s*\([^)]*\)/gi,
     /<[^>]*>/gi
   ]
   
