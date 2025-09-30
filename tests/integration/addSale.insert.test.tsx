@@ -211,8 +211,10 @@ describe('Add Sale Integration', () => {
     vi.mocked(useSales).mockReturnValue({
       data: [],
       isLoading: false,
+      isPending: false,
+      isError: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
