@@ -1,4 +1,4 @@
-import { Redis } from 'upstash'
+import { Redis } from '@upstash/redis'
 
 // In-memory store for development
 const memoryStore = new Map<string, { count: number; resetTime: number }>()
