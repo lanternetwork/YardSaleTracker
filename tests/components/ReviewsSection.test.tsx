@@ -172,10 +172,9 @@ describe('ReviewsSection', () => {
     mockSupabase.from.mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            then: vi.fn((callback) => {
-              callback({ data: [], error: null })
-            })
+          order: vi.fn(() => Promise.resolve({
+            data: [],
+            error: null
           }))
         }))
       }))
@@ -213,10 +212,9 @@ describe('ReviewsSection', () => {
     mockSupabase.from.mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            then: vi.fn((callback) => {
-              callback({ data: mockReviews, error: null })
-            })
+          order: vi.fn(() => Promise.resolve({
+            data: mockReviews,
+            error: null
           }))
         }))
       }))
