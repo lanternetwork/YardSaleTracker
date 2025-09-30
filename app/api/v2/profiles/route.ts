@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer, getTableName } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -11,11 +12,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Use schema-qualified table name
-    const profilesTable = getTableName('profiles')
-    
     const { data: profile, error } = await supabase
-      .from(profilesTable)
+      .from(T.profiles)
       .select('*')
       .eq('user_id', user.id)
       .single()
@@ -34,7 +32,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     const body = await request.json()
     
     // Get current user
@@ -43,11 +41,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Use schema-qualified table name
-    const profilesTable = getTableName('profiles')
-    
     const { data: profile, error } = await supabase
-      .from(profilesTable)
+      .from(T.profiles)
       .upsert({
         user_id: user.id,
         display_name: body.display_name,

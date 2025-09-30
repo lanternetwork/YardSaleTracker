@@ -1,4 +1,5 @@
-import { createSupabaseServer, getTableName } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 import { z } from 'zod'
 
 // Zod schemas for validation
@@ -93,11 +94,10 @@ export type ItemInput = z.infer<typeof ItemInputSchema>
 export async function getSales(params: GetSalesParams = {}) {
   try {
     const validatedParams = GetSalesParamsSchema.parse(params)
-    const supabase = createSupabaseServer()
-    const salesTable = getTableName('sales')
+    const supabase = createSupabaseServerClient()
     
     let query = supabase
-      .from(salesTable)
+      .from(T.sales)
       .select('*')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
@@ -162,11 +162,10 @@ export async function getSales(params: GetSalesParams = {}) {
 
 export async function getSaleById(id: string): Promise<Sale | null> {
   try {
-    const supabase = createSupabaseServer()
-    const salesTable = getTableName('sales')
+    const supabase = createSupabaseServerClient()
     
     const { data, error } = await supabase
-      .from(salesTable)
+      .from(T.sales)
       .select('*')
       .eq('id', id)
       .single()
@@ -189,8 +188,7 @@ export async function getSaleById(id: string): Promise<Sale | null> {
 export async function createSale(input: SaleInput): Promise<Sale> {
   try {
     const validatedInput = SaleInputSchema.parse(input)
-    const supabase = createSupabaseServer()
-    const salesTable = getTableName('sales')
+    const supabase = createSupabaseServerClient()
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -199,7 +197,7 @@ export async function createSale(input: SaleInput): Promise<Sale> {
     }
 
     const { data, error } = await supabase
-      .from(salesTable)
+      .from(T.sales)
       .insert({
         owner_id: user.id,
         ...validatedInput,
@@ -222,8 +220,7 @@ export async function createSale(input: SaleInput): Promise<Sale> {
 export async function updateSale(id: string, input: Partial<SaleInput>): Promise<Sale> {
   try {
     const validatedInput = SaleInputSchema.partial().parse(input)
-    const supabase = createSupabaseServer()
-    const salesTable = getTableName('sales')
+    const supabase = createSupabaseServerClient()
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -232,7 +229,7 @@ export async function updateSale(id: string, input: Partial<SaleInput>): Promise
     }
 
     const { data, error } = await supabase
-      .from(salesTable)
+      .from(T.sales)
       .update(validatedInput)
       .eq('id', id)
       .eq('owner_id', user.id) // Ensure user owns the sale
@@ -253,8 +250,7 @@ export async function updateSale(id: string, input: Partial<SaleInput>): Promise
 
 export async function deleteSale(id: string): Promise<void> {
   try {
-    const supabase = createSupabaseServer()
-    const salesTable = getTableName('sales')
+    const supabase = createSupabaseServerClient()
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -263,7 +259,7 @@ export async function deleteSale(id: string): Promise<void> {
     }
 
     const { error } = await supabase
-      .from(salesTable)
+      .from(T.sales)
       .delete()
       .eq('id', id)
       .eq('owner_id', user.id) // Ensure user owns the sale
@@ -280,11 +276,10 @@ export async function deleteSale(id: string): Promise<void> {
 
 export async function listItems(saleId: string): Promise<Item[]> {
   try {
-    const supabase = createSupabaseServer()
-    const itemsTable = getTableName('items')
+    const supabase = createSupabaseServerClient()
     
     const { data, error } = await supabase
-      .from(itemsTable)
+      .from(T.items)
       .select('*')
       .eq('sale_id', saleId)
       .order('created_at', { ascending: false })
@@ -304,8 +299,7 @@ export async function listItems(saleId: string): Promise<Item[]> {
 export async function createItem(saleId: string, input: ItemInput): Promise<Item> {
   try {
     const validatedInput = ItemInputSchema.parse(input)
-    const supabase = createSupabaseServer()
-    const itemsTable = getTableName('items')
+    const supabase = createSupabaseServerClient()
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -320,7 +314,7 @@ export async function createItem(saleId: string, input: ItemInput): Promise<Item
     }
 
     const { data, error } = await supabase
-      .from(itemsTable)
+      .from(T.items)
       .insert({
         sale_id: saleId,
         ...validatedInput,
@@ -342,8 +336,7 @@ export async function createItem(saleId: string, input: ItemInput): Promise<Item
 
 export async function toggleFavorite(saleId: string): Promise<{ is_favorited: boolean }> {
   try {
-    const supabase = createSupabaseServer()
-    const favoritesTable = getTableName('favorites')
+    const supabase = createSupabaseServerClient()
     
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -353,7 +346,7 @@ export async function toggleFavorite(saleId: string): Promise<{ is_favorited: bo
 
     // Check if already favorited
     const { data: existingFavorite } = await supabase
-      .from(favoritesTable)
+      .from(T.favorites)
       .select('id')
       .eq('sale_id', saleId)
       .eq('user_id', user.id)
@@ -362,7 +355,7 @@ export async function toggleFavorite(saleId: string): Promise<{ is_favorited: bo
     if (existingFavorite) {
       // Remove from favorites
       const { error } = await supabase
-        .from(favoritesTable)
+        .from(T.favorites)
         .delete()
         .eq('sale_id', saleId)
         .eq('user_id', user.id)
@@ -376,7 +369,7 @@ export async function toggleFavorite(saleId: string): Promise<{ is_favorited: bo
     } else {
       // Add to favorites
       const { error } = await supabase
-        .from(favoritesTable)
+        .from(T.favorites)
         .insert({
           sale_id: saleId,
           user_id: user.id,

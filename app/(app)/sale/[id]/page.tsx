@@ -1,4 +1,5 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 import { notFound } from 'next/navigation'
 import { SaleDetailClient } from './SaleDetailClient'
 import { createSaleMetadata } from '@/lib/metadata'
@@ -9,7 +10,7 @@ export async function generateMetadata({
 }: { 
   params: { id: string } 
 }) {
-  const sb = createSupabaseServer()
+  const sb = createSupabaseServerClient()
   
   const { data: sale } = await sb
     .from('yard_sales')
@@ -32,7 +33,7 @@ export default async function SaleDetail({
 }: { 
   params: { id: string } 
 }) {
-  const sb = createSupabaseServer()
+  const sb = createSupabaseServerClient()
   
   const { data: sale, error } = await sb
     .from('yard_sales')

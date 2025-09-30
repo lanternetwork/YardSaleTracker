@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 import { z } from 'zod'
 
 const SubscribeSchema = z.object({
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -75,7 +76,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {

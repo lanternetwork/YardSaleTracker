@@ -31,13 +31,5 @@ export const adminSupabase = createClient(
   }
 )
 
-// Get the schema name from environment variables
-export const getSchemaName = () => {
-  return process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public'
-}
-
-// Helper function to get schema-qualified table name
-export const getTableName = (tableName: string) => {
-  const schema = getSchemaName()
-  return schema === 'public' ? tableName : `${schema}.${tableName}`
-}
+// Note: Admin client uses the schema configuration from the client creation
+// No need for separate schema helpers since the client is configured with the schema

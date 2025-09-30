@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 
 export async function GET() {
   try {
     // Test environment variables are loaded
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     
     // Test database connection with a simple query
     const { data, error } = await supabase
-      .from('yard_sales')
+      .from(T.sales)
       .select('id')
       .limit(1)
     

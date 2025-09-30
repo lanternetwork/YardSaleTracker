@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer, getTableName } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     
     // Get query parameters
@@ -12,11 +13,8 @@ export async function GET(request: NextRequest) {
     const radius = searchParams.get('radius') || '25'
     const status = searchParams.get('status') || 'published'
     
-    // Use schema-qualified table name
-    const salesTable = getTableName('sales')
-    
     let query = supabase
-      .from(salesTable)
+      .from(T.sales)
       .select('*')
       .eq('status', status)
     
@@ -48,7 +46,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServerClient()
     const body = await request.json()
     
     // Get current user
@@ -57,11 +55,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Use schema-qualified table name
-    const salesTable = getTableName('sales')
-    
     const { data: sale, error } = await supabase
-      .from(salesTable)
+      .from(T.sales)
       .insert({
         owner_id: user.id,
         title: body.title,
