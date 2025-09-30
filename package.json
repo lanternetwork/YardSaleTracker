@@ -17,7 +17,6 @@
     "test:e2e": "playwright test",
     "format": "prettier -w .",
     "check:storage": "tsx scripts/storage-check.ts",
-    "smoke:scrape": "tsx scripts/smoke-scrape.ts",
     "check:node": "node scripts/check-node-version.js"
   },
   "dependencies": {

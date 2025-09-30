@@ -91,13 +91,13 @@ test.describe('Complete User Flow', () => {
               id: 'mock-1',
               title: 'Mock Garage Sale',
               start_at: '2024-12-25T10:00:00Z',
-              source: 'craigslist'
+              source: 'manual'
             },
             {
               id: 'mock-2',
               title: 'Mock Estate Sale',
               start_at: '2024-12-26T10:00:00Z',
-              source: 'craigslist'
+              source: 'manual'
             }
           ]
         })
@@ -108,17 +108,15 @@ test.describe('Complete User Flow', () => {
     await page.goto('/explore?tab=find')
     await expect(page.getByText('Find More Sales')).toBeVisible()
 
-    // Test Craigslist scraper
-    await page.getByRole('tab', { name: 'Craigslist Scraper' }).click()
-    await page.fill('input[placeholder="City (e.g., sfbay)"]', 'sfbay')
-    await page.fill('input[placeholder="Search term"]', 'garage sale')
+    // Test manual import
+    await page.getByRole('tab', { name: 'Manual Import' }).click()
+    await page.fill('input[placeholder="CSV data"]', 'title,address,start_at\nTest Sale,123 Test St,2024-12-25T10:00:00Z')
 
-    // Start scraping
-    await page.getByRole('button', { name: 'Start Scraping' }).click()
+    // Start import
+    await page.getByRole('button', { name: 'Import Sales' }).click()
 
     // Wait for results
-    await expect(page.getByText('Mock Garage Sale')).toBeVisible()
-    await expect(page.getByText('Mock Estate Sale')).toBeVisible()
+    await expect(page.getByText('Test Sale')).toBeVisible()
 
     // Test import functionality
     await page.getByRole('checkbox', { name: 'Select All' }).check()

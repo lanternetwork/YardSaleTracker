@@ -9,9 +9,3 @@ export function readFixture(filename: string): string {
   return readFileSync(fixturePath, 'utf-8')
 }
 
-/**
- * Read a Craigslist HTML fixture
- */
-export function readCraigslistFixture(filename: string): string {
-  return readFixture(`craigslist/${filename}`)
-}

@@ -24,7 +24,7 @@ create table if not exists yard_sales (
   photos text[] default '{}',
   contact text,
   status sale_status default 'active',
-  source text default 'user',             -- 'user' | 'craigslist'
+  source text default 'user',             -- 'user' | 'manual'
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
