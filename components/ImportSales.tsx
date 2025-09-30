@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CSVImportExport } from './CSVImportExport'
+import CSVImportExport from './CSVImportExport'
 
 export default function ImportSales() {
   return (
