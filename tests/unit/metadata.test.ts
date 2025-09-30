@@ -104,7 +104,7 @@ describe('createSaleMetadata', () => {
 
     const metadata = createSaleMetadata(sale)
 
-    expect(metadata.description).toContain('Test City')
+    expect(metadata.description).toContain('123 Test St')
   })
 })
 

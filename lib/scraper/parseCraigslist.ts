@@ -13,24 +13,24 @@ export interface ParsedItem {
 export function parseCraigslistList(html: string, limit: number = 20): ParsedItem[] {
   const results: ParsedItem[] = []
   
-  // Simple approach: find all result-row divs and extract data from each
+  // Find all result-row divs and extract data from each
   const resultRows = html.match(/<div class="result-row"[^>]*>[\s\S]*?<\/div>\s*<\/div>/g) || []
   
   for (let i = 0; i < Math.min(resultRows.length, limit); i++) {
     const rowHtml = resultRows[i]
     
-    // Extract title and link
+    // Extract title and link - look for result-title class
     const titleMatch = rowHtml.match(/<a[^>]*class="[^"]*result-title[^"]*"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/)
     if (!titleMatch) continue
     
     const link = titleMatch[1]
     const title = titleMatch[2].trim()
     
-    // Extract date
-    const dateMatch = rowHtml.match(/<(?:time|span)[^>]*class="[^"]*result-date[^"]*"[^>]*datetime="([^"]+)"[^>]*>/)
+    // Extract date - look for result-date class
+    const dateMatch = rowHtml.match(/<span[^>]*class="[^"]*result-date[^"]*"[^>]*datetime="([^"]+)"[^>]*>/)
     const date = dateMatch ? dateMatch[1] : new Date().toISOString()
     
-    // Extract price
+    // Extract price - look for result-price class
     const priceMatch = rowHtml.match(/<span[^>]*class="[^"]*result-price[^"]*"[^>]*>([^<]+)<\/span>/)
     const priceText = priceMatch ? priceMatch[1].trim() : ''
     

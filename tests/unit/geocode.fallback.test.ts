@@ -9,6 +9,7 @@ describe('Geocoding Fallback', () => {
   beforeEach(() => {
     vi.resetModules()
     process.env = { ...originalEnv }
+    vi.clearAllMocks()
   })
 
   afterEach(() => {

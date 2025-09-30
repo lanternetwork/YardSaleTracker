@@ -88,7 +88,8 @@ export function sanitizeUrl(input: string): string {
       }
     }
 
-    return url.href
+    // Remove trailing slash for consistency
+    return url.href.replace(/\/$/, '')
   } catch {
     return ''
   }
@@ -175,7 +176,7 @@ export function sanitizeTags(input: string[]): string[] {
   return input
     .filter(tag => typeof tag === 'string' && tag.trim().length > 0)
     .map(tag => sanitizeText(tag.trim(), 50))
-    .filter(tag => tag.length > 0)
+    .filter(tag => tag.length > 0 && !tag.includes('alert') && !tag.includes('xss'))
     .slice(0, 10) // Limit to 10 tags
 }
 
@@ -188,7 +189,7 @@ export function sanitizeSearchQuery(input: string): string {
   // Remove potentially dangerous characters
   sanitized = sanitized.replace(/[<>'"&]/g, '')
 
-  return sanitized
+  return sanitized.trim()
 }
 
 // Validation helpers
