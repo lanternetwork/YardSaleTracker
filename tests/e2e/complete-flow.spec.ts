@@ -75,7 +75,8 @@ test.describe('Complete User Flow', () => {
 
     // Test reset filters
     await page.getByRole('button', { name: 'Clear All' }).click()
-    await expect(page.getByDisplayValue('')).toBeVisible()
+    // Replace unsupported getByDisplayValue with a looser check
+    await expect(page.locator('input[value=""]')).toBeVisible()
   })
 
   test('importer path: mock /api/scrape, import items, verify appear', async ({ page }) => {

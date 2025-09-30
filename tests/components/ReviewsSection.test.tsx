@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ReviewsSection from '@/components/ReviewsSection'
 
-// Mock the Supabase client
+// Mock the Supabase client (include rpc as required by component)
 const mockSupabase = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
@@ -11,15 +11,15 @@ const mockSupabase = {
           then: vi.fn()
         }))
       }))
-    })),
-    rpc: vi.fn(() => ({
-      then: vi.fn()
     }))
+  })),
+  rpc: vi.fn(() => ({
+    then: vi.fn()
   }))
 }
 
 vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => mockSupabase
+  createSupabaseBrowserClient: () => mockSupabase
 }))
 
 // Mock the auth hook

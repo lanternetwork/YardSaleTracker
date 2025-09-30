@@ -636,7 +636,7 @@ function ReviewStep({ formData, photos, items }: {
               {photos.map((photo, index) => (
                 <img
                   key={index}
-                  src={URL.createObjectURL(photo)}
+                  src={photo}
                   alt={`Photo ${index + 1}`}
                   className="w-full h-20 object-cover rounded"
                 />

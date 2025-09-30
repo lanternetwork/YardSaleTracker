@@ -15,7 +15,8 @@ export interface SaleMinimal {
   price_min?: number
   price_max?: number
   tags: string[]
-  photos: string[]
+  // photos removed from schema; keep internal optional typing for compatibility
+  photos?: string[]
   source: 'craigslist'
 }
 
@@ -43,7 +44,6 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     price_min,
     price_max,
     tags,
-    photos: [],
     source: 'craigslist'
   }
   
@@ -52,10 +52,7 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
   
   Object.entries(normalized).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
-      if (Array.isArray(value) && value.length === 0) {
-        // Include empty arrays
-        result[key as keyof SaleMinimal] = value
-      } else if (!Array.isArray(value) && value !== '') {
+      if (!Array.isArray(value) && value !== '') {
         // Include non-empty strings and other values
         result[key as keyof SaleMinimal] = value
       }
@@ -77,7 +74,6 @@ export function normalizeCraigslistItem(item: ParsedItem, city: string = 'sfbay'
     price_min: result.price_min,
     price_max: result.price_max,
     tags: (result.tags as string[]) || [],
-    photos: (result.photos as string[]) || [],
     source: 'craigslist'
   }
 }

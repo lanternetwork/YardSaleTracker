@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getSchema } from './schema';
 
@@ -14,10 +14,10 @@ export function createSupabaseServerClient() {
       get(name: string) {
         return cookieStore.get(name)?.value
       },
-      set(name: string, value: string, options: { expires?: Date; maxAge?: number; path?: string; domain?: string; secure?: boolean; httpOnly?: boolean; sameSite?: 'lax' | 'strict' | 'none' }) {
+      set(name: string, value: string, options: CookieOptions) {
         cookieStore.set({ name, value, ...options })
       },
-      remove(name: string, options: { path?: string; domain?: string }) {
+      remove(name: string, options: CookieOptions) {
         cookieStore.set({ name, value: '', ...options, maxAge: 0 })
       },
     },

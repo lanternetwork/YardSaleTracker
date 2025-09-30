@@ -1,13 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddSaleForm from '@/components/AddSaleForm'
+import { useCreateSale } from '@/lib/hooks/useSales'
 
 // Mock the hooks
 vi.mock('@/lib/hooks/useSales', () => ({
-  useCreateSale: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
-    isPending: false
-  })
+  useCreateSale: vi.fn()
 }))
 
 // Mock the geocoding function
@@ -57,12 +55,11 @@ describe('AddSaleForm', () => {
   })
 
   it('submits form with valid data', async () => {
-    const { useCreateSale } = await import('@/lib/hooks/useSales')
     const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false
-    })
+    } as any)
 
     render(<AddSaleForm />)
     
@@ -137,11 +134,10 @@ describe('AddSaleForm', () => {
   })
 
   it('shows loading state during submission', () => {
-    const { useCreateSale } = vi.mocked(await import('@/lib/hooks/useSales'))
-    useCreateSale.mockReturnValue({
+    vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: true
-    })
+    } as any)
 
     render(<AddSaleForm />)
     
