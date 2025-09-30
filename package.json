@@ -3,9 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "engines": {
-    "node": "20.x"
+    "node": ">=20.18.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
+    "preinstall": "node scripts/check-node-version.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -16,7 +18,8 @@
     "test:e2e": "playwright test",
     "format": "prettier -w .",
     "check:storage": "tsx scripts/storage-check.ts",
-    "smoke:scrape": "tsx scripts/smoke-scrape.ts"
+    "smoke:scrape": "tsx scripts/smoke-scrape.ts",
+    "check:node": "node scripts/check-node-version.js"
   },
   "dependencies": {
     "next": "14.2.4",
