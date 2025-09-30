@@ -188,127 +188,129 @@ export default function ImportSales() {
             </p>
           </div>
 
-      {/* Search form */}
-      <div className="bg-neutral-50 p-4 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">City</label>
-            <select
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            >
-              {cities.map(c => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Search Query</label>
-            <input
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="garage sale, estate sale, etc."
-              className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            />
-          </div>
-          
-          <div className="flex items-end">
-            <button
-              onClick={handleScrape}
-              disabled={loading}
-              className="w-full px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Searching...' : 'Search Craigslist'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* Results */}
-      {scrapedSales.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">
-              Found {scrapedSales.length} sales
-            </h3>
-            <div className="flex gap-2">
-              <button
-                onClick={handleSelectAll}
-                className="px-3 py-1 text-sm border rounded hover:bg-neutral-100"
-              >
-                {selectedSales.size === scrapedSales.length ? 'Deselect All' : 'Select All'}
-              </button>
-              <button
-                onClick={handleImport}
-                disabled={selectedSales.size === 0 || importing}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {importing ? 'Importing...' : `Import ${selectedSales.size} Selected`}
-              </button>
+          {/* Search form */}
+          <div className="bg-neutral-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">City</label>
+                <select
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                >
+                  {cities.map(c => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Search Query</label>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="garage sale, estate sale, etc."
+                  className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex items-end">
+                <button
+                  onClick={handleScrape}
+                  disabled={loading}
+                  className="w-full px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Searching...' : 'Search Craigslist'}
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-4">
-            {scrapedSales.map(sale => (
-              <div
-                key={sale.id}
-                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                  selectedSales.has(sale.id)
-                    ? 'border-amber-500 bg-amber-50'
-                    : 'border-neutral-200 hover:border-neutral-300'
-                }`}
-                onClick={() => handleSelectSale(sale.id)}
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedSales.has(sale.id)}
-                    onChange={() => handleSelectSale(sale.id)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-lg">{sale.title}</h4>
-                    {sale.description && (
-                      <p className="text-neutral-600 text-sm mt-1">{sale.description}</p>
-                    )}
-                    <div className="flex flex-wrap gap-4 mt-2 text-sm text-neutral-500">
-                      {sale.address && <span>📍 {sale.address}</span>}
-                      {sale.start_at && (
-                        <span>📅 {new Date(sale.start_at).toLocaleDateString()}</span>
-                      )}
-                      {(sale.price_min || sale.price_max) && (
-                        <span>
-                          💰 ${sale.price_min || 0} - ${sale.price_max || '∞'}
-                        </span>
-                      )}
-                      {sale.url && (
-                        <a
-                          href={sale.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-amber-600 hover:text-amber-700"
-                          onClick={e => e.stopPropagation()}
-                        >
-                          View on Craigslist →
-                        </a>
-                      )}
-                    </div>
-                  </div>
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Results */}
+          {scrapedSales.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">
+                  Found {scrapedSales.length} sales
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSelectAll}
+                    className="px-3 py-1 text-sm border rounded hover:bg-neutral-100"
+                  >
+                    {selectedSales.size === scrapedSales.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                  <button
+                    onClick={handleImport}
+                    disabled={selectedSales.size === 0 || importing}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {importing ? 'Importing...' : `Import ${selectedSales.size} Selected`}
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="grid gap-4">
+                {scrapedSales.map(sale => (
+                  <div
+                    key={sale.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedSales.has(sale.id)
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-neutral-200 hover:border-neutral-300'
+                    }`}
+                    onClick={() => handleSelectSale(sale.id)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedSales.has(sale.id)}
+                        onChange={() => handleSelectSale(sale.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">{sale.title}</h4>
+                        {sale.description && (
+                          <p className="text-neutral-600 text-sm mt-1">{sale.description}</p>
+                        )}
+                        <div className="flex flex-wrap gap-4 mt-2 text-sm text-neutral-500">
+                          {sale.address && <span>📍 {sale.address}</span>}
+                          {sale.start_at && (
+                            <span>📅 {new Date(sale.start_at).toLocaleDateString()}</span>
+                          )}
+                          {(sale.price_min || sale.price_max) && (
+                            <span>
+                              💰 ${sale.price_min || 0} - ${sale.price_max || '∞'}
+                            </span>
+                          )}
+                          {sale.url && (
+                            <a
+                              href={sale.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-amber-600 hover:text-amber-700"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              View on Craigslist →
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
