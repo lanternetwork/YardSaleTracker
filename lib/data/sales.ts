@@ -121,18 +121,29 @@ export async function getSales(params: GetSalesParams = {}) {
         .lte('date_start', validatedParams.dateRange.end)
     }
 
-    // Filter by distance (if lat/lng provided)
+    // Filter by distance using PostGIS (if lat/lng provided)
     if (validatedParams.lat && validatedParams.lng && validatedParams.distanceKm) {
-      // Note: This is a simplified distance filter
-      // In production, you'd want to use PostGIS or a more sophisticated approach
-      const latRange = validatedParams.distanceKm / 111 // Rough conversion: 1 degree ≈ 111 km
-      const lngRange = validatedParams.distanceKm / (111 * Math.cos(validatedParams.lat * Math.PI / 180))
+      const distanceMeters = validatedParams.distanceKm * 1000
       
-      query = query
-        .gte('lat', validatedParams.lat - latRange)
-        .lte('lat', validatedParams.lat + latRange)
-        .gte('lng', validatedParams.lng - lngRange)
-        .lte('lng', validatedParams.lng + lngRange)
+      // Use PostGIS function for accurate distance filtering
+      const { data: spatialData, error: spatialError } = await supabase
+        .rpc('search_sales_within_distance', {
+          user_lat: validatedParams.lat,
+          user_lng: validatedParams.lng,
+          distance_meters: distanceMeters,
+          search_city: validatedParams.city || null,
+          search_categories: validatedParams.categories || null,
+          date_start_filter: validatedParams.dateRange?.start || null,
+          date_end_filter: validatedParams.dateRange?.end || null,
+          limit_count: validatedParams.limit
+        })
+
+      if (spatialError) {
+        console.error('Spatial query error:', spatialError)
+        throw new Error('Failed to perform spatial search')
+      }
+
+      return spatialData as Sale[]
     }
 
     const { data, error } = await query

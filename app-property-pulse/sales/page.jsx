@@ -1,5 +1,6 @@
 import SaleCard from '@/components/SaleCard';
 import SaleSearchForm from '@/components/SaleSearchForm';
+import SalesMap from '@/components/location/SalesMap';
 import Pagination from '@/components/Pagination';
 import Sale from '@/models/Sale';
 import connectDB from '@/config/database';
@@ -21,6 +22,20 @@ const SalesPage = async ({ searchParams: { pageSize = 9, page = 1 } }) => {
           <SaleSearchForm />
         </div>
       </section>
+      
+      {/* Map Section */}
+      <section className='px-4 py-6'>
+        <div className='container-xl lg:container m-auto px-4 py-6'>
+          <h2 className='text-xl font-semibold mb-4'>Sales Map</h2>
+          <SalesMap 
+            sales={sales} 
+            center={{ lat: 38.2527, lng: -85.7585 }}
+            zoom={10}
+          />
+        </div>
+      </section>
+
+      {/* Sales List Section */}
       <section className='px-4 py-6'>
         <div className='container-xl lg:container m-auto px-4 py-6'>
           <h1 className='text-2xl mb-4'>Browse Sales</h1>
