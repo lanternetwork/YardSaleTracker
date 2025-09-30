@@ -78,7 +78,7 @@ describe('createSaleMetadata', () => {
     expect(metadata.title).toBe('Test Sale | YardSaleFinder')
     expect(metadata.description).toContain('Test description')
     expect(metadata.openGraph?.type).toBe('article')
-    expect(metadata.openGraph?.images?.[0]?.url).toBe('https://example.com/photo.jpg')
+    expect(Array.isArray(metadata.openGraph?.images) ? metadata.openGraph.images[0]?.url : metadata.openGraph?.images?.url).toBe('https://example.com/photo.jpg')
   })
 
   it('should handle sale without description', () => {
