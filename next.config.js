@@ -28,6 +28,25 @@ const nextConfig = {
     optimizePackageImports: ['react-virtuoso'],
   },
   // Note: Avoid standalone output on Vercel to prevent traced file copy issues
+  async redirects() {
+    return [
+      {
+        source: '/properties/:id',
+        destination: '/sales/:id',
+        permanent: true,
+      },
+      {
+        source: '/properties',
+        destination: '/sales',
+        permanent: true,
+      },
+      {
+        source: '/login',
+        destination: '/auth/signin',
+        permanent: true,
+      },
+    ]
+  },
   // Compress responses
   compress: true,
   // Enable SWC minification
