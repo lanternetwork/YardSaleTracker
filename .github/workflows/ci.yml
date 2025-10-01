@@ -58,7 +58,7 @@ jobs:
       run: npm install
       
     - name: Build Next.js application
-      run: npm run build
+      run: npm run build 2>&1 | tee build.log
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -91,10 +91,10 @@ jobs:
       run: npm install
       
     - name: Run TypeScript type checking
-      run: npm run typecheck
+      run: npm run typecheck 2>&1 | tee typecheck.log
       
     - name: Run ESLint code linting
-      run: npm run lint
+      run: npm run lint 2>&1 | tee lint.log
 
   "Unit Tests":
     needs: setup
@@ -119,7 +119,7 @@ jobs:
       run: npm install
       
     - name: Run Vitest unit tests with verbose reporter
-      run: npm run test -- --reporter=verbose
+      run: npm run test -- --reporter=verbose 2>&1 | tee vitest.log
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -155,7 +155,7 @@ jobs:
       run: npx playwright install --with-deps
       
     - name: Run Playwright E2E smoke tests with list reporter
-      run: npm run test:e2e -- --reporter=list
+      run: npm run test:e2e -- --reporter=list 2>&1 | tee playwright.log
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -206,3 +206,99 @@ jobs:
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
         vercel-args: '--prod'
+
+  error-summary:
+    needs: [build, typecheck, "Unit Tests", "E2E Smoke"]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Aggregate error summary
+      run: |
+        echo "## Error Summary" >> $GITHUB_STEP_SUMMARY
+        
+        # Check if any logs exist and extract errors
+        if [ -f build.log ]; then
+          echo "### Build" >> $GITHUB_STEP_SUMMARY
+          if grep -q "Error\|Failed\|failed" build.log; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            head -30 build.log | grep -A 5 -B 5 "Error\|Failed\|failed" | head -20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        if [ -f typecheck.log ]; then
+          echo "### Typecheck" >> $GITHUB_STEP_SUMMARY
+          if grep -q "error TS" typecheck.log; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep "error TS" typecheck.log | head -10 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ TypeScript type checking passed" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        if [ -f lint.log ]; then
+          echo "### ESLint" >> $GITHUB_STEP_SUMMARY
+          if grep -q "error\|warning" lint.log; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep "error\|warning" lint.log | head -10 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ ESLint passed" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        if [ -f vitest.log ]; then
+          echo "### Unit Tests (Vitest)" >> $GITHUB_STEP_SUMMARY
+          if grep -q "FAIL\|Error" vitest.log; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -A 3 "FAIL\|Error" vitest.log | head -20 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All unit tests passed" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        if [ -f playwright.log ]; then
+          echo "### E2E Smoke (Playwright)" >> $GITHUB_STEP_SUMMARY
+          if grep -q "failed\|Error" playwright.log; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -A 2 "failed\|Error" playwright.log | head -15 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All E2E tests passed" >> $GITHUB_STEP_SUMMARY
+          fi
+        fi
+        
+        # Check if any errors were found
+        if ! grep -q "Error\|Failed\|failed\|error TS\|error\|warning" *.log 2>/dev/null; then
+          echo "## ✅ No errors detected" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Copy this block into Cursor:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "## Error Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -f build.log ] && grep -q "Error\|Failed\|failed" build.log; then
+          echo "### Build Errors:" >> $GITHUB_STEP_SUMMARY
+          head -30 build.log | grep -A 5 -B 5 "Error\|Failed\|failed" | head -10 >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f typecheck.log ] && grep -q "error TS" typecheck.log; then
+          echo "### TypeScript Errors:" >> $GITHUB_STEP_SUMMARY
+          grep "error TS" typecheck.log | head -5 >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f vitest.log ] && grep -q "FAIL\|Error" vitest.log; then
+          echo "### Test Failures:" >> $GITHUB_STEP_SUMMARY
+          grep -A 2 "FAIL\|Error" vitest.log | head -10 >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -f playwright.log ] && grep -q "failed\|Error" playwright.log; then
+          echo "### E2E Failures:" >> $GITHUB_STEP_SUMMARY
+          grep -A 1 "failed\|Error" playwright.log | head -8 >> $GITHUB_STEP_SUMMARY
+        fi
+        echo '```' >> $GITHUB_STEP_SUMMARY
