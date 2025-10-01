@@ -1,6 +1,6 @@
 {
-  "name": "YardSaleFinder - Find Amazing Yard Sale Treasures",
-  "short_name": "YardSaleFinder",
+  "name": "LootAura - Find Amazing Yard Sale Treasures",
+  "short_name": "LootAura",
   "display": "standalone",
   "start_url": "/",
   "background_color": "#ffffff",

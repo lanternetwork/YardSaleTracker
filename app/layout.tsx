@@ -7,11 +7,11 @@ import { PWAComponents } from './PWAComponents'
 import { createHomepageStructuredData, createOrganizationStructuredData } from '@/lib/metadata'
 
 export const metadata: Metadata = {
-  title: 'YardSaleFinder - Find Amazing Yard Sale Treasures',
+  title: 'LootAura - Find Amazing Yard Sale Treasures',
   description: 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!',
   keywords: 'yard sale, garage sale, estate sale, local sales, treasure hunting',
   openGraph: {
-    title: 'YardSaleFinder - Find Amazing Yard Sale Treasures',
+    title: 'LootAura - Find Amazing Yard Sale Treasures',
     description: 'Discover local yard sales, garage sales, and estate sales in your area.',
     type: 'website',
   },
