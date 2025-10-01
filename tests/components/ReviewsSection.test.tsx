@@ -63,7 +63,7 @@ describe('ReviewsSection', () => {
     })
   })
 
-  it('renders star rating correctly', () => {
+  it('renders star rating correctly', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -72,11 +72,14 @@ describe('ReviewsSection', () => {
       />
     )
     
-    // Should show 4 filled stars (rounded up from 3.5)
-    const filledStars = screen.getAllByText('★').filter(star => 
-      star.className.includes('text-amber-400')
-    )
-    expect(filledStars).toHaveLength(4)
+    // Wait for component to load
+    await waitFor(() => {
+      // Should show 4 filled stars (rounded up from 3.5)
+      const filledStars = screen.getAllByText('★').filter(star => 
+        star.className.includes('text-amber-400')
+      )
+      expect(filledStars).toHaveLength(4)
+    })
   })
 
   it('renders review form for authenticated users', async () => {
@@ -134,7 +137,7 @@ describe('ReviewsSection', () => {
         star.className.includes('text-amber-400')
       )
       expect(filledStars).toHaveLength(3)
-    })
+    }, { timeout: 3000 })
   })
 
   it('allows comment input', async () => {

@@ -21,7 +21,7 @@ vi.mock('@/lib/geocode', () => ({
 
 // Mock the Supabase client
 vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => ({
+  createSupabaseBrowserClient: () => ({
     auth: {
       getUser: () => Promise.resolve({ data: { user: { id: 'test-user' } } })
     }
@@ -58,7 +58,14 @@ describe('AddSaleForm', () => {
     const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: mockMutateAsync,
-      isPending: false
+      isPending: false,
+      error: null,
+      data: null,
+      variables: null,
+      isError: false,
+      isSuccess: false,
+      reset: vi.fn(),
+      mutate: vi.fn()
     } as any)
 
     render(<AddSaleForm />)
@@ -136,7 +143,14 @@ describe('AddSaleForm', () => {
   it('shows loading state during submission', () => {
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: vi.fn(),
-      isPending: true
+      isPending: true,
+      error: null,
+      data: null,
+      variables: null,
+      isError: false,
+      isSuccess: false,
+      reset: vi.fn(),
+      mutate: vi.fn()
     } as any)
 
     render(<AddSaleForm />)

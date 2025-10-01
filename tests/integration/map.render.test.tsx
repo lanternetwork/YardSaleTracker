@@ -251,7 +251,9 @@ describe('Map Render Integration', () => {
     // Wait for component to finish loading
     await new Promise(resolve => setTimeout(resolve, 500))
 
-    expect(screen.getByText('No sales with locations found')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('No sales with locations found')).toBeInTheDocument()
+    }, { timeout: 2000 })
   })
 
   it('should add Near Me button when geolocation is available', async () => {
@@ -274,9 +276,11 @@ describe('Map Render Integration', () => {
     await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify Near Me button was added
-    expect(mockMap.controls[Symbol.for('TOP_LEFT')].push).toHaveBeenCalledWith(
-      expect.any(HTMLButtonElement)
-    )
+    await waitFor(() => {
+      expect(mockMap.controls[Symbol.for('TOP_LEFT')].push).toHaveBeenCalledWith(
+        expect.any(HTMLButtonElement)
+      )
+    }, { timeout: 2000 })
   })
 
   it('should handle geolocation error gracefully', async () => {
@@ -306,11 +310,12 @@ describe('Map Render Integration', () => {
     await new Promise(resolve => setTimeout(resolve, 500))
 
     // Find and click the Near Me button
-    const nearMeButton = document.querySelector('button[textContent="📍 Near Me"]') as HTMLButtonElement
-    if (nearMeButton) {
-      nearMeButton.click()
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
+    await waitFor(() => {
+      const nearMeButton = document.querySelector('button[textContent="📍 Near Me"]') as HTMLButtonElement
+      if (nearMeButton) {
+        nearMeButton.click()
+      }
+    }, { timeout: 2000 })
 
     // Should show error alert
     expect(alertSpy).toHaveBeenCalledWith(

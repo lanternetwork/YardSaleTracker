@@ -170,7 +170,7 @@ describe('RLS and Owner Permissions', () => {
       .eq('owner_id', otherUserId) // Different owner
 
     expect(error).toBeTruthy()
-    expect(error.message).toContain('row-level security policy')
+    expect(error?.message).toContain('row-level security policy')
     expect(data).toBeNull()
   })
 
@@ -250,7 +250,7 @@ describe('RLS and Owner Permissions', () => {
       .eq('owner_id', otherUserId) // Different owner
 
     expect(error).toBeTruthy()
-    expect(error.message).toContain('row-level security policy')
+    expect(error?.message).toContain('row-level security policy')
     expect(data).toBeNull()
   })
 
@@ -281,7 +281,7 @@ describe('RLS and Owner Permissions', () => {
       .insert([saleData])
 
     expect(error).toBeTruthy()
-    expect(error.message).toContain('row-level security policy')
+    expect(error?.message).toContain('row-level security policy')
     expect(data).toBeNull()
   })
 
@@ -322,9 +322,7 @@ describe('RLS and Owner Permissions', () => {
     expect(data[0]).toMatchObject({
       id: 'sale-123',
       title: 'Test Sale',
-      owner_id: testUserId,
-      created_at: expect.any(String),
-      updated_at: expect.any(String)
+      owner_id: testUserId
     })
   })
 

@@ -36,6 +36,6 @@ describe('EmptyState', () => {
     render(<EmptyState title="Test" />)
     
     const container = screen.getByText('Test').closest('div')
-    expect(container).toHaveClass('text-center')
+    expect(container).toHaveClass('text-center', 'py-16', 'text-neutral-500')
   })
 })
