@@ -7,6 +7,10 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     
+    // Log schema info for debugging
+    const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public'
+    console.log(`[SALES] Using schema: ${schema}`)
+    
     // Parse inputs explicitly
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
     const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : undefined
@@ -23,8 +27,9 @@ export async function GET(request: NextRequest) {
     // Helper: baseline query to avoid hard-fail (degraded mode)
     async function runBaseline() {
       console.log(`[SALES][BASELINE] Attempting simple query on table: ${T.sales}`)
+      // Force use of public schema by using direct table name
       const { data, error: baseErr } = await supabase
-        .from(T.sales)
+        .from('sales')
         .select('id,title,city,state,lat,lng,date_start,time_start,date_end,time_end,tags')
         .eq('status', 'published')
         .order('date_start', { ascending: true })
@@ -55,7 +60,7 @@ export async function GET(request: NextRequest) {
     try {
       // Build advanced query with filters
       let query = supabase
-        .from(T.sales)
+        .from('sales')
         .select('*')
         .eq('status', 'published')
         .order('created_at', { ascending: false })
@@ -142,7 +147,7 @@ export async function POST(request: NextRequest) {
     console.log(`[SALES][POST] Creating sale for user ${user.id}`)
     
     const { data: sale, error } = await supabase
-      .from(T.sales)
+      .from('sales')
       .insert({
         owner_id: user.id,
         title: body.title,
