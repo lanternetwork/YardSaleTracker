@@ -75,17 +75,17 @@ CREATE INDEX IF NOT EXISTS idx_sales_search_tsv ON yard_sales USING GIN (search_
 
 -- Create function for full-text search
 CREATE OR REPLACE FUNCTION search_sales(
-  search_query text,
-  max_distance_km float DEFAULT NULL,
-  user_lat float DEFAULT NULL,
-  user_lng float DEFAULT NULL,
-  date_from timestamptz DEFAULT NULL,
-  date_to timestamptz DEFAULT NULL,
-  price_min numeric DEFAULT NULL,
-  price_max numeric DEFAULT NULL,
-  tags_filter text[] DEFAULT NULL,
-  limit_count int DEFAULT 50,
-  offset_count int DEFAULT 0
+  p_search_query text,
+  p_max_distance_km float DEFAULT NULL,
+  p_user_lat float DEFAULT NULL,
+  p_user_lng float DEFAULT NULL,
+  p_date_from timestamptz DEFAULT NULL,
+  p_date_to timestamptz DEFAULT NULL,
+  p_price_min numeric DEFAULT NULL,
+  p_price_max numeric DEFAULT NULL,
+  p_tags_filter text[] DEFAULT NULL,
+  p_limit_count int DEFAULT 50,
+  p_offset_count int DEFAULT 0
 )
 RETURNS TABLE (
   id uuid,
@@ -134,40 +134,40 @@ BEGIN
     ys.created_at,
     ys.updated_at,
     CASE 
-      WHEN user_lat IS NOT NULL AND user_lng IS NOT NULL AND ys.lat IS NOT NULL AND ys.lng IS NOT NULL
+      WHEN p_user_lat IS NOT NULL AND p_user_lng IS NOT NULL AND ys.lat IS NOT NULL AND ys.lng IS NOT NULL
       THEN 6371 * acos(
-        cos(radians(user_lat)) * cos(radians(ys.lat)) * 
-        cos(radians(ys.lng) - radians(user_lng)) + 
-        sin(radians(user_lat)) * sin(radians(ys.lat))
+        cos(radians(p_user_lat)) * cos(radians(ys.lat)) * 
+        cos(radians(ys.lng) - radians(p_user_lng)) + 
+        sin(radians(p_user_lat)) * sin(radians(ys.lat))
       )
       ELSE NULL
     END as distance_km
   FROM yard_sales ys
   WHERE 
     ys.status = 'active'
-    AND (search_query IS NULL OR search_query = '' OR ys.search_tsv @@ plainto_tsquery('english', search_query))
-    AND (max_distance_km IS NULL OR user_lat IS NULL OR user_lng IS NULL OR ys.lat IS NULL OR ys.lng IS NULL OR 
+    AND (p_search_query IS NULL OR p_search_query = '' OR ys.search_tsv @@ plainto_tsquery('english', p_search_query))
+    AND (p_max_distance_km IS NULL OR p_user_lat IS NULL OR p_user_lng IS NULL OR ys.lat IS NULL OR ys.lng IS NULL OR 
          6371 * acos(
-           cos(radians(user_lat)) * cos(radians(ys.lat)) * 
-           cos(radians(ys.lng) - radians(user_lng)) + 
-           sin(radians(user_lat)) * sin(radians(ys.lat))
-         ) <= max_distance_km)
-    AND (date_from IS NULL OR ys.start_at IS NULL OR ys.start_at >= date_from)
-    AND (date_to IS NULL OR ys.end_at IS NULL OR ys.end_at <= date_to)
-    AND (price_min IS NULL OR ys.price_min IS NULL OR ys.price_min >= price_min)
-    AND (price_max IS NULL OR ys.price_max IS NULL OR ys.price_max <= price_max)
-    AND (tags_filter IS NULL OR array_length(tags_filter, 1) IS NULL OR ys.tags && tags_filter)
+           cos(radians(p_user_lat)) * cos(radians(ys.lat)) * 
+           cos(radians(ys.lng) - radians(p_user_lng)) + 
+           sin(radians(p_user_lat)) * sin(radians(ys.lat))
+         ) <= p_max_distance_km)
+    AND (p_date_from IS NULL OR ys.start_at IS NULL OR ys.start_at >= p_date_from)
+    AND (p_date_to IS NULL OR ys.end_at IS NULL OR ys.end_at <= p_date_to)
+    AND (p_price_min IS NULL OR ys.price_min IS NULL OR ys.price_min >= p_price_min)
+    AND (p_price_max IS NULL OR ys.price_max IS NULL OR ys.price_max <= p_price_max)
+    AND (p_tags_filter IS NULL OR array_length(p_tags_filter, 1) IS NULL OR ys.tags && p_tags_filter)
   ORDER BY 
-    CASE WHEN user_lat IS NOT NULL AND user_lng IS NOT NULL AND ys.lat IS NOT NULL AND ys.lng IS NOT NULL
+    CASE WHEN p_user_lat IS NOT NULL AND p_user_lng IS NOT NULL AND ys.lat IS NOT NULL AND ys.lng IS NOT NULL
          THEN 6371 * acos(
-           cos(radians(user_lat)) * cos(radians(ys.lat)) * 
-           cos(radians(ys.lng) - radians(user_lng)) + 
-           sin(radians(user_lat)) * sin(radians(ys.lat))
+           cos(radians(p_user_lat)) * cos(radians(ys.lat)) * 
+           cos(radians(ys.lng) - radians(p_user_lng)) + 
+           sin(radians(p_user_lat)) * sin(radians(ys.lat))
          )
          ELSE 0
     END,
     ys.created_at DESC
-  LIMIT limit_count
-  OFFSET offset_count;
+  LIMIT p_limit_count
+  OFFSET p_offset_count;
 END;
 $$ LANGUAGE plpgsql;
