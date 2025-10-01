@@ -20,75 +20,100 @@ export async function GET(request: NextRequest) {
     // Log parameters to server console
     console.log(`[SALES] params lat=${lat}, lng=${lng}, distKm=${distanceKm}, dateRange=${dateRange}, cats=${categories?.join(',')}, q=${q}, limit=${limit}, offset=${offset}`)
     
-    // Build query
-    let query = supabase
-      .from(T.sales)
-      .select('*')
-      .eq('status', 'published')
-      .order('created_at', { ascending: false })
-      .limit(limit)
-      .range(offset, offset + limit - 1)
-    
-    // Apply filters
-    if (lat && lng && distanceKm) {
-      // Simple distance filtering (rough approximation)
-      const latRange = distanceKm / 111 // 1 degree ≈ 111 km
-      const lngRange = distanceKm / (111 * Math.cos(lat * Math.PI / 180)) // Adjust for latitude
-      query = query
-        .gte('lat', lat - latRange)
-        .lte('lat', lat + latRange)
-        .gte('lng', lng - lngRange)
-        .lte('lng', lng + lngRange)
-    }
-    
-    if (dateRange && dateRange !== 'any') {
-      const today = new Date()
-      const todayStr = today.toISOString().split('T')[0]
-      
-      if (dateRange === 'today') {
-        query = query.eq('date_start', todayStr)
-      } else if (dateRange === 'weekend') {
-        const dayOfWeek = today.getDay()
-        const daysUntilSaturday = (6 - dayOfWeek) % 7
-        const daysUntilSunday = (7 - dayOfWeek) % 7
-        
-        const saturday = new Date(today)
-        saturday.setDate(today.getDate() + daysUntilSaturday)
-        
-        const sunday = new Date(today)
-        sunday.setDate(today.getDate() + daysUntilSunday)
-        
-        query = query
-          .gte('date_start', saturday.toISOString().split('T')[0])
-          .lte('date_start', sunday.toISOString().split('T')[0])
+    // Helper: baseline query to avoid hard-fail (degraded mode)
+    async function runBaseline() {
+      const { data, error: baseErr } = await supabase
+        .from(T.sales)
+        .select('id,title,city,state,lat,lng,date_start,time_start,date_end,time_end,tags')
+        .eq('status', 'published')
+        .order('date_start', { ascending: true })
+        .limit(24)
+      if (baseErr) {
+        console.log(`[SALES][ERROR][BASELINE] code=${baseErr.code}, message=${baseErr.message}, details=${baseErr.details}, hint=${baseErr.hint}`)
+        return NextResponse.json({ ok: false, error: 'Database query failed' }, { status: 500 })
       }
+      const mapped = (data || []).map((row: any) => {
+        const starts_at = `${row.date_start}T${row.time_start ?? '08:00'}:00`
+        const ends_at = row.date_end ? `${row.date_end}T${row.time_end ?? '12:00'}:00` : null
+        return {
+          id: row.id,
+          title: row.title,
+          city: row.city,
+          state: row.state,
+          latitude: row.lat,
+          longitude: row.lng,
+          starts_at,
+          ends_at,
+          categories: row.tags || [],
+          cover_image_url: null,
+        }
+      })
+      return NextResponse.json({ ok: true, degraded: true, count: mapped.length, data: mapped })
     }
-    
-    if (categories && categories.length > 0) {
-      query = query.overlaps('tags', categories)
+
+    try {
+      // Build advanced query with filters
+      let query = supabase
+        .from(T.sales)
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+        .range(offset, offset + limit - 1)
+
+      // Apply filters
+      if (lat && lng && distanceKm) {
+        const latRange = distanceKm / 111 // 1 degree ≈ 111 km
+        const lngRange = distanceKm / (111 * Math.cos(lat * Math.PI / 180)) // Adjust for latitude
+        query = query
+          .gte('lat', lat - latRange)
+          .lte('lat', lat + latRange)
+          .gte('lng', lng - lngRange)
+          .lte('lng', lng + lngRange)
+      }
+
+      if (dateRange && dateRange !== 'any') {
+        const today = new Date()
+        const todayStr = today.toISOString().split('T')[0]
+
+        if (dateRange === 'today') {
+          query = query.eq('date_start', todayStr)
+        } else if (dateRange === 'weekend') {
+          const dayOfWeek = today.getDay()
+          const daysUntilSaturday = (6 - dayOfWeek) % 7
+          const daysUntilSunday = (7 - dayOfWeek) % 7
+
+          const saturday = new Date(today)
+          saturday.setDate(today.getDate() + daysUntilSaturday)
+
+          const sunday = new Date(today)
+          sunday.setDate(today.getDate() + daysUntilSunday)
+
+          query = query
+            .gte('date_start', saturday.toISOString().split('T')[0])
+            .lte('date_start', sunday.toISOString().split('T')[0])
+        }
+      }
+
+      if (categories && categories.length > 0) {
+        query = query.overlaps('tags', categories)
+      }
+
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
+      }
+
+      const { data: sales, error } = await query
+      if (error) {
+        console.log(`[SALES][ERROR] code=${error.code}, message=${error.message}, details=${error.details}, hint=${error.hint}`)
+        return await runBaseline()
+      }
+
+      return NextResponse.json({ ok: true, degraded: false, count: sales?.length || 0, data: sales || [] })
+    } catch (advErr: any) {
+      console.log(`[SALES][ERROR][ADVANCED] ${advErr?.message || advErr}`)
+      return await runBaseline()
     }
-    
-    if (q) {
-      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
-    }
-    
-    // Execute query
-    const { data: sales, error } = await query
-    
-    if (error) {
-      // Log Supabase error details
-      console.log(`[SALES][ERROR] code=${error.code}, message=${error.message}, details=${error.details}, hint=${error.hint}`)
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Database query failed' 
-      }, { status: 500 })
-    }
-    
-    return NextResponse.json({ 
-      ok: true, 
-      count: sales?.length || 0, 
-      data: sales || [] 
-    })
     
   } catch (error: any) {
     console.log(`[SALES][ERROR] Unexpected error: ${error?.message || error}`)
