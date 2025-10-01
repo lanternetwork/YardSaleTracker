@@ -114,6 +114,22 @@ jobs:
         
     - name: Install project dependencies
       run: npm install
+
+      - name: Discover Vitest tests
+        run: |
+          set -e
+          echo "Enabling pnpm via corepack for discovery only"
+          corepack enable || true
+          corepack prepare pnpm@8.15.8 --activate || true
+          pnpm -v || echo "pnpm not available; attempting to proceed"
+          echo "Listing Vitest test files..."
+          pnpm vitest --list | tee vitest-discovery.log || true
+          total=$(wc -l < vitest-discovery.log | xargs || echo 0)
+          echo "Vitest discovered files: $total"
+          if [ "${total}" = "0" ]; then
+            echo "No unit tests discovered"
+            exit 1
+          fi
       
     - name: Run Vitest unit tests with verbose reporter
       run: npm run test -- --reporter=verbose 2>&1 | tee vitest.log
@@ -149,6 +165,19 @@ jobs:
       
     - name: Install Playwright browser dependencies
       run: npx playwright install --with-deps
+
+      - name: Discover Playwright tests
+        run: |
+          set -e
+          echo "Listing Playwright tests..."
+          npx playwright test --list | tee playwright-discovery.log || true
+          tests=$(grep -E "^\s*\-\s" playwright-discovery.log | wc -l | xargs || echo 0)
+          projects=$(grep -E "^Project " playwright-discovery.log | wc -l | xargs || echo 0)
+          echo "Playwright discovered tests: ${tests}"
+          echo "Playwright discovered projects: ${projects}"
+          if [ "${tests}" = "0" ]; then
+            echo "::warning::No E2E tests discovered"
+          fi
       
     - name: Run Playwright E2E smoke tests with list reporter
       run: npm run test:e2e -- --reporter=list 2>&1 | tee playwright.log
