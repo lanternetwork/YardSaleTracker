@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
 
     // Create admin client that bypasses RLS
     const supabase = createClient(url, serviceKey, {
-      auth: { persistSession: false }
+      auth: { persistSession: false },
+      db: { schema: 'lootaura_v2' }
     })
 
     console.log('🌱 Starting direct database seed...')

@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
           cookies().set({ name, value: '', ...options, maxAge: 0 })
         },
       },
-      db: { schema: 'public' }, // Force public schema
+      db: { schema: 'lootaura_v2' }, // Use lootaura_v2 schema
     })
     
     const { searchParams } = new URL(request.url)
     
-    console.log(`[SALES] Using forced public schema`)
+    console.log(`[SALES] Using lootaura_v2 schema`)
     
     // Parse inputs explicitly
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
           cookies().set({ name, value: '', ...options, maxAge: 0 })
         },
       },
-      db: { schema: 'public' }, // Force public schema
+      db: { schema: 'lootaura_v2' }, // Use lootaura_v2 schema
     })
     
     const body = await request.json()
