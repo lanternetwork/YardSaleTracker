@@ -1,199 +1,133 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+'use client'
+import { useState, useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createSupabaseBrowser } from '@/lib/supabase/client'
-import { Profile } from '@/lib/types'
-import { ProfileSchema } from '@/lib/zodSchemas'
-
-const sb = createSupabaseBrowser()
 
 export function useAuth() {
-  return useQuery({
-    queryKey: ['auth'],
-    queryFn: async () => {
-      const { data: { user }, error } = await sb.auth.getUser()
-      if (error) {
-        throw new Error(error.message)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowser()
+    
+    // Get initial session
+    supabase.auth.getUser().then(({ data }: { data: { user: any } }) => {
+      setUser(data.user)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event: any, session: any) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
       }
-      return user
-    },
-  })
-}
+    )
 
-export function useProfile() {
-  const { data: user } = useAuth()
-  
-  return useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      if (!user) return null
+    return () => subscription.unsubscribe()
+  }, [])
 
-      const { data, error } = await sb
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') { // Not found error
-        throw new Error(error.message)
-      }
-
-      return data as Profile | null
-    },
-    enabled: !!user,
-  })
-}
-
-export function useUpdateProfile() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (profileData: Partial<Profile>) => {
-      const { data: { user } } = await sb.auth.getUser()
-      if (!user) {
-        throw new Error('Not authenticated')
-      }
-
-      const parsed = ProfileSchema.partial().safeParse(profileData)
-      if (!parsed.success) {
-        throw new Error('Invalid profile data')
-      }
-
-      const { data, error } = await sb
-        .from('profiles')
-        .upsert({ id: user.id, ...parsed.data })
-        .select()
-        .single()
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data as Profile
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
-    },
-  })
+  return {
+    user,
+    loading,
+    isAuthenticated: !!user,
+    data: user,
+    isLoading: loading
+  }
 }
 
 export function useSignIn() {
+  const supabase = createSupabaseBrowser()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const { data, error } = await sb.auth.signInWithPassword({
+    mutationFn: async ({ email, password }: { email: string, password: string }) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
+      if (error) throw error
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth'] })
-      queryClient.invalidateQueries({ queryKey: ['profile'] })
-    },
+      queryClient.invalidateQueries({ queryKey: ['authSession'] })
+    }
   })
 }
 
 export function useSignUp() {
-  const queryClient = useQueryClient()
+  const supabase = createSupabaseBrowser()
 
   return useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const { data, error } = await sb.auth.signUp({
+    mutationFn: async ({ email, password }: { email: string, password: string }) => {
+      const { data, error } = await supabase.auth.signUp({
         email,
         password
       })
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
+      if (error) throw error
       return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth'] })
-    },
+    }
   })
 }
 
 export function useSignOut() {
+  const supabase = createSupabaseBrowser()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async () => {
-      const { error } = await sb.auth.signOut()
-      if (error) {
-        throw new Error(error.message)
-      }
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
     },
     onSuccess: () => {
-      queryClient.clear()
-    },
+      queryClient.invalidateQueries({ queryKey: ['authSession'] })
+    }
   })
 }
 
-export function useFavorites() {
+export function useProfile() {
+  const supabase = createSupabaseBrowser()
   const { data: user } = useAuth()
-  
+
   return useQuery({
-    queryKey: ['favorites', user?.id],
+    queryKey: ['profile', user?.id],
     queryFn: async () => {
-      if (!user) return []
-
-      const { data, error } = await sb
-        .from('favorites')
-        .select(`
-          sale_id,
-          yard_sales (*)
-        `)
-        .eq('user_id', user.id)
-
-      if (error) {
-        throw new Error(error.message)
-      }
-
-      return data?.map(fav => fav.yard_sales).filter(Boolean) || []
+      if (!user) return null
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      if (error) throw error
+      return data
     },
     enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
 
-export function useToggleFavorite() {
+export function useUpdateProfile() {
+  const supabase = createSupabaseBrowser()
   const queryClient = useQueryClient()
   const { data: user } = useAuth()
 
   return useMutation({
-    mutationFn: async ({ saleId, isFavorited }: { saleId: string; isFavorited: boolean }) => {
-      if (!user) {
-        throw new Error('Please sign in to save favorites')
-      }
-
-      if (isFavorited) {
-        const { error } = await sb
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('sale_id', saleId)
-
-        if (error) {
-          throw new Error(error.message)
-        }
-      } else {
-        const { error } = await sb
-          .from('favorites')
-          .insert({ user_id: user.id, sale_id: saleId })
-
-        if (error) {
-          throw new Error(error.message)
-        }
-      }
+    mutationFn: async (updates: { display_name?: string, avatar_url?: string }) => {
+      if (!user) throw new Error('User not authenticated')
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites'] })
-    },
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] })
+    }
   })
 }
+
+// Re-export favorites hooks for convenience
+export { useFavorites, useToggleFavorite } from './useFavorites'

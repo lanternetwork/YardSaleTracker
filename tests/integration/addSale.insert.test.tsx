@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMockSupabaseClient } from '@/tests/utils/mocks'
-import { useCreateSale } from '@/lib/hooks/useSales'
+import { useCreateSale, useSales } from '@/lib/hooks/useSales'
 import Explore from '@/app/(app)/explore/page'
 import { getAddressFixtures } from '@/tests/utils/mocks'
+import { geocodeAddress } from '@/lib/geocode'
 
 // Mock the hooks
 vi.mock('@/lib/hooks/useSales', () => ({
@@ -14,7 +15,7 @@ vi.mock('@/lib/hooks/useSales', () => ({
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams('?tab=add'),
+  useSearchParams: vi.fn(() => new URLSearchParams('?tab=add')),
   useRouter: () => ({ push: vi.fn() })
 }))
 
@@ -67,7 +68,7 @@ describe('Add Sale Integration', () => {
       error: null
     }
 
-    vi.mocked(useCreateSale).mockReturnValue(mockCreateSale)
+    vi.mocked(useCreateSale).mockReturnValue(mockCreateSale as any)
   })
 
   it('should insert sale with geocoded coordinates', async () => {
@@ -92,7 +93,7 @@ describe('Add Sale Integration', () => {
       data: [createdSale],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -108,7 +109,8 @@ describe('Add Sale Integration', () => {
 
   it('should handle geocoding failure gracefully', async () => {
     // Mock geocoding to fail
-    vi.mocked(require('@/lib/geocode').geocodeAddress).mockResolvedValue(null)
+    const { geocodeAddress } = await import('@/lib/geocode')
+    vi.mocked(geocodeAddress).mockResolvedValue(null)
 
     mockCreateSale.mutateAsync.mockResolvedValue({
       id: 'sale-123',
@@ -120,10 +122,16 @@ describe('Add Sale Integration', () => {
     })
 
     vi.mocked(useSales).mockReturnValue({
-      data: [],
+      data: [] as any,
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isPending: false,
+      isLoadingError: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      status: 'success'
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -144,7 +152,7 @@ describe('Add Sale Integration', () => {
       data: [],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -167,7 +175,7 @@ describe('Add Sale Integration', () => {
       data: [],
       isLoading: false,
       error: null
-    })
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -184,10 +192,16 @@ describe('Add Sale Integration', () => {
     mockCreateSale.mutateAsync.mockRejectedValue(new Error(errorMessage))
 
     vi.mocked(useSales).mockReturnValue({
-      data: [],
+      data: [] as any,
       isLoading: false,
-      error: null
-    })
+      error: null,
+      isError: false,
+      isPending: false,
+      isLoadingError: false,
+      isRefetchError: false,
+      refetch: vi.fn(),
+      status: 'success'
+    } as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -255,7 +269,11 @@ describe('Add Sale Integration', () => {
       data: [createdSale],
       isLoading: false,
       error: null
-    })
+    } as any)
+
+    // Mock navigation to show list view
+    const { useSearchParams } = await import('next/navigation')
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams('?tab=list') as any)
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -266,6 +284,6 @@ describe('Add Sale Integration', () => {
     // The new sale should appear in the list
     await waitFor(() => {
       expect(screen.getByText('Test Sale')).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
   })
 })

@@ -1,17 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import FavoriteButton from '@/components/FavoriteButton'
+import FavoriteButton from '../../components/FavoriteButton'
+import { useFavorites, useToggleFavorite } from '../../lib/hooks/useFavorites'
 
 // Mock the auth hooks
-vi.mock('@/lib/hooks/useAuth', () => ({
-  useFavorites: () => ({
-    data: []
-  }),
-  useToggleFavorite: () => ({
-    mutate: vi.fn(),
-    isPending: false
-  })
+vi.mock('../../lib/hooks/useFavorites', () => ({
+  useFavorites: vi.fn(),
+  useToggleFavorite: vi.fn()
 }))
 
 const createTestQueryClient = () => new QueryClient({
@@ -32,6 +28,23 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
 
 describe('FavoriteButton', () => {
   it('renders save button when not favorited', () => {
+    vi.mocked(useFavorites).mockReturnValue({
+      data: [],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      status: 'success',
+      fetchStatus: 'idle',
+      refetch: vi.fn(),
+      remove: vi.fn()
+    } as any)
+    vi.mocked(useToggleFavorite).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false
+    })
+
     render(
       <TestWrapper>
         <FavoriteButton saleId="test-sale-id" />
@@ -41,10 +54,23 @@ describe('FavoriteButton', () => {
     expect(screen.getByText('♡ Save')).toBeInTheDocument()
   })
 
-  it('renders saved button when favorited', () => {
+  it('renders saved button when favorited', async () => {
     // Mock the hook to return a favorited sale
-    vi.mocked(require('@/lib/hooks/useAuth').useFavorites).mockReturnValue({
-      data: [{ id: 'test-sale-id', title: 'Test Sale' }]
+    vi.mocked(useFavorites).mockReturnValue({
+      data: [{ id: 'test-sale-id', title: 'Test Sale' }],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      status: 'success',
+      fetchStatus: 'idle',
+      refetch: vi.fn(),
+      remove: vi.fn()
+    } as any)
+    vi.mocked(useToggleFavorite).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false
     })
 
     render(
@@ -53,12 +79,25 @@ describe('FavoriteButton', () => {
       </TestWrapper>
     )
 
+    // The component should immediately show the favorited state
     expect(screen.getByText('♥ Saved')).toBeInTheDocument()
   })
 
   it('calls toggle function when clicked', async () => {
     const mockToggle = vi.fn()
-    vi.mocked(require('@/lib/hooks/useAuth').useToggleFavorite).mockReturnValue({
+    vi.mocked(useFavorites).mockReturnValue({
+      data: [],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      status: 'success',
+      fetchStatus: 'idle',
+      refetch: vi.fn(),
+      remove: vi.fn()
+    } as any)
+    vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: mockToggle,
       isPending: false
     })
@@ -79,7 +118,19 @@ describe('FavoriteButton', () => {
   })
 
   it('shows loading state when pending', () => {
-    vi.mocked(require('@/lib/hooks/useAuth').useToggleFavorite).mockReturnValue({
+    vi.mocked(useFavorites).mockReturnValue({
+      data: [],
+      isError: false,
+      error: null,
+      isPending: false,
+      isLoading: false,
+      isSuccess: true,
+      status: 'success',
+      fetchStatus: 'idle',
+      refetch: vi.fn(),
+      remove: vi.fn()
+    } as any)
+    vi.mocked(useToggleFavorite).mockReturnValue({
       mutate: vi.fn(),
       isPending: true
     })

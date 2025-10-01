@@ -27,7 +27,7 @@ export function parseCSV(csvText: string): CSVRow[] {
     const values = parseCSVLine(lines[i])
     if (values.length !== headers.length) continue
 
-    const row: CSVRow = {}
+    const row: CSVRow = { title: '' }
     headers.forEach((header, index) => {
       const value = values[index]?.trim().replace(/"/g, '')
       if (value) {

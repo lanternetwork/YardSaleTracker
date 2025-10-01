@@ -199,6 +199,60 @@ export function mockNominatimFetch() {
 export function createMockSupabaseClient() {
   const mockSales: any[] = []
   let nextId = 1
+  const tableCache: Record<string, any> = {}
+
+  function getYardSalesAPI() {
+    if (tableCache['yard_sales']) return tableCache['yard_sales']
+    let updateSpy: any = null
+    let deleteSpy: any = null
+    let lastPromise: Promise<any> | null = null
+    const chain = () => ({
+      eq: vi.fn(() => chain()),
+      then: (resolve: any, reject?: any) => (lastPromise || Promise.resolve({ data: mockSales.slice(), error: null })).then(resolve, reject),
+    })
+    const api: any = {
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockImplementation((data: any[]) => {
+        const newSale = {
+          id: `sale-${nextId++}`,
+          ...data[0],
+          owner_id: 'test-user-id',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        mockSales.push(newSale)
+        const res = {
+          data: [newSale],
+          error: null
+        }
+        lastPromise = Promise.resolve(res)
+        return res
+      }),
+      get update() {
+        return (...args: any[]) => {
+          if (typeof updateSpy === 'function') lastPromise = Promise.resolve(updateSpy(...args))
+          return chain()
+        }
+      },
+      set update(fn: any) { updateSpy = fn },
+      get delete() {
+        return (...args: any[]) => {
+          if (typeof deleteSpy === 'function') lastPromise = Promise.resolve(deleteSpy(...args))
+          return chain()
+        }
+      },
+      set delete(fn: any) { deleteSpy = fn },
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockImplementation(() => {
+        return {
+          data: mockSales[0] || null,
+          error: null
+        }
+      })
+    }
+    tableCache['yard_sales'] = api
+    return api
+  }
 
   return {
     auth: {
@@ -210,54 +264,29 @@ export function createMockSupabaseClient() {
       signOut: vi.fn()
     },
     from: (table: string) => {
-      if (table === 'yard_sales') {
-        return {
+      if (!tableCache[table]) {
+        tableCache[table] = table === 'yard_sales' ? getYardSalesAPI() : {
           select: vi.fn().mockReturnThis(),
-          insert: vi.fn().mockImplementation((data) => {
-            const newSale = {
-              id: `sale-${nextId++}`,
-              ...data[0],
-              owner_id: 'test-user-id',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-            mockSales.push(newSale)
-            return {
-              data: [newSale],
-              error: null
-            }
-          }),
+          insert: vi.fn().mockReturnThis(),
           update: vi.fn().mockReturnThis(),
           delete: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
-          single: vi.fn().mockImplementation(() => {
-            return {
-              data: mockSales[0] || null,
-              error: null
-            }
-          })
+          single: vi.fn().mockResolvedValue({ data: null, error: null })
         }
       }
-      return {
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: null })
-      }
+      return tableCache[table]
     },
     rpc: vi.fn().mockImplementation((functionName: string, params: any) => {
       if (functionName === 'search_sales') {
         return {
           data: mockSales,
           error: null
-        }
+        } as any
       }
       return {
         data: [],
         error: null
-      }
+      } as any
     })
   }
 }
