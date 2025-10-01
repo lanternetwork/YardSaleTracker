@@ -17,9 +17,17 @@ interface SalesPageProps {
   }
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function SalesPage({ searchParams }: SalesPageProps) {
   const supabase = createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  let user: any = null
+  try {
+    const res = await supabase.auth.getUser()
+    user = res.data.user
+  } catch {
+    user = null
+  }
 
   // Parse search parameters
   const lat = searchParams.lat ? parseFloat(searchParams.lat) : undefined
@@ -30,15 +38,21 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   const pageSize = searchParams.pageSize ? parseInt(searchParams.pageSize) : 50
 
   // Fetch initial sales data
-  const initialSales = await getSales({
-    lat,
-    lng,
-    distanceKm,
-    city,
-    categories,
-    limit: pageSize,
-    offset: 0
-  })
+  let initialSales = [] as Awaited<ReturnType<typeof getSales>>
+  try {
+    initialSales = await getSales({
+      lat,
+      lng,
+      distanceKm,
+      city,
+      categories,
+      limit: pageSize,
+      offset: 0
+    })
+  } catch (err) {
+    console.error('Sales page initial fetch failed:', err)
+    initialSales = []
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
