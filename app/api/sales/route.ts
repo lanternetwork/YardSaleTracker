@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     
     // Helper: baseline query to avoid hard-fail (degraded mode)
     async function runBaseline() {
+      console.log(`[SALES][BASELINE] Attempting simple query on table: ${T.sales}`)
       const { data, error: baseErr } = await supabase
         .from(T.sales)
         .select('id,title,city,state,lat,lng,date_start,time_start,date_end,time_end,tags')
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
         .limit(24)
       if (baseErr) {
         console.log(`[SALES][ERROR][BASELINE] code=${baseErr.code}, message=${baseErr.message}, details=${baseErr.details}, hint=${baseErr.hint}`)
-        return NextResponse.json({ ok: false, error: 'Database query failed' }, { status: 500 })
+        return NextResponse.json({ ok: false, error: 'Database query failed', debug: { code: baseErr.code, message: baseErr.message } }, { status: 500 })
       }
       const mapped = (data || []).map((row: any) => {
         const starts_at = `${row.date_start}T${row.time_start ?? '08:00'}:00`
