@@ -16,8 +16,7 @@ export async function POST(request: NextRequest) {
 
     // Create admin client that bypasses RLS
     const supabase = createClient(url, serviceKey, {
-      auth: { persistSession: false },
-      db: { schema: 'lootaura_v2' }
+      auth: { persistSession: false }
     })
 
     console.log('🌱 Starting public database seed...')
@@ -31,11 +30,11 @@ export async function POST(request: NextRequest) {
       try {
         // Check if sale already exists
         const { data: existing } = await supabase
-          .from('sales')
+          .from('yard_sales')
           .select('id')
           .eq('owner_id', seed.seller_id)
           .ilike('title', seed.title)
-          .eq('date_start', seed.starts_at.split('T')[0])
+          .eq('start_at', seed.starts_at)
           .limit(1)
           .maybeSingle()
 
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
 
         // Insert sale
         const { data: sale, error: saleError } = await supabase
-          .from('sales')
+          .from('yard_sales')
           .insert({
             owner_id: seed.seller_id,
             title: seed.title,
@@ -55,16 +54,13 @@ export async function POST(request: NextRequest) {
             address: seed.address || null,
             city: seed.city,
             state: seed.state,
-            zip_code: null,
+            zip: null,
             lat: seed.lat,
             lng: seed.lng,
-            date_start: seed.starts_at.split('T')[0],
-            time_start: seed.starts_at.split('T')[1]?.slice(0,5) || '08:00',
-            date_end: seed.ends_at.split('T')[0],
-            time_end: seed.ends_at.split('T')[1]?.slice(0,5) || '12:00',
-            status: 'published',
-            privacy_mode: 'exact',
-            is_featured: false,
+            start_at: seed.starts_at,
+            end_at: seed.ends_at,
+            status: 'active',
+            source: 'manual',
           })
           .select('id')
           .single()
@@ -79,16 +75,15 @@ export async function POST(request: NextRequest) {
         // Insert items
         for (const item of seed.items) {
           const { error: itemError } = await supabase
-            .from('items')
+            .from('sale_items')
             .insert({
               sale_id: sale.id,
               name: item.name,
-              description: null,
-              price: Math.round(item.price * 100), // Convert to cents
               category: null,
               condition: null,
-              images: [],
-              is_sold: false,
+              price: item.price,
+              photo: null,
+              purchased: false,
             })
 
           if (itemError) {

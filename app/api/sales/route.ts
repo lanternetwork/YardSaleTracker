@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
           cookies().set({ name, value: '', ...options, maxAge: 0 })
         },
       },
-      db: { schema: 'lootaura_v2' }, // Use lootaura_v2 schema
+      // Use default public schema
     })
     
     const { searchParams } = new URL(request.url)
     
-    console.log(`[SALES] Using lootaura_v2 schema`)
+    console.log(`[SALES] Using public schema`)
     
     // Parse inputs explicitly
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
@@ -50,20 +50,18 @@ export async function GET(request: NextRequest) {
     // Helper: baseline query to avoid hard-fail (degraded mode)
     async function runBaseline() {
       console.log(`[SALES][BASELINE] Attempting simple query on table: ${T.sales}`)
-      // Force use of public schema by using direct table name
+      // Use yard_sales table in public schema
       const { data, error: baseErr } = await supabase
-        .from('sales')
-        .select('id,title,city,state,lat,lng,date_start,time_start,date_end,time_end,tags')
-        .eq('status', 'published')
-        .order('date_start', { ascending: true })
+        .from('yard_sales')
+        .select('id,title,city,state,lat,lng,start_at,end_at,tags')
+        .eq('status', 'active')
+        .order('start_at', { ascending: true })
         .limit(24)
       if (baseErr) {
         console.log(`[SALES][ERROR][BASELINE] code=${baseErr.code}, message=${baseErr.message}, details=${baseErr.details}, hint=${baseErr.hint}`)
         return NextResponse.json({ ok: false, error: 'Database query failed', debug: { code: baseErr.code, message: baseErr.message } }, { status: 500 })
       }
       const mapped = (data || []).map((row: any) => {
-        const starts_at = `${row.date_start}T${row.time_start ?? '08:00'}:00`
-        const ends_at = row.date_end ? `${row.date_end}T${row.time_end ?? '12:00'}:00` : null
         return {
           id: row.id,
           title: row.title,
@@ -71,8 +69,8 @@ export async function GET(request: NextRequest) {
           state: row.state,
           latitude: row.lat,
           longitude: row.lng,
-          starts_at,
-          ends_at,
+          starts_at: row.start_at,
+          ends_at: row.end_at,
           categories: row.tags || [],
           cover_image_url: null,
         }
@@ -83,9 +81,9 @@ export async function GET(request: NextRequest) {
     try {
       // Build advanced query with filters
       let query = supabase
-        .from('sales')
+        .from('yard_sales')
         .select('*')
-        .eq('status', 'published')
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(limit)
         .range(offset, offset + limit - 1)
@@ -104,23 +102,23 @@ export async function GET(request: NextRequest) {
       if (dateRange && dateRange !== 'any') {
         const today = new Date()
         const todayStr = today.toISOString().split('T')[0]
-
+        
         if (dateRange === 'today') {
-          query = query.eq('date_start', todayStr)
+          query = query.gte('start_at', `${todayStr}T00:00:00Z`).lt('start_at', `${todayStr}T23:59:59Z`)
         } else if (dateRange === 'weekend') {
           const dayOfWeek = today.getDay()
           const daysUntilSaturday = (6 - dayOfWeek) % 7
           const daysUntilSunday = (7 - dayOfWeek) % 7
-
+          
           const saturday = new Date(today)
           saturday.setDate(today.getDate() + daysUntilSaturday)
-
+          
           const sunday = new Date(today)
           sunday.setDate(today.getDate() + daysUntilSunday)
-
+          
           query = query
-            .gte('date_start', saturday.toISOString().split('T')[0])
-            .lte('date_start', sunday.toISOString().split('T')[0])
+            .gte('start_at', saturday.toISOString().split('T')[0])
+            .lte('start_at', sunday.toISOString().split('T')[0])
         }
       }
 
@@ -178,7 +176,7 @@ export async function POST(request: NextRequest) {
           cookies().set({ name, value: '', ...options, maxAge: 0 })
         },
       },
-      db: { schema: 'lootaura_v2' }, // Use lootaura_v2 schema
+      // Use default public schema
     })
     
     const body = await request.json()
@@ -195,7 +193,7 @@ export async function POST(request: NextRequest) {
     console.log(`[SALES][POST] Creating sale for user ${user.id}`)
     
     const { data: sale, error } = await supabase
-      .from('sales')
+      .from('yard_sales')
       .insert({
         owner_id: user.id,
         title: body.title,
@@ -203,15 +201,13 @@ export async function POST(request: NextRequest) {
         address: body.address,
         city: body.city,
         state: body.state,
-        zip_code: body.zip_code,
+        zip: body.zip_code,
         lat: body.lat,
         lng: body.lng,
-        date_start: body.date_start,
-        time_start: body.time_start,
-        date_end: body.date_end,
-        time_end: body.time_end,
-        status: body.status || 'draft',
-        privacy_mode: body.privacy_mode || 'exact'
+        start_at: body.date_start ? `${body.date_start}T${body.time_start || '08:00'}:00Z` : null,
+        end_at: body.date_end ? `${body.date_end}T${body.time_end || '12:00'}:00Z` : null,
+        status: body.status || 'active',
+        source: 'user'
       })
       .select()
       .single()
