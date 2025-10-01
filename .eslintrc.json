@@ -5,10 +5,11 @@
     "es2022": true,
     "node": true
   },
-  "extends": ["eslint:recommended"],
+  "extends": ["eslint:recommended", "plugin:react/recommended"],
   "parserOptions": {
     "ecmaVersion": 2022,
-    "sourceType": "module"
+    "sourceType": "module",
+    "ecmaFeatures": { "jsx": true }
   },
   "ignorePatterns": [
     "node_modules/",
@@ -24,7 +25,8 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-  "rules": {}
+  "rules": {},
+  "settings": { "react": { "version": "detect" } }
 }
 
 
