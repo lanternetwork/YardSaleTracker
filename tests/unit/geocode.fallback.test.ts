@@ -31,7 +31,7 @@ describe('Geocoding Fallback', () => {
     const addresses = getAddressFixtures()
     const testAddress = addresses[0]
     
-    global.fetch = vi.fn()
+    const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: false,
         json: () => Promise.resolve({ error: 'Invalid API key' })
@@ -49,6 +49,8 @@ describe('Geocoding Fallback', () => {
           }
         }])
       })
+    
+    global.fetch = fetchMock
 
     const result = await geocodeAddress(testAddress.address)
     
@@ -60,13 +62,16 @@ describe('Geocoding Fallback', () => {
       state: testAddress.state,
       zip: testAddress.zip
     })
+    
+    // Verify fetch was called twice (Google first, then Nominatim)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('should return null when both Google and Nominatim fail', async () => {
     // Mock both APIs to fail
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = 'invalid-key'
     
-    global.fetch = vi.fn()
+    const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: false,
         json: () => Promise.resolve({ error: 'Invalid API key' })
@@ -75,10 +80,14 @@ describe('Geocoding Fallback', () => {
         ok: false,
         json: () => Promise.resolve({ error: 'Nominatim error' })
       })
+    
+    global.fetch = fetchMock
 
     const result = await geocodeAddress('Invalid Address That Should Fail')
     
     expect(result).toBeNull()
+    // Verify fetch was called twice (Google first, then Nominatim)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
   it('should use Google Maps when API key is valid', async () => {

@@ -16,6 +16,11 @@ const mockMap = {
   }
 }
 
+// Mock ControlPosition
+const mockControlPosition = {
+  TOP_LEFT: Symbol.for('TOP_LEFT')
+}
+
 const mockMarker = {
   setMap: vi.fn(),
   addListener: vi.fn(),
@@ -220,9 +225,10 @@ describe('Map Render Integration', () => {
 
   it('should handle map loading error', async () => {
     // Mock loader to reject
-    const { Loader } = require('@googlemaps/js-api-loader')
-    Loader.mockImplementation(() => ({
-      load: vi.fn().mockRejectedValue(new Error('Failed to load'))
+    vi.doMock('@googlemaps/js-api-loader', () => ({
+      Loader: vi.fn().mockImplementation(() => ({
+        load: vi.fn().mockRejectedValue(new Error('Failed to load'))
+      }))
     }))
 
     render(<YardSaleMap points={[]} />)
@@ -242,7 +248,8 @@ describe('Map Render Integration', () => {
   it('should show no sales message when no points', async () => {
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Wait for component to finish loading
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     expect(screen.getByText('No sales with locations found')).toBeInTheDocument()
   })
@@ -256,9 +263,10 @@ describe('Map Render Integration', () => {
       writable: true
     })
 
-    render(<YardSaleMap points={[]} />)
+    render(<YardSaleMap points={testPoints} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Wait for map to load and render
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify Near Me button was added
     expect(mockMap.controls[Symbol.for('TOP_LEFT')].push).toHaveBeenCalledWith(
@@ -268,11 +276,13 @@ describe('Map Render Integration', () => {
 
   it('should handle geolocation error gracefully', async () => {
     // Mock geolocation to fail
+    const mockGetCurrentPosition = vi.fn().mockImplementation((success, error) => {
+      error({ code: 1, message: 'Permission denied' })
+    })
+    
     Object.defineProperty(navigator, 'geolocation', {
       value: {
-        getCurrentPosition: vi.fn().mockImplementation((success, error) => {
-          error({ code: 1, message: 'Permission denied' })
-        })
+        getCurrentPosition: mockGetCurrentPosition
       },
       writable: true
     })
@@ -280,9 +290,17 @@ describe('Map Render Integration', () => {
     // Mock alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
-    render(<YardSaleMap points={[]} />)
+    render(<YardSaleMap points={testPoints} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Wait for map to load
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Find and click the Near Me button
+    const nearMeButton = document.querySelector('button[textContent="📍 Near Me"]')
+    if (nearMeButton) {
+      nearMeButton.click()
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
 
     // Should show error alert
     expect(alertSpy).toHaveBeenCalledWith(

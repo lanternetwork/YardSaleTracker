@@ -28,7 +28,10 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').insert = insertSpy
+    // Set up the mock chain
+    mockSupabase.from = vi.fn().mockReturnValue({
+      insert: insertSpy
+    })
 
     // Simulate the insert operation
     const { data, error } = await mockSupabase
@@ -75,7 +78,10 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').select = selectSpy
+    // Set up the mock chain
+    mockSupabase.from = vi.fn().mockReturnValue({
+      select: selectSpy
+    })
 
     // Simulate the select operation
     const { data, error } = await mockSupabase
@@ -102,7 +108,19 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').update = updateSpy
+    // Set up the mock chain
+    const mockUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnThis()
+    })
+    mockUpdate.eq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        update: updateSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      update: mockUpdate
+    })
 
     // Simulate the update operation
     const { data, error } = await mockSupabase
@@ -132,7 +150,19 @@ describe('RLS and Owner Permissions', () => {
       error: { message: 'new row violates row-level security policy' }
     })
 
-    mockSupabase.from('yard_sales').update = updateSpy
+    // Set up the mock chain
+    const mockUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnThis()
+    })
+    mockUpdate.eq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        update: updateSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      update: mockUpdate
+    })
 
     // Simulate the update operation
     const { data, error } = await mockSupabase
@@ -161,7 +191,19 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').delete = deleteSpy
+    // Set up the mock chain
+    const mockDelete = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnThis()
+    })
+    mockDelete.eq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        delete: deleteSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      delete: mockDelete
+    })
 
     // Simulate the delete operation
     const { data, error } = await mockSupabase
@@ -190,7 +232,19 @@ describe('RLS and Owner Permissions', () => {
       error: { message: 'new row violates row-level security policy' }
     })
 
-    mockSupabase.from('yard_sales').delete = deleteSpy
+    // Set up the mock chain
+    const mockDelete = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnThis()
+    })
+    mockDelete.eq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        delete: deleteSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      delete: mockDelete
+    })
 
     // Simulate the delete operation
     const { data, error } = await mockSupabase
