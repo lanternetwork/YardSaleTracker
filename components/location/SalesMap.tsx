@@ -5,6 +5,7 @@ import Map, { Marker, Popup } from 'react-map-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Sale } from '@/lib/types'
 import { formatLocation } from '@/lib/location/client'
+import { getMapboxToken } from '@/lib/maps/token'
 import { incMapLoad } from '@/lib/usageLogs'
 
 interface SalesMapProps {
@@ -65,10 +66,12 @@ export default function SalesMap({
     return `${displayHour}:${minutes} ${ampm}`
   }
 
-  if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
+  // Token via util for flexibility
+  const token = getMapboxToken()
+  if (!token) {
     return (
       <div className="h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-        <p className="text-gray-600">Mapbox token not configured</p>
+        <p className="text-gray-600">Mapbox token missing. Set NEXT_PUBLIC_MAPBOX_TOKEN in Vercel for this environment.</p>
       </div>
     )
   }
@@ -76,11 +79,11 @@ export default function SalesMap({
   return (
     <div className="h-96 w-full rounded-lg overflow-hidden">
       <Map
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+        mapboxAccessToken={token}
         initialViewState={viewState}
-        onMove={evt => setViewState(evt.viewState)}
+        onMove={(evt: any) => setViewState(evt.viewState)}
         style={{ width: '100%', height: '100%' }}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
+        mapStyle="mapbox://styles/mapbox/streets-v12"
       >
         {sales.map((sale) => (
           <Marker
