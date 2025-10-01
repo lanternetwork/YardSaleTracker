@@ -2,9 +2,19 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, pivot/property-pulse ]
+    branches:
+      - main
+      - develop
+      - pivot/property-pulse
+      - feat/**
+      - fix/**
+      - chore/**
+      - refactor/**
+      - hotfix/**
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
   workflow_dispatch:
 
 jobs:
