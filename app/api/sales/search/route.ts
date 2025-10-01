@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSales } from '@/lib/data/sales'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,10 +36,24 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ sales })
   } catch (error) {
-    console.error('Sales search error:', error)
-    return NextResponse.json(
-      { error: 'Failed to search sales' }, 
-      { status: 500 }
-    )
+    console.error('Sales search error (primary path):', error)
+    // Fallback: try a simple direct query without RPC or filters
+    try {
+      const supabase = createSupabaseServerClient()
+      const { data, error: dbError } = await supabase
+        .from(T.sales)
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (dbError) {
+        console.error('Sales search error (fallback query):', dbError)
+        return NextResponse.json({ error: 'Failed to search sales', detail: dbError.message }, { status: 500 })
+      }
+      return NextResponse.json({ sales: data || [] })
+    } catch (fallbackErr: any) {
+      console.error('Sales search error (fallback path):', fallbackErr)
+      return NextResponse.json({ error: 'Failed to search sales', detail: String(fallbackErr?.message || fallbackErr) }, { status: 500 })
+    }
   }
 }
