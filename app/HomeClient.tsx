@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Sale } from '@/lib/data'
+import { Sale } from '@/lib/types'
 import SalesMap from '@/components/location/SalesMap'
 import UseLocationButton from '@/components/location/UseLocationButton'
 import { useLocationSearch } from '@/lib/location/useLocation'

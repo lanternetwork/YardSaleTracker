@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Map, { Marker, Popup } from 'react-map-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { Sale } from '@/lib/data'
+import { Sale } from '@/lib/types'
 import { formatLocation } from '@/lib/location/client'
 
 interface SalesMapProps {

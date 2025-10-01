@@ -4,7 +4,6 @@ export * from './actions'
 
 // Re-export types for convenience
 export type {
-  Sale,
   Item,
   GetSalesParams,
   SaleInput,

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Sale, GetSalesParams, formatDistance } from '@/lib/data/sales'
+import { Sale } from '@/lib/types'
+import { GetSalesParams, formatDistance } from '@/lib/data/sales'
 import SalesMap from '@/components/location/SalesMap'
 import UseLocationButton from '@/components/location/UseLocationButton'
 import { useLocation } from '@/lib/location/useLocation'

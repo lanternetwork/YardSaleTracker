@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { T } from '@/lib/supabase/tables'
 import { z } from 'zod'
+import { Sale } from '@/lib/types'
 
 // Zod schemas for validation
 const SaleInputSchema = z.object({
@@ -45,29 +46,7 @@ const GetSalesParamsSchema = z.object({
 })
 
 // TypeScript types
-export type Sale = {
-  id: string
-  owner_id: string
-  title: string
-  description?: string
-  address?: string
-  city: string
-  state: string
-  zip_code?: string
-  lat?: number
-  lng?: number
-  date_start: string
-  time_start: string
-  date_end?: string
-  time_end?: string
-  price?: number
-  tags?: string[]
-  status: 'draft' | 'published' | 'completed' | 'cancelled'
-  privacy_mode: 'exact' | 'block_until_24h'
-  is_featured: boolean
-  created_at: string
-  updated_at: string
-}
+// Sale type is imported from @/lib/types
 
 export type Item = {
   id: string

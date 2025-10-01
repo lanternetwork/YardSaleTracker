@@ -272,7 +272,7 @@ export function enableMocks() {
 
   // Mock Supabase
   vi.mock('@/lib/supabase/client', () => ({
-    createSupabaseBrowser: () => createMockSupabaseClient()
+    createSupabaseBrowserClient: () => createMockSupabaseClient()
   }))
 
   // Mock geocoding

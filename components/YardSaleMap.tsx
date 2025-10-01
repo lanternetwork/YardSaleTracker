@@ -2,13 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader } from '@googlemaps/js-api-loader'
 import { logger } from '@/lib/log'
-
-type Marker = { 
-  id: string
-  title: string
-  lat: number
-  lng: number 
-}
+import { Marker } from '@/lib/types'
 
 export default function YardSaleMap({ points }: { points: Marker[] }) {
   const ref = useRef<HTMLDivElement>(null)

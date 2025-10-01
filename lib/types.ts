@@ -46,3 +46,10 @@ export type Favorite = {
   sale_id: string
   created_at?: string
 }
+
+export type Marker = {
+  id: string
+  title: string
+  lat: number
+  lng: number
+}
