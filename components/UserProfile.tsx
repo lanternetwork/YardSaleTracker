@@ -46,7 +46,7 @@ export default function UserProfile() {
   if (!user) {
     return (
       <a 
-        href="/signin" 
+        href="/auth/signin" 
         className="text-neutral-700 hover:text-amber-600 font-medium"
       >
         Sign In
