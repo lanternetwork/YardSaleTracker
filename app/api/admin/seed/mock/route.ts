@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { T } from '@/lib/supabase/tables'
-import { MOCK_SALES } from '@/lib/admin/mockSeed'
+import { SEED_DATA } from '@/lib/admin/seedDataset'
 
 function authOk(req: NextRequest): boolean {
   const token = process.env.SEED_TOKEN
@@ -23,19 +23,20 @@ export async function POST(req: NextRequest) {
   let itemsInserted = 0
   const errors: Array<{ title: string; message: string }> = []
 
-  for (const sale of MOCK_SALES) {
+  for (const seed of SEED_DATA) {
     try {
-      // Build dedupe key conditions
+      // Build dedupe key conditions based on: seller_id, lower(title), starts_at::date, rounded lat/lng
+      const startDate = seed.starts_at.split('T')[0]
       const { data: existing, error: existErr } = await supabase
         .from(T.sales)
         .select('id')
-        .eq('owner_id', sale.seller_id)
-        .ilike('title', sale.title)
-        .eq('date_start', sale.date_start)
-        .gte('lat', Number((sale.lat - 0.00005).toFixed(4)))
-        .lte('lat', Number((sale.lat + 0.00005).toFixed(4)))
-        .gte('lng', Number((sale.lng - 0.00005).toFixed(4)))
-        .lte('lng', Number((sale.lng + 0.00005).toFixed(4)))
+        .eq('owner_id', seed.seller_id)
+        .ilike('title', seed.title)
+        .eq('date_start', startDate)
+        .gte('lat', Number((seed.lat - 0.00005).toFixed(4)))
+        .lte('lat', Number((seed.lat + 0.00005).toFixed(4)))
+        .gte('lng', Number((seed.lng - 0.00005).toFixed(4)))
+        .lte('lng', Number((seed.lng + 0.00005).toFixed(4)))
         .limit(1)
         .maybeSingle()
 
@@ -51,19 +52,19 @@ export async function POST(req: NextRequest) {
       const { data: created, error: insErr } = await supabase
         .from(T.sales)
         .insert({
-          owner_id: sale.seller_id,
-          title: sale.title,
-          description: sale.description || null,
-          city: sale.city,
-          state: sale.state,
-          lat: sale.lat,
-          lng: sale.lng,
-          date_start: sale.date_start,
-          time_start: sale.time_start,
-          price: sale.price ?? 0,
-          is_featured: !!sale.is_featured,
+          owner_id: seed.seller_id,
+          title: seed.title,
+          description: null,
+          city: seed.city,
+          state: seed.state,
+          lat: seed.lat,
+          lng: seed.lng,
+          date_start: startDate,
+          time_start: seed.starts_at.split('T')[1]?.slice(0,5) || '08:00',
+          price: 0,
+          is_featured: false,
           status: 'published',
-          tags: sale.tags || [],
+          tags: seed.categories || [],
         })
         .select('id')
         .single()
@@ -75,22 +76,23 @@ export async function POST(req: NextRequest) {
       inserted += 1
 
       // Insert 2–3 items per sale
-      for (const item of sale.items.slice(0, 3)) {
+      for (const item of seed.items.slice(0, 3)) {
         const { error: itemErr } = await supabase
           .from(T.items)
           .insert({
             sale_id: created.id,
             name: item.name,
-            description: item.description || null,
-            price: item.price_cents ? Math.round(item.price_cents / 100) : null,
-            category: item.category || null,
-            condition: item.condition || null,
-            images: item.images || [],
+            description: null,
+            // Convert dollars to integer price if the schema expects numbers; using dollars here
+            price: Math.round(item.price),
+            category: null,
+            condition: null,
+            images: [],
           })
         if (!itemErr) itemsInserted += 1
       }
     } catch (e: any) {
-      errors.push({ title: sale.title, message: String(e?.message || e) })
+      errors.push({ title: seed.title, message: String(e?.message || e) })
     }
   }
 
