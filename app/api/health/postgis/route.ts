@@ -50,6 +50,15 @@ export async function GET() {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
+    // Handle missing environment variables gracefully
+    if (error instanceof Error && error.message.includes('is missing')) {
+      return NextResponse.json({
+        ok: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }, { status: 500 })
+    }
+    
     return NextResponse.json({
       ok: false,
       error: error instanceof Error ? error.message : 'Unknown PostGIS error',
