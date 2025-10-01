@@ -27,8 +27,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['react-virtuoso'],
   },
-  // Enable static optimization for better performance
-  output: 'standalone',
+  // Note: Avoid standalone output on Vercel to prevent traced file copy issues
   // Compress responses
   compress: true,
   // Enable SWC minification
