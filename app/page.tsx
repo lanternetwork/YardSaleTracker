@@ -1,23 +1,50 @@
 "use client"
 export const dynamic = 'force-dynamic'
 
-export default function Landing() {
+export default function Home() {
   return (
-    <main className="relative">
-      <section className="bg-cover bg-center" style={{backgroundImage:'url(/hero.jpg)'}}>
-        <div className="backdrop-brightness-75 py-24 text-center text-white">
-          <h1 className="text-5xl font-extrabold">Find Amazing <span className="text-amber-300">Yard Sale Treasures</span></h1>
-          <p className="mt-4 text-lg max-w-2xl mx-auto">Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!</p>
-          <div className="mt-8 flex justify-center gap-3">
-            <input aria-label="Enter city or zip" className="w-[480px] max-w-[90vw] rounded-lg px-4 py-3 text-neutral-900" placeholder="Enter your city or zip code" />
-            <a href="/explore" className="rounded-lg bg-amber-500 px-5 py-3 font-semibold">Find Sales</a>
-          </div>
-          <div className="mt-4 flex justify-center gap-4">
-            <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore#map">View Map</a>
-            <a className="rounded border px-4 py-2 bg-white/90 text-neutral-800" href="/explore#add">Post Your Sale</a>
+    <div className="min-h-screen bg-gray-50">
+      <section className="bg-gradient-to-b from-amber-50 to-gray-50 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="text-center">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900">
+              LootAura
+            </h1>
+            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+              Discover nearby yard sales and post your own. Find deals, declutter fast, and connect with local buyers.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href="/sales"
+                className="inline-flex items-center justify-center rounded-lg bg-amber-500 px-6 py-3 text-white font-semibold hover:bg-amber-600 transition"
+              >
+                Browse Sales
+              </a>
+              <a
+                href="/sell/new"
+                className="inline-flex items-center justify-center rounded-lg border border-amber-500 px-6 py-3 text-amber-700 bg-white font-semibold hover:bg-amber-50 transition"
+              >
+                Post Your Sale
+              </a>
+            </div>
           </div>
         </div>
       </section>
-    </main>
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <h2 className="text-xl font-semibold text-gray-900">Find Sales Near You</h2>
+            <p className="mt-2 text-gray-600">Explore listings with photos, details, and maps. Filter by distance and category.</p>
+            <a href="/sales" className="mt-4 inline-block text-amber-700 font-medium hover:underline">Start browsing →</a>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <h2 className="text-xl font-semibold text-gray-900">Post Your Sale</h2>
+            <p className="mt-2 text-gray-600">Create a listing with images and attract local buyers. It only takes a minute.</p>
+            <a href="/sell/new" className="mt-4 inline-block text-amber-700 font-medium hover:underline">Create a listing →</a>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }
