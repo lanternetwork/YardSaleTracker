@@ -7,11 +7,40 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.node-version.outputs.version }}
+      schema: ${{ steps.schema.outputs.value }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js 20
+      id: node-version
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Log environment information
+      id: schema
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        echo "NEXT_PUBLIC_SUPABASE_SCHEMA: ${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}"
+        echo "schema=${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}" >> $GITHUB_OUTPUT
+        
+    - name: Install project dependencies
+      run: npm install
+
+  build:
+    needs: setup
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
       
     - name: Setup Node.js 20
@@ -20,19 +49,15 @@ jobs:
         node-version: '20'
         cache: 'npm'
         
-    - name: Install dependencies
+    - name: Log environment information
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "NEXT_PUBLIC_SUPABASE_SCHEMA: ${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}"
+        
+    - name: Install project dependencies
       run: npm install
       
-    - name: Run type checking
-      run: npm run typecheck
-      
-    - name: Run linting
-      run: npm run lint
-      
-    - name: Run tests
-      run: npm run test
-      
-    - name: Build application
+    - name: Build Next.js application
       run: npm run build
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -42,12 +67,13 @@ jobs:
         NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
         NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
         NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-        
-  e2e:
+
+  typecheck:
+    needs: setup
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
       
     - name: Setup Node.js 20
@@ -56,14 +82,80 @@ jobs:
         node-version: '20'
         cache: 'npm'
         
-    - name: Install dependencies
+    - name: Log environment information
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "NEXT_PUBLIC_SUPABASE_SCHEMA: ${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}"
+        
+    - name: Install project dependencies
       run: npm install
       
-    - name: Install Playwright browsers
+    - name: Run TypeScript type checking
+      run: npm run typecheck
+      
+    - name: Run ESLint code linting
+      run: npm run lint
+
+  "Unit Tests":
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Log environment information
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "NEXT_PUBLIC_SUPABASE_SCHEMA: ${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}"
+        
+    - name: Install project dependencies
+      run: npm install
+      
+    - name: Run Vitest unit tests with verbose reporter
+      run: npm run test -- --reporter=verbose
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        NEXT_PUBLIC_SUPABASE_SCHEMA: ${{ secrets.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public' }}
+        NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+        NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
+        NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+        NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+
+  "E2E Smoke":
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Log environment information
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "NEXT_PUBLIC_SUPABASE_SCHEMA: ${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}"
+        
+    - name: Install project dependencies
+      run: npm install
+      
+    - name: Install Playwright browser dependencies
       run: npx playwright install --with-deps
       
-    - name: Run E2E tests
-      run: npm run test:e2e
+    - name: Run Playwright E2E smoke tests with list reporter
+      run: npm run test:e2e -- --reporter=list
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -74,12 +166,12 @@ jobs:
         NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
         
   deploy:
-    needs: [test, e2e]
+    needs: ["Unit Tests", "E2E Smoke"]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
       
     - name: Setup Node.js 20
@@ -88,10 +180,15 @@ jobs:
         node-version: '20'
         cache: 'npm'
         
-    - name: Install dependencies
+    - name: Log environment information
+      run: |
+        echo "Node.js version: $(node --version)"
+        echo "NEXT_PUBLIC_SUPABASE_SCHEMA: ${NEXT_PUBLIC_SUPABASE_SCHEMA:-public}"
+        
+    - name: Install project dependencies
       run: npm install
       
-    - name: Build application
+    - name: Build Next.js application for production
       run: npm run build
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
@@ -102,7 +199,7 @@ jobs:
         NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
         NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
         
-    - name: Deploy to Vercel
+    - name: Deploy application to Vercel production
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
