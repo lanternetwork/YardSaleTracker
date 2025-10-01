@@ -25,7 +25,11 @@
     "**/*.ts",
     "**/*.tsx"
   ],
-  "rules": {},
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_.*|^(reset)$", "ignoreRestSiblings": true }]
+  },
   "settings": { "react": { "version": "detect" } }
 }
 
