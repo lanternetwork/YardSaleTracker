@@ -1,4 +1,4 @@
-# YardSaleFinder - Complete Implementation Plan
+# LootAura - Complete Implementation Plan
 
 ## 🎯 Project Summary
 A production-grade mobile-first web app for browsing, mapping, posting, and planning yard/garage/estate sales with robust scraping, offline PWA capabilities, and cost-effective operation.
@@ -768,3 +768,14 @@ Canonical domain set to `https://lootaura.com` across environment configuration 
 ### Notes
 - No secrets committed; Supabase URLs and Google endpoints unchanged
 - Environment validation continues to enforce proper URL format
+
+## 📛 Repo Rename (Completed 2025-09-23)
+
+### Summary
+Renamed GitHub repository to `LootAura`. Updated project branding and references; no functional changes.
+
+### Details
+- New repo path: `<owner>/LootAura`
+- Files updated: README, plan.md, public/manifest.json, app/layout.tsx, lib/metadata.ts
+- CI references verified to use `main`. Badges should point to the new path.
+- No secrets or deployment settings changed.
