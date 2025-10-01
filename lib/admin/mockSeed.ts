@@ -22,6 +22,8 @@ export type MockSale = {
 }
 
 // Small, realistic dataset (server-only)
+import { CATEGORIES } from '@/lib/data/categories'
+
 export const MOCK_SALES: MockSale[] = [
   {
     title: 'Neighborhood Multi-Family Sale',
@@ -36,7 +38,7 @@ export const MOCK_SALES: MockSale[] = [
     price: 0,
     is_featured: true,
     seller_id: '00000000-0000-0000-0000-000000000001',
-    tags: ['toys','furniture','electronics'],
+    tags: [CATEGORIES[0], CATEGORIES[1], CATEGORIES[14]],
     items: [
       { name: 'IKEA Bookshelf', description: 'Good condition, white', price_cents: 2500, category: 'furniture' },
       { name: 'Sony 42\" TV', description: '1080p, works great', price_cents: 12000, category: 'electronics' },
@@ -54,7 +56,7 @@ export const MOCK_SALES: MockSale[] = [
     time_start: '09:00',
     price: 0,
     seller_id: '00000000-0000-0000-0000-000000000002',
-    tags: ['moving','home'],
+    tags: [CATEGORIES[0], CATEGORIES[7], CATEGORIES[20]],
     items: [
       { name: 'Sectional Sofa', description: 'Light wear', price_cents: 25000, category: 'furniture' },
       { name: 'Dining Table', description: 'Seats 6', price_cents: 18000, category: 'furniture' }
@@ -71,7 +73,7 @@ export const MOCK_SALES: MockSale[] = [
     time_start: '07:30',
     price: 0,
     seller_id: '00000000-0000-0000-0000-000000000003',
-    tags: ['tools','garden'],
+    tags: [CATEGORIES[2], CATEGORIES[8], CATEGORIES[21]],
     items: [
       { name: 'Cordless Drill', description: 'Includes charger', price_cents: 6000, category: 'tools' },
       { name: 'Lawn Mower', description: 'Gas-powered, runs well', price_cents: 15000, category: 'garden' },
