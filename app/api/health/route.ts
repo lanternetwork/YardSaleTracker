@@ -36,13 +36,17 @@ export async function GET() {
       })
     )
 
-    const healthStatus = results.map((result, index) => ({
-      name: healthChecks[index].name,
-      ...(result.status === 'fulfilled' ? result.value : { 
-        ok: false, 
-        error: result.status === 'rejected' ? result.reason : 'Unknown error' 
-      })
-    }))
+    const healthStatus = results.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        const { name: _ignored, ...rest } = result.value as any
+        return { name: healthChecks[index].name, ...rest }
+      }
+      return {
+        name: healthChecks[index].name,
+        ok: false,
+        error: result.status === 'rejected' ? (result as any).reason : 'Unknown error'
+      }
+    })
 
     const overallOk = healthStatus.every(check => check.ok)
 
