@@ -3,14 +3,9 @@ import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import NavTabs from '@/components/NavTabs'
 import SearchFilters from '@/components/SearchFilters'
-import SearchResults from '@/components/SearchResults'
 import VirtualizedSalesList from '@/components/VirtualizedSalesList'
-import dynamic from 'next/dynamic'
 
-const YardSaleMap = dynamic(() => import('@/components/YardSaleMap'), {
-  ssr: false,
-  loading: () => <div className="h-[60vh] w-full rounded-2xl bg-neutral-200 flex items-center justify-center">Loading map...</div>
-})
+import YardSaleMap from '@/components/YardSaleMap'
 import AddSaleForm from '@/components/AddSaleForm'
 import ImportSales from '@/components/ImportSales'
 import { useSales } from '@/lib/hooks/useSales'
