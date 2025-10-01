@@ -19,6 +19,29 @@ vi.mock('@googlemaps/js-api-loader', () => ({
   }))
 }))
 
+// Mock Google Maps global object
+Object.defineProperty(window, 'google', {
+  value: {
+    maps: {
+      places: {
+        Autocomplete: vi.fn().mockImplementation(() => ({
+          addListener: vi.fn(),
+          getPlace: vi.fn().mockReturnValue({
+            geometry: {
+              location: {
+                lat: () => 37.7749,
+                lng: () => -122.4194
+              }
+            },
+            formatted_address: '123 Test St, San Francisco, CA'
+          })
+        }))
+      }
+    }
+  },
+  writable: true
+})
+
 // Mock geocoding
 vi.mock('@/lib/geocode', () => ({
   geocodeAddress: vi.fn().mockResolvedValue(null)
