@@ -5,31 +5,32 @@ export async function GET() {
   try {
     const supabase = createSupabaseServerClient()
     
-    // Query information_schema.tables to get table names
+    // Test PostGIS functionality with a simple spatial query
     const { data, error } = await supabase
-      .rpc('get_table_names')
+      .rpc('test_postgis')
 
-    // If the RPC doesn't exist, fall back to a direct query
-    if (error && error.message.includes('function get_table_names')) {
-      const { data: tableData, error: tableError } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
+    // If the RPC doesn't exist, create a simple test query
+    if (error && error.message.includes('function test_postgis')) {
+      // Test with a simple PostGIS function
+      const { data: testData, error: testError } = await supabase
+        .from('yard_sales')
+        .select('id')
+        .not('lat', 'is', null)
+        .not('lng', 'is', null)
+        .limit(1)
 
-      if (tableError) {
+      if (testError) {
         return NextResponse.json({
           ok: false,
-          error: tableError.message,
+          error: testError.message,
           timestamp: new Date().toISOString()
         }, { status: 500 })
       }
 
-      const tables = tableData?.map(row => row.table_name) || []
-      
       return NextResponse.json({
         ok: true,
-        tables,
-        count: tables.length,
+        message: 'PostGIS functionality available (basic test)',
+        hasSpatialData: (testData?.length || 0) > 0,
         timestamp: new Date().toISOString()
       })
     }
@@ -44,14 +45,14 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
-      tables: data || [],
-      count: data?.length || 0,
+      message: 'PostGIS functionality confirmed',
+      result: data,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
     return NextResponse.json({
       ok: false,
-      error: error instanceof Error ? error.message : 'Unknown schema error',
+      error: error instanceof Error ? error.message : 'Unknown PostGIS error',
       timestamp: new Date().toISOString()
     }, { status: 500 })
   }

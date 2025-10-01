@@ -1,44 +1,65 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { T } from '@/lib/supabase/tables'
 
 export async function GET() {
   try {
-    // Test environment variables are loaded
-    const supabase = createSupabaseServerClient()
-    
-    // Test database connection with a simple query
-    const { data, error } = await supabase
-      .from(T.sales)
-      .select('id')
-      .limit(1)
-    
-    if (error) {
-      console.error('Health check failed:', error)
-      return NextResponse.json(
-        { 
-          ok: false, 
-          error: 'Database connection failed',
-          details: error.message 
-        },
-        { status: 500 }
-      )
-    }
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000'
 
-    return NextResponse.json({ 
-      ok: true,
+    const healthChecks = [
+      { name: 'env', url: `${baseUrl}/api/health/env` },
+      { name: 'db', url: `${baseUrl}/api/health/db` },
+      { name: 'schema', url: `${baseUrl}/api/health/schema` },
+      { name: 'postgis', url: `${baseUrl}/api/health/postgis` },
+      { name: 'auth', url: `${baseUrl}/api/health/auth` }
+    ]
+
+    const results = await Promise.allSettled(
+      healthChecks.map(async (check) => {
+        try {
+          const response = await fetch(check.url)
+          const data = await response.json()
+          return {
+            name: check.name,
+            ok: response.ok && data.ok,
+            status: response.status,
+            data: data
+          }
+        } catch (error) {
+          return {
+            name: check.name,
+            ok: false,
+            status: 500,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }
+        }
+      })
+    )
+
+    const healthStatus = results.map((result, index) => ({
+      name: healthChecks[index].name,
+      ...(result.status === 'fulfilled' ? result.value : { 
+        ok: false, 
+        error: result.status === 'rejected' ? result.reason : 'Unknown error' 
+      })
+    }))
+
+    const overallOk = healthStatus.every(check => check.ok)
+
+    return NextResponse.json({
+      ok: overallOk,
+      status: overallOk ? 'healthy' : 'unhealthy',
+      checks: healthStatus,
       timestamp: new Date().toISOString(),
-      database: 'connected'
+      version: process.env.VERCEL_GIT_COMMIT_SHA || 'local'
+    }, { 
+      status: overallOk ? 200 : 503 
     })
   } catch (error) {
-    console.error('Health check error:', error)
-    return NextResponse.json(
-      { 
-        ok: false, 
-        error: 'Health check failed',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      ok: false,
+      error: error instanceof Error ? error.message : 'Unknown health check error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 }
