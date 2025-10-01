@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Sale } from '@/lib/data'
+import { Sale } from '@/lib/types'
 import SalesMap from '@/components/location/SalesMap'
 import UseLocationButton from '@/components/location/UseLocationButton'
 import SaleCard from '@/components/SaleCard'
