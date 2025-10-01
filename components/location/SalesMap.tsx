@@ -5,6 +5,7 @@ import Map, { Marker, Popup } from 'react-map-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Sale } from '@/lib/types'
 import { formatLocation } from '@/lib/location/client'
+import { incMapLoad } from '@/lib/usageLogs'
 
 interface SalesMapProps {
   sales: Sale[]
@@ -21,6 +22,9 @@ export default function SalesMap({
   onSaleClick,
   selectedSaleId
 }: SalesMapProps) {
+  useEffect(() => {
+    incMapLoad()
+  }, [])
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [viewState, setViewState] = useState({
     latitude: center.lat,
