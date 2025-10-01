@@ -3,15 +3,27 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { T } from '@/lib/supabase/tables'
 import webpush from 'web-push'
 
-// Configure web-push
-webpush.setVapidDetails(
-  'mailto:admin@yardsalefinder.com',
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+function configureWebPushOrReturnError() {
+  const publicKey = process.env.VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  if (!publicKey || !privateKey) {
+    return 'Missing VAPID keys (VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY)'
+  }
+  try {
+    webpush.setVapidDetails('mailto:admin@yardsalefinder.com', publicKey, privateKey)
+    return null
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Unknown VAPID configuration error'
+    return msg
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const vapidError = configureWebPushOrReturnError()
+    if (vapidError) {
+      return NextResponse.json({ ok: false, error: vapidError }, { status: 500 })
+    }
     const supabase = createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
