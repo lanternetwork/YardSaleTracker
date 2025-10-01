@@ -14,31 +14,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-        
     - name: Setup Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+        cache: 'npm'
         
     - name: Install dependencies
-      run: pnpm install
+      run: npm install
       
     - name: Run type checking
-      run: pnpm run typecheck
+      run: npm run typecheck
       
     - name: Run linting
-      run: pnpm run lint
+      run: npm run lint
       
     - name: Run tests
-      run: pnpm run test
+      run: npm run test
       
     - name: Build application
-      run: pnpm run build
+      run: npm run build
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -55,25 +50,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-      
     - name: Setup Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+        cache: 'npm'
         
     - name: Install dependencies
-      run: pnpm install
+      run: npm install
       
     - name: Install Playwright browsers
-      run: pnpm exec playwright install --with-deps
+      run: npx playwright install --with-deps
       
     - name: Run E2E tests
-      run: pnpm run test:e2e
+      run: npm run test:e2e
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -92,22 +82,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-      
     - name: Setup Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+        cache: 'npm'
         
     - name: Install dependencies
-      run: pnpm install
+      run: npm install
       
     - name: Build application
-      run: pnpm run build
+      run: npm run build
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
