@@ -4,12 +4,35 @@ import { T } from '@/lib/supabase/tables'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    // Create Supabase client with explicit public schema
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !anon) {
+      return NextResponse.json({ ok: false, error: 'Missing Supabase configuration' }, { status: 500 })
+    }
+    
+    const { createServerClient } = await import('@supabase/ssr')
+    const { cookies } = await import('next/headers')
+    
+    const supabase = createServerClient(url, anon, {
+      cookies: {
+        get(name: string) {
+          return cookies().get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          cookies().set({ name, value, ...options })
+        },
+        remove(name: string, options: any) {
+          cookies().set({ name, value: '', ...options, maxAge: 0 })
+        },
+      },
+      db: { schema: 'public' }, // Force public schema
+    })
+    
     const { searchParams } = new URL(request.url)
     
-    // Log schema info for debugging
-    const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public'
-    console.log(`[SALES] Using schema: ${schema}`)
+    console.log(`[SALES] Using forced public schema`)
     
     // Parse inputs explicitly
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
@@ -132,7 +155,32 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServerClient()
+    // Create Supabase client with explicit public schema
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !anon) {
+      return NextResponse.json({ ok: false, error: 'Missing Supabase configuration' }, { status: 500 })
+    }
+    
+    const { createServerClient } = await import('@supabase/ssr')
+    const { cookies } = await import('next/headers')
+    
+    const supabase = createServerClient(url, anon, {
+      cookies: {
+        get(name: string) {
+          return cookies().get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          cookies().set({ name, value, ...options })
+        },
+        remove(name: string, options: any) {
+          cookies().set({ name, value: '', ...options, maxAge: 0 })
+        },
+      },
+      db: { schema: 'public' }, // Force public schema
+    })
+    
     const body = await request.json()
     
     // Get current user
