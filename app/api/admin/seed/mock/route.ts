@@ -12,6 +12,27 @@ function authOk(req: NextRequest): boolean {
   return m[1] === token
 }
 
+function validateSeedSale(seed: any): string[] {
+  const errors: string[] = []
+  if (!seed.seller_id) errors.push('seller_id is required')
+  if (!seed.title) errors.push('title is required')
+  if (!seed.starts_at) errors.push('starts_at is required')
+  if (typeof seed.lat !== 'number' || isNaN(seed.lat)) errors.push('latitude must be a valid number')
+  if (typeof seed.lng !== 'number' || isNaN(seed.lng)) errors.push('longitude must be a valid number')
+  return errors
+}
+
+function parseDateTime(isoString: string): { date: string; time: string } {
+  const [date, time] = isoString.split('T')
+  return { date, time: time?.slice(0, 5) || '08:00' }
+}
+
+function addHours(isoString: string, hours: number): string {
+  const date = new Date(isoString)
+  date.setHours(date.getHours() + hours)
+  return date.toISOString()
+}
+
 export async function POST(req: NextRequest) {
   if (!authOk(req)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
@@ -25,14 +46,23 @@ export async function POST(req: NextRequest) {
 
   for (const seed of SEED_DATA) {
     try {
-      // Build dedupe key conditions based on: seller_id, lower(title), starts_at::date, rounded lat/lng
-      const startDate = seed.starts_at.split('T')[0]
+      // Validate required fields
+      const validationErrors = validateSeedSale(seed)
+      if (validationErrors.length > 0) {
+        throw new Error(`Validation failed: ${validationErrors.join(', ')}`)
+      }
+
+      // Parse starts_at and calculate ends_at if not provided
+      const startDateTime = parseDateTime(seed.starts_at)
+      const endDateTime = seed.ends_at ? parseDateTime(seed.ends_at) : parseDateTime(addHours(seed.starts_at, 4))
+
+      // Dedupe: SELECT existing by key (seller_id, lower(title), date(starts_at), ROUND(latitude,4), ROUND(longitude,4))
       const { data: existing, error: existErr } = await supabase
         .from(T.sales)
         .select('id')
         .eq('owner_id', seed.seller_id)
-        .ilike('title', seed.title)
-        .eq('date_start', startDate)
+        .ilike('title', seed.title.toLowerCase())
+        .eq('date_start', startDateTime.date)
         .gte('lat', Number((seed.lat - 0.00005).toFixed(4)))
         .lte('lat', Number((seed.lat + 0.00005).toFixed(4)))
         .gte('lng', Number((seed.lng - 0.00005).toFixed(4)))
@@ -49,45 +79,49 @@ export async function POST(req: NextRequest) {
         continue
       }
 
+      // Insert sale
       const { data: created, error: insErr } = await supabase
         .from(T.sales)
         .insert({
           owner_id: seed.seller_id,
           title: seed.title,
           description: null,
+          address: seed.address || null,
           city: seed.city,
           state: seed.state,
+          zip_code: null,
           lat: seed.lat,
           lng: seed.lng,
-          date_start: startDate,
-          time_start: seed.starts_at.split('T')[1]?.slice(0,5) || '08:00',
-          price: 0,
-          is_featured: false,
+          date_start: startDateTime.date,
+          time_start: startDateTime.time,
+          date_end: endDateTime.date,
+          time_end: endDateTime.time,
           status: 'published',
-          tags: seed.categories || [],
+          privacy_mode: 'exact',
+          is_featured: false,
         })
         .select('id')
         .single()
 
       if (insErr || !created) {
-        throw insErr || new Error('Insert failed')
+        throw insErr || new Error('Sale insert failed')
       }
 
       inserted += 1
 
-      // Insert 2–3 items per sale
-      for (const item of seed.items.slice(0, 3)) {
+      // Insert items with sale_id and price_cents (Math.round(price*100))
+      for (const item of seed.items) {
         const { error: itemErr } = await supabase
           .from(T.items)
           .insert({
             sale_id: created.id,
             name: item.name,
             description: null,
-            // Convert dollars to integer price if the schema expects numbers; using dollars here
-            price: Math.round(item.price),
+            price: Math.round(item.price * 100), // Convert to cents
             category: null,
             condition: null,
             images: [],
+            is_sold: false,
           })
         if (!itemErr) itemsInserted += 1
       }
@@ -96,7 +130,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, inserted, skipped, itemsInserted, errors: errors.length ? errors : undefined })
+  return NextResponse.json({ 
+    ok: errors.length === 0, 
+    inserted, 
+    skipped, 
+    itemsInserted, 
+    errors: errors.length ? errors : undefined 
+  })
 }
 
 
