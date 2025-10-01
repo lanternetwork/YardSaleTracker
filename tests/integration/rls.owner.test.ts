@@ -109,17 +109,16 @@ describe('RLS and Owner Permissions', () => {
     })
 
     // Set up the mock chain
-    const mockUpdate = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnThis()
-    })
-    mockUpdate.eq = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         update: updateSpy
       })
     })
     
     mockSupabase.from = vi.fn().mockReturnValue({
-      update: mockUpdate
+      update: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
     })
 
     // Simulate the update operation
@@ -151,17 +150,16 @@ describe('RLS and Owner Permissions', () => {
     })
 
     // Set up the mock chain
-    const mockUpdate = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnThis()
-    })
-    mockUpdate.eq = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         update: updateSpy
       })
     })
     
     mockSupabase.from = vi.fn().mockReturnValue({
-      update: mockUpdate
+      update: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
     })
 
     // Simulate the update operation
@@ -192,17 +190,16 @@ describe('RLS and Owner Permissions', () => {
     })
 
     // Set up the mock chain
-    const mockDelete = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnThis()
-    })
-    mockDelete.eq = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         delete: deleteSpy
       })
     })
     
     mockSupabase.from = vi.fn().mockReturnValue({
-      delete: mockDelete
+      delete: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
     })
 
     // Simulate the delete operation
@@ -233,17 +230,16 @@ describe('RLS and Owner Permissions', () => {
     })
 
     // Set up the mock chain
-    const mockDelete = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnThis()
-    })
-    mockDelete.eq = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({
         delete: deleteSpy
       })
     })
     
     mockSupabase.from = vi.fn().mockReturnValue({
-      delete: mockDelete
+      delete: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
     })
 
     // Simulate the delete operation

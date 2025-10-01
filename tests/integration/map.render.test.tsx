@@ -263,6 +263,11 @@ describe('Map Render Integration', () => {
       writable: true
     })
 
+    const testPoints = [
+      { id: '1', title: 'Test Sale 1', lat: 37.7749, lng: -122.4194 },
+      { id: '2', title: 'Test Sale 2', lat: 37.7849, lng: -122.4094 }
+    ]
+
     render(<YardSaleMap points={testPoints} />)
 
     // Wait for map to load and render
@@ -290,13 +295,18 @@ describe('Map Render Integration', () => {
     // Mock alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
+    const testPoints = [
+      { id: '1', title: 'Test Sale 1', lat: 37.7749, lng: -122.4194 },
+      { id: '2', title: 'Test Sale 2', lat: 37.7849, lng: -122.4094 }
+    ]
+
     render(<YardSaleMap points={testPoints} />)
 
     // Wait for map to load
     await new Promise(resolve => setTimeout(resolve, 500))
 
     // Find and click the Near Me button
-    const nearMeButton = document.querySelector('button[textContent="📍 Near Me"]')
+    const nearMeButton = document.querySelector('button[textContent="📍 Near Me"]') as HTMLButtonElement
     if (nearMeButton) {
       nearMeButton.click()
       await new Promise(resolve => setTimeout(resolve, 100))
