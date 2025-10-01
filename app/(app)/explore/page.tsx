@@ -1,15 +1,18 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import NavTabs from '@/components/NavTabs'
-import SearchFilters from '@/components/SearchFilters'
-import VirtualizedSalesList from '@/components/VirtualizedSalesList'
-
-import YardSaleMap from '@/components/YardSaleMap'
-import AddSaleForm from '@/components/AddSaleForm'
-import ImportSales from '@/components/ImportSales'
 import { useSales } from '@/lib/hooks/useSales'
 import { Filters } from '@/state/filters'
+
+// Dynamic imports to avoid build issues
+import dynamic from 'next/dynamic'
+
+const NavTabs = dynamic(() => import('@/components/NavTabs'), { ssr: false })
+const SearchFilters = dynamic(() => import('@/components/SearchFilters'), { ssr: false })
+const VirtualizedSalesList = dynamic(() => import('@/components/VirtualizedSalesList'), { ssr: false })
+const YardSaleMap = dynamic(() => import('@/components/YardSaleMap'), { ssr: false })
+const AddSaleForm = dynamic(() => import('@/components/AddSaleForm'), { ssr: false })
+const ImportSales = dynamic(() => import('@/components/ImportSales'), { ssr: false })
 
 export default function Explore() {
   const searchParams = useSearchParams()
