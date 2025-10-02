@@ -31,7 +31,7 @@ export default function ZipDebugPage() {
       } catch (error) {
         newResults.push({
           input: zip,
-          result: { error: error.message },
+          result: { error: error instanceof Error ? error.message : String(error) },
           status: 'network_error'
         })
       }
@@ -63,7 +63,7 @@ export default function ZipDebugPage() {
     } catch (error) {
       setResults([{
         input: 'Table Count Check',
-        result: { error: error.message },
+        result: { error: error instanceof Error ? error.message : String(error) },
         status: 'network_error'
       }])
     }
