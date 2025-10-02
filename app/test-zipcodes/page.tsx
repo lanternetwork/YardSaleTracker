@@ -6,6 +6,8 @@ export default function TestZipcodesPage() {
   const [zipcodes, setZipcodes] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [seedLoading, setSeedLoading] = useState(false)
+  const [seedResult, setSeedResult] = useState<any>(null)
 
   const fetchZipcodes = async () => {
     setLoading(true)
@@ -27,6 +29,28 @@ export default function TestZipcodesPage() {
     }
   }
 
+  const seedZipcodes = async () => {
+    setSeedLoading(true)
+    setSeedResult(null)
+    
+    try {
+      const response = await fetch('/api/admin/seed/zipcodes', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SEED_TOKEN || 'lootaura_ingest_8nZ3tYq4Jm2Kb1Rp7Vx6Wc9uD5a0Ls3f'}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const data = await response.json()
+      setSeedResult(data)
+    } catch (err) {
+      setSeedResult({ ok: false, error: 'Network error' })
+    } finally {
+      setSeedLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchZipcodes()
   }, [])
@@ -35,14 +59,31 @@ export default function TestZipcodesPage() {
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">ZIP Codes Table Test</h1>
       
-      <div className="mb-4">
-        <button
-          onClick={fetchZipcodes}
-          disabled={loading}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-        >
-          {loading ? 'Loading...' : 'Refresh ZIP Codes'}
-        </button>
+      <div className="mb-6 space-y-4">
+        <div className="flex gap-4">
+          <button
+            onClick={fetchZipcodes}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+          >
+            {loading ? 'Loading...' : 'Refresh ZIP Codes'}
+          </button>
+          
+          <button
+            onClick={seedZipcodes}
+            disabled={seedLoading}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+          >
+            {seedLoading ? 'Seeding...' : 'Seed ZIP Codes (Admin)'}
+          </button>
+        </div>
+        
+        {seedResult && (
+          <div className={`p-4 rounded ${seedResult.ok ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
+            <h3 className="font-bold">Seed Result:</h3>
+            <pre className="mt-2 text-sm">{JSON.stringify(seedResult, null, 2)}</pre>
+          </div>
+        )}
       </div>
 
       {error && (

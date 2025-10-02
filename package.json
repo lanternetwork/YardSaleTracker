@@ -28,6 +28,7 @@
     "zod": "^3.23.8",
     "@googlemaps/js-api-loader": "^1.16.6",
     "clsx": "^2.1.1",
+    "zipcodes": "^8",
     "react-virtuoso": "^4.7.0",
     "web-push": "^3.6.7",
     "@sentry/nextjs": "^8.15.0",
