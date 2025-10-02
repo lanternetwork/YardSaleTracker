@@ -57,28 +57,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const fetchSales = useCallback(async () => {
     setLoading(true)
     
-    // If no location, fetch all sales (initial load)
+    // If no location, show message to user
     if (!filters.lat || !filters.lng) {
-      console.log('[SALES] No location provided, fetching all sales')
-      try {
-        const res = await fetch('/api/sales')
-        const data = await res.json()
-        if (data.ok) {
-          setSales(data.data || [])
-          setDateWindow(data.dateWindow || null)
-          setDegraded(data.degraded || false)
-        } else {
-          console.error('Sales API error:', data.error)
-          setSales([])
-          setDateWindow(null)
-          setDegraded(false)
-        }
-      } catch (error) {
-        console.error('Error fetching sales:', error)
-        setSales([])
-      } finally {
-        setLoading(false)
-      }
+      console.log('[SALES] No location provided, showing location prompt')
+      setSales([])
+      setDateWindow(null)
+      setDegraded(false)
+      setLoading(false)
       return
     }
 
@@ -244,6 +229,31 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading sales...</span>
+              </div>
+            ) : !filters.lat || !filters.lng ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📍</div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Enter Your Location</h3>
+                <p className="text-gray-500 mb-4">To find yard sales near you, please enter your ZIP code or use your current location.</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter ZIP code"
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      maxLength={5}
+                    />
+                    <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                      Set Location
+                    </button>
+                  </div>
+                  <span className="text-gray-400">or</span>
+                  <UseLocationButton 
+                    onClick={handleLocationClick} 
+                    loading={locationLoading} 
+                    error={locationError?.message || null} 
+                  />
+                </div>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">
