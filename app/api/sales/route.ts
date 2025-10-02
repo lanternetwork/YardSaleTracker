@@ -9,16 +9,56 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     
-    // 1. Parse & validate required location
+    // 1. Parse & validate location (optional for initial load)
     const lat = searchParams.get('lat')
     const lng = searchParams.get('lng')
     
+    // If no location provided, return all active sales (for initial page load)
     if (!lat || !lng) {
-      console.log(`[SALES] Missing location: lat=${lat}, lng=${lng}`)
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Missing location' 
-      }, { status: 400 })
+      console.log(`[SALES] No location provided, returning all active sales`)
+      try {
+        const { data: allSales, error } = await supabase
+          .from('yard_sales')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(50)
+        
+        if (error) {
+          console.error('Error fetching all sales:', error)
+          return NextResponse.json({ 
+            ok: false, 
+            error: 'Database query failed' 
+          }, { status: 500 })
+        }
+        
+        const results = (allSales || []).map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          starts_at: row.start_at,
+          ends_at: row.end_at,
+          latitude: row.lat,
+          longitude: row.lng,
+          city: row.city,
+          state: row.state,
+          zip: row.zip,
+          categories: row.tags || [],
+          cover_image_url: null
+        }))
+        
+        return NextResponse.json({
+          ok: true,
+          data: results,
+          count: results.length,
+          message: 'All active sales (no location filter applied)'
+        })
+      } catch (error: any) {
+        console.error('Error fetching all sales:', error)
+        return NextResponse.json({ 
+          ok: false, 
+          error: 'Internal server error' 
+        }, { status: 500 })
+      }
     }
     
     const latitude = parseFloat(lat)
