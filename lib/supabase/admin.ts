@@ -30,3 +30,6 @@ export const adminSupabase = createClient(
     }
   }
 )
+
+// Note: Admin client uses the schema configuration from the client creation
+// No need for separate schema helpers since the client is configured with the schema

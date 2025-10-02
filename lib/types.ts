@@ -1,25 +1,25 @@
 export type Sale = {
   id: string
+  owner_id: string
   title: string
   description?: string
   address?: string
-  city?: string
-  state?: string
-  zip?: string
+  city: string
+  state: string
+  zip_code?: string
   lat?: number
   lng?: number
-  start_at?: string
-  end_at?: string
-  tags: string[]
-  price_min?: number
-  price_max?: number
-  photos: string[]
-  contact?: string
-  status: 'active'|'completed'|'cancelled'
-  source?: string
-  owner_id?: string
-  created_at?: string
-  updated_at?: string
+  date_start: string
+  time_start: string
+  date_end?: string
+  time_end?: string
+  price?: number
+  tags?: string[]
+  status: 'draft' | 'published' | 'completed' | 'cancelled'
+  privacy_mode: 'exact' | 'block_until_24h'
+  is_featured: boolean
+  created_at: string
+  updated_at: string
 }
 
 export type SaleItem = {
@@ -45,4 +45,11 @@ export type Favorite = {
   user_id: string
   sale_id: string
   created_at?: string
+}
+
+export type Marker = {
+  id: string
+  title: string
+  lat: number
+  lng: number
 }

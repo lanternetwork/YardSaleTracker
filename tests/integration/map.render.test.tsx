@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import YardSaleMap from '@/components/YardSaleMap'
 import { getAddressFixtures } from '@/tests/utils/mocks'
 
@@ -14,6 +14,11 @@ const mockMap = {
       push: vi.fn()
     }
   }
+}
+
+// Mock ControlPosition
+const mockControlPosition = {
+  TOP_LEFT: Symbol.for('TOP_LEFT')
 }
 
 const mockMarker = {
@@ -220,9 +225,10 @@ describe('Map Render Integration', () => {
 
   it('should handle map loading error', async () => {
     // Mock loader to reject
-    const { Loader } = require('@googlemaps/js-api-loader')
-    Loader.mockImplementation(() => ({
-      load: vi.fn().mockRejectedValue(new Error('Failed to load'))
+    vi.doMock('@googlemaps/js-api-loader', () => ({
+      Loader: vi.fn().mockImplementation(() => ({
+        load: vi.fn().mockRejectedValue(new Error('Failed to load'))
+      }))
     }))
 
     render(<YardSaleMap points={[]} />)
@@ -242,9 +248,12 @@ describe('Map Render Integration', () => {
   it('should show no sales message when no points', async () => {
     render(<YardSaleMap points={[]} />)
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    // Wait for component to finish loading
+    await new Promise(resolve => setTimeout(resolve, 500))
 
-    expect(screen.getByText('No sales with locations found')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('No sales with locations found')).toBeInTheDocument()
+    }, { timeout: 2000 })
   })
 
   it('should add Near Me button when geolocation is available', async () => {
@@ -256,23 +265,33 @@ describe('Map Render Integration', () => {
       writable: true
     })
 
-    render(<YardSaleMap points={[]} />)
+    const testPoints = [
+      { id: '1', title: 'Test Sale 1', lat: 37.7749, lng: -122.4194 },
+      { id: '2', title: 'Test Sale 2', lat: 37.7849, lng: -122.4094 }
+    ]
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    render(<YardSaleMap points={testPoints} />)
+
+    // Wait for map to load and render
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Verify Near Me button was added
-    expect(mockMap.controls[Symbol.for('TOP_LEFT')].push).toHaveBeenCalledWith(
-      expect.any(HTMLButtonElement)
-    )
+    await waitFor(() => {
+      expect(mockMap.controls[Symbol.for('TOP_LEFT')].push).toHaveBeenCalledWith(
+        expect.any(HTMLButtonElement)
+      )
+    }, { timeout: 2000 })
   })
 
   it('should handle geolocation error gracefully', async () => {
     // Mock geolocation to fail
+    const mockGetCurrentPosition = vi.fn().mockImplementation((success, error) => {
+      error({ code: 1, message: 'Permission denied' })
+    })
+    
     Object.defineProperty(navigator, 'geolocation', {
       value: {
-        getCurrentPosition: vi.fn().mockImplementation((success, error) => {
-          error({ code: 1, message: 'Permission denied' })
-        })
+        getCurrentPosition: mockGetCurrentPosition
       },
       writable: true
     })
@@ -280,9 +299,23 @@ describe('Map Render Integration', () => {
     // Mock alert
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
-    render(<YardSaleMap points={[]} />)
+    const testPoints = [
+      { id: '1', title: 'Test Sale 1', lat: 37.7749, lng: -122.4194 },
+      { id: '2', title: 'Test Sale 2', lat: 37.7849, lng: -122.4094 }
+    ]
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    render(<YardSaleMap points={testPoints} />)
+
+    // Wait for map to load
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Find and click the Near Me button
+    await waitFor(() => {
+      const nearMeButton = document.querySelector('button[textContent="📍 Near Me"]') as HTMLButtonElement
+      if (nearMeButton) {
+        nearMeButton.click()
+      }
+    }, { timeout: 2000 })
 
     // Should show error alert
     expect(alertSpy).toHaveBeenCalledWith(

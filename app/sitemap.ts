@@ -1,12 +1,13 @@
 import { MetadataRoute } from 'next'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServerClient()
   
   // Get all active sales for dynamic URLs
   const { data: sales } = await supabase
-    .from('yard_sales')
+    .from(T.sales)
     .select('id, updated_at')
     .eq('status', 'active')
     .order('updated_at', { ascending: false })

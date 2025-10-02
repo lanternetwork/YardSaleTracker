@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { Sale, SaleItem } from '@/lib/types'
 import { SaleSchema } from '@/lib/zodSchemas'
 
-const sb = createSupabaseBrowser()
+const sb = createSupabaseBrowserClient()
 
 export function useSales(filters?: {
   q?: string
@@ -180,7 +180,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map(fav => fav.yard_sales).filter(Boolean) as Sale[]
+      return data?.map((fav: any) => fav.yard_sales).filter(Boolean) as Sale[]
     },
   })
 }

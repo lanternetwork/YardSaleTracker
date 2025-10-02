@@ -1,17 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { T } from '@/lib/supabase/tables'
 import webpush from 'web-push'
 
-// Configure web-push
-webpush.setVapidDetails(
-  'mailto:admin@yardsalefinder.com',
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+function configureWebPushOrReturnError() {
+  const publicKey = process.env.VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  if (!publicKey || !privateKey) {
+    return 'Missing VAPID keys (VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY)'
+  }
+  try {
+    webpush.setVapidDetails('mailto:admin@yardsalefinder.com', publicKey, privateKey)
+    return null
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Unknown VAPID configuration error'
+    return msg
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createSupabaseServer()
+    const vapidError = configureWebPushOrReturnError()
+    if (vapidError) {
+      return NextResponse.json({ ok: false, error: vapidError }, { status: 500 })
+    }
+    const supabase = createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -65,9 +78,10 @@ export async function POST(request: NextRequest) {
             payload
           )
           return { success: true, endpoint: sub.endpoint }
-        } catch (error) {
-          console.error('Error sending notification:', error)
-          return { success: false, endpoint: sub.endpoint, error: error.message }
+        } catch (err) {
+          console.error('Error sending notification:', err)
+          const message = err instanceof Error ? err.message : String(err)
+          return { success: false, endpoint: sub.endpoint, error: message }
         }
       })
     )
@@ -84,7 +98,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Test notification error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

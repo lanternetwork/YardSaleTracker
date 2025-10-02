@@ -2,24 +2,37 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ReviewsSection from '@/components/ReviewsSection'
 
-// Mock the Supabase client
+// Mock the Supabase client (include rpc as required by component)
 const mockSupabase = {
   from: vi.fn(() => ({
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
-        order: vi.fn(() => ({
-          then: vi.fn()
+        order: vi.fn(() => Promise.resolve({
+          data: [],
+          error: null
         }))
       }))
-    })),
-    rpc: vi.fn(() => ({
-      then: vi.fn()
     }))
+  })),
+  rpc: vi.fn(() => Promise.resolve({
+    data: null,
+    error: null
   }))
 }
 
+// Mock the async operations to resolve immediately
+const mockFetchReviews = vi.fn().mockResolvedValue({
+  data: [],
+  error: null
+})
+
+const mockFetchUserReview = vi.fn().mockResolvedValue({
+  data: null,
+  error: null
+})
+
 vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => mockSupabase
+  createSupabaseBrowserClient: () => mockSupabase
 }))
 
 // Mock the auth hook
@@ -34,7 +47,7 @@ describe('ReviewsSection', () => {
     vi.clearAllMocks()
   })
 
-  it('renders with rating summary', () => {
+  it('renders with rating summary', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -43,11 +56,14 @@ describe('ReviewsSection', () => {
       />
     )
     
-    expect(screen.getByText('4.5')).toBeInTheDocument()
-    expect(screen.getByText('10 reviews')).toBeInTheDocument()
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.getByText('4.5')).toBeInTheDocument()
+      expect(screen.getByText('10 reviews')).toBeInTheDocument()
+    })
   })
 
-  it('renders star rating correctly', () => {
+  it('renders star rating correctly', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -56,14 +72,17 @@ describe('ReviewsSection', () => {
       />
     )
     
-    // Should show 4 filled stars (rounded up from 3.5)
-    const filledStars = screen.getAllByText('★').filter(star => 
-      star.className.includes('text-amber-400')
-    )
-    expect(filledStars).toHaveLength(4)
+    // Wait for component to load
+    await waitFor(() => {
+      // Should show 4 filled stars (rounded up from 3.5)
+      const filledStars = screen.getAllByText('★').filter(star => 
+        star.className.includes('text-amber-400')
+      )
+      expect(filledStars).toHaveLength(4)
+    })
   })
 
-  it('renders review form for authenticated users', () => {
+  it('renders review form for authenticated users', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -72,8 +91,11 @@ describe('ReviewsSection', () => {
       />
     )
     
-    expect(screen.getByText('Write a Review')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /submit review/i })).toBeInTheDocument()
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.getByText('Write a Review')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /submit review/i })).toBeInTheDocument()
+    })
   })
 
   it('validates rating selection', async () => {
@@ -85,14 +107,17 @@ describe('ReviewsSection', () => {
       />
     )
     
-    const submitButton = screen.getByRole('button', { name: /submit review/i })
-    fireEvent.click(submitButton)
+    // Wait for loading to complete
+    await waitFor(() => {
+      const submitButton = screen.getByRole('button', { name: /submit review/i })
+      fireEvent.click(submitButton)
 
-    // Should not submit without rating
-    expect(submitButton).toBeDisabled()
+      // Should not submit without rating
+      expect(submitButton).toBeDisabled()
+    })
   })
 
-  it('allows rating selection', () => {
+  it('allows rating selection', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -101,18 +126,21 @@ describe('ReviewsSection', () => {
       />
     )
     
-    const stars = screen.getAllByRole('button')
-    const thirdStar = stars[2] // 3rd star
-    fireEvent.click(thirdStar)
+    // Wait for loading to complete
+    await waitFor(() => {
+      const stars = screen.getAllByRole('button')
+      const thirdStar = stars[2] // 3rd star
+      fireEvent.click(thirdStar)
 
-    // Should show 3 filled stars
-    const filledStars = screen.getAllByText('★').filter(star => 
-      star.className.includes('text-amber-400')
-    )
-    expect(filledStars).toHaveLength(3)
+      // Should show 3 filled stars
+      const filledStars = screen.getAllByText('★').filter(star => 
+        star.className.includes('text-amber-400')
+      )
+      expect(filledStars).toHaveLength(3)
+    }, { timeout: 3000 })
   })
 
-  it('allows comment input', () => {
+  it('allows comment input', async () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -121,13 +149,16 @@ describe('ReviewsSection', () => {
       />
     )
     
-    const commentInput = screen.getByPlaceholderText(/share your experience/i)
-    fireEvent.change(commentInput, { target: { value: 'Great sale!' } })
+    // Wait for loading to complete
+    await waitFor(() => {
+      const commentInput = screen.getByPlaceholderText(/share your experience/i)
+      fireEvent.change(commentInput, { target: { value: 'Great sale!' } })
 
-    expect(commentInput).toHaveValue('Great sale!')
+      expect(commentInput).toHaveValue('Great sale!')
+    })
   })
 
-  it('shows loading state', () => {
+  it('shows loading state initially', () => {
     render(
       <ReviewsSection 
         saleId="test-sale" 
@@ -144,10 +175,9 @@ describe('ReviewsSection', () => {
     mockSupabase.from.mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            then: vi.fn((callback) => {
-              callback({ data: [], error: null })
-            })
+          order: vi.fn(() => Promise.resolve({
+            data: [],
+            error: null
           }))
         }))
       }))
@@ -185,10 +215,9 @@ describe('ReviewsSection', () => {
     mockSupabase.from.mockReturnValue({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          order: vi.fn(() => ({
-            then: vi.fn((callback) => {
-              callback({ data: mockReviews, error: null })
-            })
+          order: vi.fn(() => Promise.resolve({
+            data: mockReviews,
+            error: null
           }))
         }))
       }))

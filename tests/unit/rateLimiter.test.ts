@@ -1,8 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { RateLimiter } from '@/lib/rateLimiter'
+import { RateLimiter, clearMemoryStore } from '@/lib/rateLimiter'
+
+// Clear memory store before each test
+beforeEach(() => {
+  clearMemoryStore()
+  vi.clearAllMocks()
+})
 
 // Mock the Upstash Redis client
-vi.mock('upstash', () => ({
+vi.mock('@upstash/redis', () => ({
   Redis: vi.fn().mockImplementation(() => ({
     get: vi.fn(),
     set: vi.fn(),

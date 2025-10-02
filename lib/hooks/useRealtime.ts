@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { RealtimeChannel } from '@supabase/supabase-js'
 
 export function useRealtimeSales(onUpdate: (payload: any) => void) {
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const supabase = createSupabaseBrowser()
+  const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     // Subscribe to yard_sales changes
@@ -34,7 +34,7 @@ export function useRealtimeSales(onUpdate: (payload: any) => void) {
 
 export function useRealtimeFavorites(userId: string, onUpdate: (payload: any) => void) {
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const supabase = createSupabaseBrowser()
+  const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     if (!userId) return
@@ -66,7 +66,7 @@ export function useRealtimeFavorites(userId: string, onUpdate: (payload: any) =>
 
 export function useRealtimeReviews(saleId: string, onUpdate: (payload: any) => void) {
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const supabase = createSupabaseBrowser()
+  const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     if (!saleId) return

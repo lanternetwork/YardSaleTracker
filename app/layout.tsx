@@ -6,6 +6,10 @@ import { Header } from './Header'
 import { PWAComponents } from './PWAComponents'
 import { createHomepageStructuredData, createOrganizationStructuredData } from '@/lib/metadata'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
+
 export const metadata: Metadata = {
   title: 'YardSaleFinder - Find Amazing Yard Sale Treasures',
   description: 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!',

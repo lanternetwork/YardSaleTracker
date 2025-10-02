@@ -11,7 +11,7 @@ export default function FavoriteButton({
   const { data: favorites = [] } = useFavorites()
   const toggleFavorite = useToggleFavorite()
   
-  const isFavorited = favorites.some(fav => fav.id === saleId)
+  const isFavorited = favorites.some((fav: any) => fav.id === saleId)
 
   const handleToggle = () => {
     toggleFavorite.mutate({ saleId, isFavorited })

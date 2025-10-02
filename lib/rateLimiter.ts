@@ -1,7 +1,12 @@
-import { Redis } from 'upstash'
+import { Redis } from '@upstash/redis'
 
 // In-memory store for development
 const memoryStore = new Map<string, { count: number; resetTime: number }>()
+
+// Clear memory store (for testing)
+export function clearMemoryStore() {
+  memoryStore.clear()
+}
 
 // Redis client for production
 let redis: Redis | null = null

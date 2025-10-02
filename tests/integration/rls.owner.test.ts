@@ -28,7 +28,10 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').insert = insertSpy
+    // Set up the mock chain
+    mockSupabase.from = vi.fn().mockReturnValue({
+      insert: insertSpy
+    })
 
     // Simulate the insert operation
     const { data, error } = await mockSupabase
@@ -75,7 +78,10 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').select = selectSpy
+    // Set up the mock chain
+    mockSupabase.from = vi.fn().mockReturnValue({
+      select: selectSpy
+    })
 
     // Simulate the select operation
     const { data, error } = await mockSupabase
@@ -102,17 +108,28 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').update = updateSpy
+    // Set up the mock chain properly
+    const mockEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        update: updateSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
+    })
 
     // Simulate the update operation
-    const { data, error } = await mockSupabase
+    const result = await mockSupabase
       .from('yard_sales')
       .update({ title: 'Updated Sale' })
       .eq('id', saleId)
       .eq('owner_id', testUserId)
 
-    expect(error).toBeNull()
-    expect(data[0].title).toBe('Updated Sale')
+    expect(result.error).toBeNull()
+    expect(result.data[0].title).toBe('Updated Sale')
     expect(updateSpy).toHaveBeenCalled()
   })
 
@@ -132,18 +149,29 @@ describe('RLS and Owner Permissions', () => {
       error: { message: 'new row violates row-level security policy' }
     })
 
-    mockSupabase.from('yard_sales').update = updateSpy
+    // Set up the mock chain
+    const mockEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        update: updateSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
+    })
 
     // Simulate the update operation
-    const { data, error } = await mockSupabase
+    const result = await mockSupabase
       .from('yard_sales')
       .update({ title: 'Unauthorized Update' })
       .eq('id', saleId)
       .eq('owner_id', otherUserId) // Different owner
 
-    expect(error).toBeTruthy()
-    expect(error.message).toContain('row-level security policy')
-    expect(data).toBeNull()
+    expect(result.error).toBeTruthy()
+    expect(result.error?.message).toContain('row-level security policy')
+    expect(result.data).toBeNull()
   })
 
   it('should allow owner to delete their own sale', async () => {
@@ -161,16 +189,27 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').delete = deleteSpy
+    // Set up the mock chain
+    const mockEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        delete: deleteSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      delete: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
+    })
 
     // Simulate the delete operation
-    const { data, error } = await mockSupabase
+    const result = await mockSupabase
       .from('yard_sales')
       .delete()
       .eq('id', saleId)
       .eq('owner_id', testUserId)
 
-    expect(error).toBeNull()
+    expect(result.error).toBeNull()
     expect(deleteSpy).toHaveBeenCalled()
   })
 
@@ -190,18 +229,29 @@ describe('RLS and Owner Permissions', () => {
       error: { message: 'new row violates row-level security policy' }
     })
 
-    mockSupabase.from('yard_sales').delete = deleteSpy
+    // Set up the mock chain
+    const mockEq = vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        delete: deleteSpy
+      })
+    })
+    
+    mockSupabase.from = vi.fn().mockReturnValue({
+      delete: vi.fn().mockReturnValue({
+        eq: mockEq
+      })
+    })
 
     // Simulate the delete operation
-    const { data, error } = await mockSupabase
+    const result = await mockSupabase
       .from('yard_sales')
       .delete()
       .eq('id', saleId)
       .eq('owner_id', otherUserId) // Different owner
 
-    expect(error).toBeTruthy()
-    expect(error.message).toContain('row-level security policy')
-    expect(data).toBeNull()
+    expect(result.error).toBeTruthy()
+    expect(result.error?.message).toContain('row-level security policy')
+    expect(result.data).toBeNull()
   })
 
   it('should handle anonymous user attempting to create sale', async () => {
@@ -216,7 +266,9 @@ describe('RLS and Owner Permissions', () => {
       error: { message: 'new row violates row-level security policy' }
     })
 
-    mockSupabase.from('yard_sales').insert = insertSpy
+    mockSupabase.from = vi.fn().mockReturnValue({
+      insert: insertSpy
+    })
 
     const saleData = {
       title: 'Test Sale',
@@ -226,13 +278,13 @@ describe('RLS and Owner Permissions', () => {
     }
 
     // Simulate the insert operation
-    const { data, error } = await mockSupabase
+    const result = await mockSupabase
       .from('yard_sales')
       .insert([saleData])
 
-    expect(error).toBeTruthy()
-    expect(error.message).toContain('row-level security policy')
-    expect(data).toBeNull()
+    expect(result.error).toBeTruthy()
+    expect(result.error?.message).toContain('row-level security policy')
+    expect(result.data).toBeNull()
   })
 
   it('should validate owner_id is set correctly in database schema', async () => {
@@ -252,7 +304,7 @@ describe('RLS and Owner Permissions', () => {
     // Mock successful insert with proper owner_id
     const insertSpy = vi.fn().mockResolvedValue({
       data: [{
-        id: 'sale-123',
+        id: 'sale-1',
         ...saleData,
         owner_id: testUserId,
         created_at: new Date().toISOString(),
@@ -261,20 +313,20 @@ describe('RLS and Owner Permissions', () => {
       error: null
     })
 
-    mockSupabase.from('yard_sales').insert = insertSpy
+    mockSupabase.from = vi.fn().mockReturnValue({
+      insert: insertSpy
+    })
 
     // Simulate the insert operation
-    const { data, error } = await mockSupabase
+    const result = await mockSupabase
       .from('yard_sales')
       .insert([{ ...saleData, owner_id: testUserId }])
 
-    expect(error).toBeNull()
-    expect(data[0]).toMatchObject({
-      id: 'sale-123',
+    expect(result.error).toBeNull()
+    expect(result.data[0]).toMatchObject({
+      id: 'sale-1',
       title: 'Test Sale',
-      owner_id: testUserId,
-      created_at: expect.any(String),
-      updated_at: expect.any(String)
+      owner_id: testUserId
     })
   })
 

@@ -1,8 +1,25 @@
-import { createBrowserClient } from '@supabase/ssr'
-import { ENV_PUBLIC } from '../env'
+'use client';
 
-export const createSupabaseBrowser = () =>
-  createBrowserClient(
-    ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_URL,
-    ENV_PUBLIC.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
+import { createBrowserClient } from '@supabase/ssr';
+import { getSchema } from './schema';
+
+export function createSupabaseBrowserClient() {
+  // Validate required environment variables
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url) {
+    const error = 'NEXT_PUBLIC_SUPABASE_URL is missing';
+    console.error(`[Supabase Browser] ${error}`);
+    throw new Error(error);
+  }
+
+  if (!anon) {
+    const error = 'NEXT_PUBLIC_SUPABASE_ANON_KEY is missing';
+    console.error(`[Supabase Browser] ${error}`);
+    throw new Error(error);
+  }
+
+  const schema = getSchema();
+  return createBrowserClient(url, anon, { db: { schema } });
+}

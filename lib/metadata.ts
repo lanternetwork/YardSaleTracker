@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { Sale } from '@/lib/types'
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yardsalefinder.com'
 const siteName = 'YardSaleFinder'
 const description = 'Discover local yard sales, garage sales, and estate sales in your area. Never miss a great deal again!'
 
@@ -66,8 +66,8 @@ export function createPageMetadata({
 
 export function createSaleMetadata(sale: Sale): Metadata {
   const title = sale.title
-  const description = sale.description || `Yard sale at ${sale.address || sale.city || 'your area'}. ${sale.start_at ? `Starts ${new Date(sale.start_at).toLocaleDateString()}` : ''}`
-  const image = sale.photos?.[0] || '/og-sale.jpg'
+  const description = sale.description || `Yard sale at ${sale.address || sale.city || 'your area'}. ${sale.date_start ? `Starts ${new Date(sale.date_start).toLocaleDateString()}` : ''}`
+  const image = '/og-sale.jpg' // photos field doesn't exist in new schema
   const path = `/sale/${sale.id}`
 
   return createPageMetadata({

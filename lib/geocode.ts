@@ -13,6 +13,10 @@ export interface GeocodeResult {
 const geocodeCache = new Map<string, GeocodeResult>()
 
 export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
+  if (typeof window !== 'undefined') {
+    // Lazy import to avoid SSR touching window
+    import('./usageLogs').then(m => m.incGeocodeCall()).catch(() => {})
+  }
   // Check cache first
   const cached = geocodeCache.get(address.toLowerCase())
   if (cached) {

@@ -12,8 +12,8 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
       '@type': 'Event',
       name: sale.title,
       description: sale.description,
-      startDate: sale.start_at,
-      endDate: sale.end_at,
+      startDate: sale.date_start ? `${sale.date_start}T${sale.time_start}` : undefined,
+      endDate: sale.date_end ? `${sale.date_end}T${sale.time_end}` : undefined,
       location: {
         '@type': 'Place',
         name: sale.address,
@@ -22,7 +22,7 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
           streetAddress: sale.address,
           addressLocality: sale.city,
           addressRegion: sale.state,
-          postalCode: sale.zip,
+          postalCode: sale.zip_code,
           addressCountry: 'US'
         },
         geo: sale.lat && sale.lng ? {
@@ -31,20 +31,19 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
           longitude: sale.lng
         } : undefined
       },
-      offers: sale.price_min && sale.price_max ? {
+      offers: sale.price ? {
         '@type': 'Offer',
-        price: sale.price_min,
-        priceCurrency: 'USD',
-        priceRange: `${sale.price_min}-${sale.price_max}`
+        price: sale.price,
+        priceCurrency: 'USD'
       } : undefined,
       organizer: {
         '@type': 'Organization',
         name: 'YardSaleFinder',
         url: process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'
       },
-      eventStatus: sale.status === 'active' ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventCancelled',
+      eventStatus: sale.status === 'published' ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventCancelled',
       eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      image: sale.photos?.[0] ? [sale.photos[0]] : undefined,
+      image: undefined, // photos field doesn't exist in new schema
       keywords: sale.tags?.join(', '),
       url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://lootaura.com'}/sale/${sale.id}`
     }
@@ -63,11 +62,10 @@ export default function StructuredData({ sale, type = 'Event' }: StructuredDataP
       '@type': 'Product',
       name: sale.title,
       description: sale.description,
-      image: sale.photos || [],
-      offers: sale.price_min && sale.price_max ? {
-        '@type': 'AggregateOffer',
-        lowPrice: sale.price_min,
-        highPrice: sale.price_max,
+      image: [], // photos field doesn't exist in new schema
+      offers: sale.price ? {
+        '@type': 'Offer',
+        price: sale.price,
         priceCurrency: 'USD',
         availability: 'https://schema.org/InStock',
         seller: {

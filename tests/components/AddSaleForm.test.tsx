@@ -1,13 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AddSaleForm from '@/components/AddSaleForm'
+import { useCreateSale } from '@/lib/hooks/useSales'
 
 // Mock the hooks
 vi.mock('@/lib/hooks/useSales', () => ({
-  useCreateSale: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({ id: 'test-id' }),
-    isPending: false
-  })
+  useCreateSale: vi.fn()
 }))
 
 // Mock the geocoding function
@@ -21,9 +19,39 @@ vi.mock('@/lib/geocode', () => ({
   })
 }))
 
+// Mock Google Maps
+vi.mock('@googlemaps/js-api-loader', () => ({
+  Loader: vi.fn().mockImplementation(() => ({
+    load: vi.fn().mockResolvedValue({})
+  }))
+}))
+
+// Mock Google Maps global object
+Object.defineProperty(window, 'google', {
+  value: {
+    maps: {
+      places: {
+        Autocomplete: vi.fn().mockImplementation(() => ({
+          addListener: vi.fn(),
+          getPlace: vi.fn().mockReturnValue({
+            geometry: {
+              location: {
+                lat: () => 37.7749,
+                lng: () => -122.4194
+              }
+            },
+            formatted_address: '123 Test St, San Francisco, CA'
+          })
+        }))
+      }
+    }
+  },
+  writable: true
+})
+
 // Mock the Supabase client
 vi.mock('@/lib/supabase/client', () => ({
-  createSupabaseBrowser: () => ({
+  createSupabaseBrowserClient: () => ({
     auth: {
       getUser: () => Promise.resolve({ data: { user: { id: 'test-user' } } })
     }
@@ -57,12 +85,18 @@ describe('AddSaleForm', () => {
   })
 
   it('submits form with valid data', async () => {
-    const { useCreateSale } = await import('@/lib/hooks/useSales')
     const mockMutateAsync = vi.fn().mockResolvedValue({ id: 'test-id' })
     vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: mockMutateAsync,
-      isPending: false
-    })
+      isPending: false,
+      error: null,
+      data: null,
+      variables: null,
+      isError: false,
+      isSuccess: false,
+      reset: vi.fn(),
+      mutate: vi.fn()
+    } as any)
 
     render(<AddSaleForm />)
     
@@ -137,11 +171,17 @@ describe('AddSaleForm', () => {
   })
 
   it('shows loading state during submission', () => {
-    const { useCreateSale } = vi.mocked(await import('@/lib/hooks/useSales'))
-    useCreateSale.mockReturnValue({
+    vi.mocked(useCreateSale).mockReturnValue({
       mutateAsync: vi.fn(),
-      isPending: true
-    })
+      isPending: true,
+      error: null,
+      data: null,
+      variables: null,
+      isError: false,
+      isSuccess: false,
+      reset: vi.fn(),
+      mutate: vi.fn()
+    } as any)
 
     render(<AddSaleForm />)
     

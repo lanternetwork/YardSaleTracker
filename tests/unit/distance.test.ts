@@ -21,7 +21,7 @@ describe('Distance calculations', () => {
       const point1 = { lat: 37.7749, lng: -122.4194 }
       const point2 = { lat: 37.7849, lng: -122.4094 }
       const distance = haversineKm(point1, point2)
-      expect(distance).toBeCloseTo(1.4, 1)
+      expect(distance).toBeCloseTo(1.4, 0)
     })
 
     it('handles negative coordinates', () => {

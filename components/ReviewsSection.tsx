@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createSupabaseBrowser } from '@/lib/supabase/client'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 interface Review {
@@ -24,8 +24,8 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
-  const { user } = useAuth()
-  const supabase = createSupabaseBrowser()
+  const { data: user } = useAuth()
+  const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     fetchReviews()
