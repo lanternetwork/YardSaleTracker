@@ -41,6 +41,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
+    
+    // Only fetch if we have location or if this is the initial load
+    if (!filters.lat || !filters.lng) {
+      console.log('[SALES] No location provided, skipping fetch until location is available')
+      setLoading(false)
+      return
+    }
+
     const params: GetSalesParams = {
       lat: filters.lat,
       lng: filters.lng,

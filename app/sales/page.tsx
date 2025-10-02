@@ -40,9 +40,12 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   let initialSales = []
   try {
     const queryParams = new URLSearchParams()
-    if (lat !== undefined) queryParams.set('lat', lat.toString())
-    if (lng !== undefined) queryParams.set('lng', lng.toString())
-    if (distanceKm !== undefined) queryParams.set('distanceKm', distanceKm.toString())
+    // Only add location params if they exist
+    if (lat !== undefined && lng !== undefined) {
+      queryParams.set('lat', lat.toString())
+      queryParams.set('lng', lng.toString())
+      if (distanceKm !== undefined) queryParams.set('distanceKm', distanceKm.toString())
+    }
     if (city) queryParams.set('city', city)
     if (categories && categories.length > 0) queryParams.set('categories', categories.join(','))
     queryParams.set('limit', pageSize.toString())

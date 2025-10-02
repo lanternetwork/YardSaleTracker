@@ -47,12 +47,10 @@ export async function GET(request: NextRequest) {
     // Log parameters to server console
     console.log(`[SALES] params lat=${lat}, lng=${lng}, distKm=${distanceKm}, dateRange=${dateRange}, cats=${categories?.join(',')}, q=${q}, limit=${limit}, offset=${offset}`)
 
-    // Validate location parameters
+    // If no location provided, show all sales (for initial page load)
     if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Missing location. Provide lat & lng.' 
-      }, { status: 400 })
+      console.log(`[SALES][NO_LOCATION] Showing all sales without distance filter`)
+      return await runBaseline()
     }
 
     // Clamp distance to reasonable bounds (1-160km, default ~25 miles)
