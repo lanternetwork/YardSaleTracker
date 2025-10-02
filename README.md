@@ -16,6 +16,10 @@ A modern web application for discovering and managing yard sales, garage sales, 
 
 **No third-party scraping**: LootAura uses native listings and mock seed data for demos. We do not scrape external websites like Craigslist.
 
+## AI Assistant Guidelines
+
+**Important**: See [docs/AI_ASSISTANT_RULES.md](docs/AI_ASSISTANT_RULES.md) for critical restrictions and guidelines that must be followed when working on this codebase.
+
 ## ZIP Codes (Full US) — Free Lookups
 
 LootAura includes a comprehensive US ZIP code database for instant, free geocoding lookups:

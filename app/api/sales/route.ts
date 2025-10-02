@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getDateWindow, saleOverlapsWindow, formatDateWindow } from '@/lib/date/dateWindows'
 
+// CRITICAL: This API MUST require lat/lng - never remove this validation
+// See docs/AI_ASSISTANT_RULES.md for full guidelines
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
