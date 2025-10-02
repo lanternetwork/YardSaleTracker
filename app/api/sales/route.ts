@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getDateWindow, saleOverlapsWindow, formatDateWindow } from '@/lib/date/dateWindows'
+import { getSchema } from '@/lib/supabase/schema'
 
 // CRITICAL: This API MUST require lat/lng - never remove this validation
 // See docs/AI_ASSISTANT_RULES.md for full guidelines
 export const dynamic = 'force-dynamic'
 
+// One-time boot log to confirm v2 usage
+let __salesBootLogged = false
+function logBootOnce(): void {
+  if (!__salesBootLogged) {
+    const resolvedSchema = getSchema()
+    console.log(`[SALES][BOOT] schema=${resolvedSchema} table=lootaura_v2.sales`)
+    __salesBootLogged = true
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    logBootOnce()
     const supabase = createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     
@@ -74,86 +86,94 @@ export async function GET(request: NextRequest) {
     
     let results: any[] = []
     let degraded = false
-    
-    // 4. Try PostGIS distance calculation first
+
+    // 4. Try PostGIS distance calculation first against lootaura_v2.sales
     try {
-      console.log(`[SALES] Attempting PostGIS distance calculation for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
-      
+      console.log(`[SALES] Attempting PostGIS (v2) for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
+
+      // Prefer v2 search function that uses geom + RLS
       const { data: postgisData, error: postgisError } = await supabase
-        .rpc('search_sales_by_distance', {
-          search_lat: latitude,
-          search_lng: longitude,
-          max_distance_km: distanceKm,
-          date_filter: dateRange !== 'any' ? dateRange : null,
-          category_filter: categories.length > 0 ? categories : null,
-          text_filter: q || null,
-          result_limit: limit,
-          result_offset: offset
+        .rpc('search_sales_within_distance', {
+          user_lat: latitude,
+          user_lng: longitude,
+          distance_meters: Math.round(distanceKm * 1000),
+          search_city: null,
+          search_categories: categories.length > 0 ? categories : null,
+          date_start_filter: dateWindow ? dateWindow.start.toISOString().slice(0, 10) : null,
+          date_end_filter: dateWindow ? dateWindow.end.toISOString().slice(0, 10) : null,
+          limit_count: limit
         })
-      
+
       if (postgisError) {
-        throw new Error(`PostGIS RPC failed: ${postgisError.message}`)
+        throw new Error(`PostGIS v2 RPC failed: ${postgisError.message}`)
       }
-      
-      console.log(`[SALES] PostGIS returned ${postgisData?.length || 0} results`)
-      
-      // Apply date filtering in application layer for PostGIS results
+
+      console.log(`[SALES] PostGIS v2 returned ${postgisData?.length || 0} results`)
+
+      // Map v2 fields to the legacy response shape
       results = (postgisData || [])
         .filter((row: any) => {
           if (!dateWindow) return true
-          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
+          const startAt = row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : undefined
+          const endAt = row.date_end ? `${row.date_end}T${row.time_end ?? '23:59:59'}` : null
+          if (!startAt) return true
+          return saleOverlapsWindow(startAt, endAt, dateWindow)
         })
-        .map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          starts_at: row.start_at,
-          ends_at: row.end_at,
-          latitude: row.lat,
-          longitude: row.lng,
-          city: row.city,
-          state: row.state,
-          zip: row.zip,
-          categories: row.tags || [],
-          cover_image_url: null,
-          distance_m: row.distance_m
-        }))
-        
-      console.log(`[SALES] PostGIS success: ${results.length} results`)
-      
+        .map((row: any) => {
+          const startAt = row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : null
+          const endAt = row.date_end ? `${row.date_end}T${row.time_end ?? '23:59:59'}` : null
+          return {
+            id: row.id,
+            title: row.title,
+            starts_at: startAt,
+            ends_at: endAt,
+            latitude: row.lat,
+            longitude: row.lng,
+            city: row.city,
+            state: row.state,
+            zip: row.zip_code,
+            categories: row.tags || [],
+            cover_image_url: null,
+            distance_m: row.distance_meters ?? row.distance_m
+          }
+        })
+
+      console.log(`[SALES] PostGIS v2 success: ${results.length} results`)
+
     } catch (postgisError: any) {
-      console.log(`[SALES] PostGIS failed: ${postgisError.message}, falling back to bounding box`)
+      console.log(`[SALES] PostGIS v2 failed: ${postgisError.message}, falling back to bounding box (v2)`)
       degraded = true
-      
-      // Fallback to bounding box approximation
+
+      // Fallback to bounding box approximation against lootaura_v2.sales
       const latRange = distanceKm / 111 // 1 degree ≈ 111 km
       const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
-      
+
       console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
-      
+
       let query = supabase
-        .from('yard_sales')
-        .select('*')
-        .eq('status', 'active')
+        .from('lootaura_v2.sales')
+        .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
+        .eq('status', 'published')
         .gte('lat', latitude - latRange)
         .lte('lat', latitude + latRange)
         .gte('lng', longitude - lngRange)
         .lte('lng', longitude + lngRange)
-        .order('start_at', { ascending: true })
+        .order('date_start', { ascending: true })
         .limit(limit)
         .range(offset, offset + limit - 1)
-      
+
       // Apply category filter
       if (categories.length > 0) {
         query = query.overlaps('tags', categories)
       }
-      
-      // Apply text filter
+
+      // Apply text filter (approximate)
       if (q) {
-        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
+        query = query.or(`title.ilike.%${q}%,city.ilike.%${q}%`)
       }
-      
+
       const { data: bboxData, error: bboxError } = await query
-      
+
       if (bboxError) {
         console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
         return NextResponse.json({ 
@@ -161,23 +181,26 @@ export async function GET(request: NextRequest) {
           error: 'Database query failed' 
         }, { status: 500 })
       }
-      
+
       // Apply date filtering in application layer for bounding box results
       results = (bboxData || [])
         .filter((row: any) => {
           if (!dateWindow) return true
-          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
+          const startAt = row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : undefined
+          const endAt = row.date_end ? `${row.date_end}T${row.time_end ?? '23:59:59'}` : null
+          if (!startAt) return true
+          return saleOverlapsWindow(startAt, endAt, dateWindow)
         })
         .map((row: any) => ({
           id: row.id,
           title: row.title,
-          starts_at: row.start_at,
-          ends_at: row.end_at,
+          starts_at: row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : null,
+          ends_at: row.date_end ? `${row.date_end}T${row.time_end ?? '23:59:59'}` : null,
           latitude: row.lat,
           longitude: row.lng,
           city: row.city,
           state: row.state,
-          zip: row.zip,
+          zip: row.zip_code,
           categories: row.tags || [],
           cover_image_url: null
         }))
