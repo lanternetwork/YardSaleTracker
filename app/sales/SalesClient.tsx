@@ -56,6 +56,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
+    console.log(`[SALES] fetchSales called with location: ${filters.lat}, ${filters.lng}`)
     
     // If no location, don't try to fetch sales yet
     if (!filters.lat || !filters.lng) {
@@ -92,12 +93,16 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     ).toString()
 
     try {
+      console.log(`[SALES] Fetching from: /api/sales?${queryString}`)
       const res = await fetch(`/api/sales?${queryString}`)
       const data = await res.json()
+      console.log(`[SALES] API response:`, data)
+      
       if (data.ok) {
         setSales(data.data || [])
         setDateWindow(data.dateWindow || null)
         setDegraded(data.degraded || false)
+        console.log(`[SALES] Set ${data.data?.length || 0} sales`)
       } else {
         console.error('Sales API error:', data.error)
         setSales([])
@@ -154,6 +159,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   const handleZipLocationFound = (lat: number, lng: number, city?: string, state?: string, zip?: string) => {
     setZipError(null)
+    console.log(`[ZIP] Setting new location: ${lat}, ${lng} (${city}, ${state})`)
+    
     updateFilters({
       lat,
       lng,
@@ -171,10 +178,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     const newUrl = `${window.location.pathname}?${params.toString()}`
     router.push(newUrl)
     
-    // Automatically fetch sales with new location
-    setTimeout(() => {
-      fetchSales()
-    }, 100) // Small delay to ensure filters are updated
+    // fetchSales will be triggered automatically by the useEffect dependency on filters
   }
 
   const handleZipError = (error: string) => {
