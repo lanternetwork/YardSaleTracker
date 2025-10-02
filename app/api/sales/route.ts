@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
     
     let results: any[] = []
     let degraded = false
+    const startedAt = Date.now()
 
     // 4. Try PostGIS distance calculation first against lootaura_v2.sales
     try {
@@ -207,12 +208,14 @@ export async function GET(request: NextRequest) {
     }
     
     // 5. Return normalized response
+    const durationMs = Date.now() - startedAt
     const response = {
       ok: true,
       data: results,
       center: { lat: latitude, lng: longitude },
       distanceKm,
       count: results.length,
+      durationMs,
       ...(degraded && { degraded: true }),
       ...(dateWindow && { dateWindow: {
         label: dateWindow.label,
@@ -222,12 +225,12 @@ export async function GET(request: NextRequest) {
       }})
     }
     
-    console.log(`[SALES] lat=${latitude},lng=${longitude},km=${distanceKm},dateRange=${dateRange},cats=${categories.join(',')},q=${q} -> returned=${results.length} degraded=${degraded}`)
+    console.log(`[SALES][ok] lat=${latitude}, lng=${longitude}, km=${distanceKm}, filters=date:${dateRange}|cats:${categories.join(',')}|q:${q ?? ''}, degraded=${degraded}, count=${results.length}, ms=${durationMs}`)
     
     return NextResponse.json(response)
     
   } catch (error: any) {
-    console.log(`[SALES][ERROR] Unexpected error: ${error?.message || error}`)
+    console.log(`[SALES][err] Unexpected error: ${error?.message || error}`)
     return NextResponse.json({ 
       ok: false, 
       error: 'Internal server error' 
