@@ -110,7 +110,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange])
 
   useEffect(() => {
     fetchSales()
@@ -126,17 +126,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   useEffect(() => {
     if (location && location.lat && location.lng) {
-      console.log('[SALES] Location found, updating filters and fetching sales')
+      console.log('[SALES] Location found, updating filters')
       updateFilters({
         lat: location.lat,
         lng: location.lng
       })
-      // Trigger sales fetch after a short delay to ensure filters are updated
-      setTimeout(() => {
-        fetchSales()
-      }, 100)
     }
-  }, [location, updateFilters, fetchSales])
+  }, [location, updateFilters])
 
   // Initialize location from cookie on mount
   useEffect(() => {
@@ -151,10 +147,6 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             lng: locationData.lng,
             city: locationData.city
           })
-          // Trigger sales fetch after a short delay to ensure filters are updated
-          setTimeout(() => {
-            fetchSales()
-          }, 100)
         }
       } catch (error) {
         console.error('Failed to parse location cookie:', error)
