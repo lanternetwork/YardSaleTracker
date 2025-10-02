@@ -85,44 +85,47 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
   }, [searchParams])
 
   const updateFilters = (newFilters: Partial<FilterState>) => {
-    const updatedFilters = { ...filters, ...newFilters }
-    setFilters(updatedFilters)
-    
-    // Update URL with new filters
-    const params = new URLSearchParams(searchParams.toString())
-    
-    // Update distance
-    if (updatedFilters.distance !== 25) {
-      params.set('dist', updatedFilters.distance.toString())
-    } else {
-      params.delete('dist')
-    }
-    
-    // Update date range
-    if (updatedFilters.dateRange.type !== 'any') {
-      params.set('date', updatedFilters.dateRange.type)
-      if (updatedFilters.dateRange.startDate) {
-        params.set('startDate', updatedFilters.dateRange.startDate)
+    setFilters(prevFilters => {
+      const updatedFilters = { ...prevFilters, ...newFilters }
+      
+      // Update URL with new filters
+      const params = new URLSearchParams(searchParams.toString())
+      
+      // Update distance
+      if (updatedFilters.distance !== 25) {
+        params.set('dist', updatedFilters.distance.toString())
+      } else {
+        params.delete('dist')
       }
-      if (updatedFilters.dateRange.endDate) {
-        params.set('endDate', updatedFilters.dateRange.endDate)
+      
+      // Update date range
+      if (updatedFilters.dateRange.type !== 'any') {
+        params.set('date', updatedFilters.dateRange.type)
+        if (updatedFilters.dateRange.startDate) {
+          params.set('startDate', updatedFilters.dateRange.startDate)
+        }
+        if (updatedFilters.dateRange.endDate) {
+          params.set('endDate', updatedFilters.dateRange.endDate)
+        }
+      } else {
+        params.delete('date')
+        params.delete('startDate')
+        params.delete('endDate')
       }
-    } else {
-      params.delete('date')
-      params.delete('startDate')
-      params.delete('endDate')
-    }
-    
-    // Update categories
-    if (updatedFilters.categories.length > 0) {
-      params.set('cat', updatedFilters.categories.join(','))
-    } else {
-      params.delete('cat')
-    }
-    
-    // Update URL
-    const newUrl = `${window.location.pathname}?${params.toString()}`
-    router.push(newUrl)
+      
+      // Update categories
+      if (updatedFilters.categories.length > 0) {
+        params.set('cat', updatedFilters.categories.join(','))
+      } else {
+        params.delete('cat')
+      }
+      
+      // Update URL
+      const newUrl = `${window.location.pathname}?${params.toString()}`
+      router.push(newUrl)
+      
+      return updatedFilters
+    })
   }
 
   const handleDistanceChange = (distance: number) => {
