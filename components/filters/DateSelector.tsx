@@ -58,14 +58,25 @@ export default function DateSelector({ value, onChange, className = '' }: DateSe
                 ? 'bg-blue-50 border border-blue-200' 
                 : 'hover:bg-gray-50'
             }`}>
-              <input
-                type="radio"
-                name="dateRange"
-                value={option.value}
-                checked={value.type === option.value}
-                onChange={() => handleTypeChange(option.value as DateRange['type'])}
-                className="mr-3 text-blue-600 focus:ring-blue-500"
-              />
+              <div className="relative mr-3">
+                <input
+                  type="radio"
+                  name="dateRange"
+                  value={option.value}
+                  checked={value.type === option.value}
+                  onChange={() => handleTypeChange(option.value as DateRange['type'])}
+                  className="sr-only"
+                />
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  value.type === option.value 
+                    ? 'border-blue-600 bg-blue-600' 
+                    : 'border-gray-300 bg-white'
+                }`}>
+                  {value.type === option.value && (
+                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                  )}
+                </div>
+              </div>
               <span className={`text-sm font-medium ${
                 value.type === option.value ? 'text-blue-900' : 'text-gray-700'
               }`}>{option.label}</span>
