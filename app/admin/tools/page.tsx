@@ -5,6 +5,7 @@ import SchemaSection from './SchemaSection'
 import MapPreview from './MapPreview'
 import ZipLookupTool from './ZipLookupTool'
 import SalesTester from './SalesTester'
+import SeedingTools from './SeedingTools'
 
 export const dynamic = 'force-dynamic'
 
@@ -165,8 +166,8 @@ export default async function AdminToolsPage() {
           <SalesTester />
         </Section>
 
-        <Section title="Seeding & Data Tools" description="Admin seeders with Idempotency-Key and rate limits. Token required for writes.">
-          <div className="text-sm text-neutral-700">Placeholders for seed tools.</div>
+        <Section title="Seeding & Data Tools" description="Explicit token required per action. Idempotency & rate limits enforced server-side.">
+          <SeedingTools />
         </Section>
 
         <Section title="Usage & Telemetry" description="Usage logs, web vitals, and performance timing counters.">
