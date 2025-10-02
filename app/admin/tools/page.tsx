@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import CopyButton from './CopyButton'
 import HealthChecks from './HealthChecks'
+import SchemaSection from './SchemaSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -143,7 +144,7 @@ export default async function AdminToolsPage() {
         </Section>
 
         <Section title="Database & Schema" description="Schema details, RLS status, and geometry/index verifications.">
-          <div className="text-sm text-neutral-700">Placeholders for schema checks.</div>
+          <SchemaSection />
         </Section>
 
         <Section title="Maps & Location" description="Map token status, location detection diagnostics, and performance notes.">
