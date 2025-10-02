@@ -13,7 +13,7 @@ export async function GET() {
     if (error && error.message.includes('function test_postgis')) {
       // Test with a simple PostGIS function
       const { data: testData, error: testError } = await supabase
-        .from('yard_sales')
+        .from('lootaura_v2.sales')
         .select('id')
         .not('lat', 'is', null)
         .not('lng', 'is', null)
@@ -27,10 +27,26 @@ export async function GET() {
         }, { status: 500 })
       }
 
+      // Also report missing geom count for v2
+      const { count: missingGeom, error: missingError } = await supabase
+        .from('lootaura_v2.sales')
+        .select('*', { count: 'exact' })
+        .is('geom', null)
+        .limit(0)
+
+      if (missingError) {
+        return NextResponse.json({
+          ok: false,
+          error: missingError.message,
+          timestamp: new Date().toISOString()
+        }, { status: 500 })
+      }
+
       return NextResponse.json({
         ok: true,
         message: 'PostGIS functionality available (basic test)',
         hasSpatialData: (testData?.length || 0) > 0,
+        missing_geom: missingGeom ?? 0,
         timestamp: new Date().toISOString()
       })
     }
@@ -43,10 +59,26 @@ export async function GET() {
       }, { status: 500 })
     }
 
+    // Also report missing geom count for v2
+    const { count: missingGeom2, error: missingError2 } = await supabase
+      .from('lootaura_v2.sales')
+      .select('*', { count: 'exact' })
+      .is('geom', null)
+      .limit(0)
+
+    if (missingError2) {
+      return NextResponse.json({
+        ok: false,
+        error: missingError2.message,
+        timestamp: new Date().toISOString()
+      }, { status: 500 })
+    }
+
     return NextResponse.json({
       ok: true,
       message: 'PostGIS functionality confirmed',
       result: data,
+      missing_geom: missingGeom2 ?? 0,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
