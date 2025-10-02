@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import CopyButton from './CopyButton'
+import HealthChecks from './HealthChecks'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,8 +138,8 @@ export default async function AdminToolsPage() {
           </div>
         </Section>
 
-        <Section title="Health Checks" description="Quick links and summaries of /api/health/* endpoints.">
-          <div className="text-sm text-neutral-700">Placeholders for health summaries.</div>
+        <Section title="Health Checks" description="Run and visualize /api/health/* endpoints with timings and hints.">
+          <HealthChecks />
         </Section>
 
         <Section title="Database & Schema" description="Schema details, RLS status, and geometry/index verifications.">
