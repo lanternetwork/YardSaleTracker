@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import CopyButton from './CopyButton'
 import HealthChecks from './HealthChecks'
 import SchemaSection from './SchemaSection'
+import MapPreview from './MapPreview'
 
 export const dynamic = 'force-dynamic'
 
@@ -147,8 +148,11 @@ export default async function AdminToolsPage() {
           <SchemaSection />
         </Section>
 
-        <Section title="Maps & Location" description="Map token status, location detection diagnostics, and performance notes.">
-          <div className="text-sm text-neutral-700">Placeholders for maps diagnostics.</div>
+        <Section title="Maps & Location" description="Map token status and basic preview with safe fallback.">
+          <div className="mb-3 text-sm text-neutral-700">
+            Token prefix from /api/health/mapbox is surfaced in Health Checks above. A valid public token usually starts with <code className="font-mono">pk</code>.
+          </div>
+          <MapPreview />
         </Section>
 
         <Section title="ZIP Lookup Tools" description="ZIP local lookup vs. Nominatim fallback, write-back status, and common ZIP probes.">
