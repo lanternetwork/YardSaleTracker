@@ -176,7 +176,24 @@ export default async function AdminToolsPage() {
         </Section>
 
         <Section title="Danger Zone / Admin Only" description="Destructive actions with explicit token-only controls and warnings.">
-          <div className="text-sm text-neutral-700">Placeholders for admin-only dangerous tools.</div>
+          <div className="space-y-2 text-sm text-neutral-700">
+            <p>
+              Use these tools with extreme care. Prefer non-Production environments. On Production, take backups and
+              verify Idempotency-Key and rate limits are in place before triggering writes.
+            </p>
+            <ul className="list-disc pl-5">
+              <li>
+                Read the README sections for setup and safeguards:
+                <ul className="ml-4 list-disc">
+                  <li><a className="text-blue-600 underline" href="https://github.com/lanternetwork/LootAura#environment-variables" target="_blank">Environment Variables</a></li>
+                  <li><a className="text-blue-600 underline" href="https://github.com/lanternetwork/LootAura#seeding" target="_blank">Seeding & Admin Tokens</a></li>
+                  <li><a className="text-blue-600 underline" href="https://github.com/lanternetwork/LootAura#postgis--distance-search" target="_blank">PostGIS & Distance Search</a></li>
+                </ul>
+              </li>
+              <li>Never store the admin token in the browser; paste it for each action.</li>
+              <li>Confirm dialogs are required; logs show status and final summaries.</li>
+            </ul>
+          </div>
         </Section>
       </div>
     </main>
