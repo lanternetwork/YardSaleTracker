@@ -37,7 +37,7 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   const pageSize = searchParams.pageSize ? parseInt(searchParams.pageSize) : 50
 
   // Start with empty sales - let client handle the initial fetch
-  let initialSales = []
+  let initialSales: any[] = []
 
   return (
     <div className="min-h-screen bg-gray-50">
