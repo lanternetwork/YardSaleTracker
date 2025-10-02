@@ -20,6 +20,14 @@ A modern web application for discovering and managing yard sales, garage sales, 
 
 **Important**: See [docs/AI_ASSISTANT_RULES.md](docs/AI_ASSISTANT_RULES.md) for critical restrictions and guidelines that must be followed when working on this codebase.
 
+## Category Management
+
+**Important**: See [docs/CATEGORY_MANAGEMENT.md](docs/CATEGORY_MANAGEMENT.md) for comprehensive information about category management, troubleshooting, and maintenance tools.
+
+## Troubleshooting
+
+**Important**: See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues, solutions, and diagnostic tools.
+
 ## ZIP Codes (Full US) — Free Lookups
 
 LootAura includes a comprehensive US ZIP code database for instant, free geocoding lookups:
@@ -101,3 +109,26 @@ The application automatically uses the configured schema for all Supabase operat
 - To seed, send a POST request to `/api/admin/seed/mock` with header `Authorization: Bearer <SEED_TOKEN>`.
 - The response includes `inserted`, `skipped`, and `itemsInserted` counts.
 - Safe to re-run; the operation is idempotent.
+
+## Search Performance & Distance Calculations
+
+LootAura uses advanced PostGIS distance calculations for accurate location-based search:
+
+### Distance Filtering
+- **Primary Method**: PostGIS `ST_DWithin` with precise distance calculations
+- **Fallback**: Bounding box approximation (only when PostGIS unavailable)
+- **Performance**: Optimized with GIST indexes on geography columns
+- **Accuracy**: Results ordered by actual distance, not approximation
+
+### Search Features
+- **Location Required**: All searches require lat/lng coordinates
+- **Distance Filtering**: Configurable radius (1-160 km)
+- **Date Range Filtering**: Today, weekend, next weekend, custom ranges
+- **Category Filtering**: Multi-select category overlap matching
+- **Text Search**: Fuzzy search across title, description, and city
+- **Combined Filters**: All filters work together for precise results
+
+### Performance Indicators
+- **Normal Mode**: PostGIS distance calculations (most accurate)
+- **Degraded Mode**: Only appears if PostGIS fails (rare)
+- **Real-time**: Results update as filters change
