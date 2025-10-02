@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     console.log('🌱 Starting public database seed...')
     
     let inserted = 0
+    let updated = 0
     let skipped = 0
     let itemsInserted = 0
     const errors: string[] = []
@@ -39,21 +40,21 @@ export async function POST(request: NextRequest) {
           .maybeSingle()
 
         if (existing) {
-          // Update existing sale with categories if missing
-          if (!existing.tags || existing.tags.length === 0) {
-            const { error: updateError } = await supabase
-              .from('yard_sales')
-              .update({ tags: seed.categories })
-              .eq('id', existing.id)
-            
-            if (updateError) {
-              console.log(`⚠️  Failed to update categories for ${seed.title}: ${updateError.message}`)
-            } else {
-              console.log(`✅ Updated categories for existing: ${seed.title}`)
-            }
+          // Always update existing sale with categories (force update)
+          console.log(`🔄 Updating categories for existing: ${seed.title} -> ${JSON.stringify(seed.categories)}`)
+          const { error: updateError } = await supabase
+            .from('yard_sales')
+            .update({ tags: seed.categories })
+            .eq('id', existing.id)
+          
+          if (updateError) {
+            console.log(`⚠️  Failed to update categories for ${seed.title}: ${updateError.message}`)
+            errors.push(`Update failed for ${seed.title}: ${updateError.message}`)
+          } else {
+            console.log(`✅ Updated categories for existing: ${seed.title}`)
+            updated++
           }
           skipped++
-          console.log(`⏭️  Skipped existing: ${seed.title}`)
           continue
         }
 
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       inserted,
+      updated,
       skipped,
       itemsInserted,
       errors: errors.length > 0 ? errors : undefined

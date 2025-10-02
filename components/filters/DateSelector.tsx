@@ -48,16 +48,22 @@ export default function DateSelector({ value, onChange, className = '' }: DateSe
             { value: 'next_weekend', label: 'Next Weekend' },
             { value: 'range', label: 'Custom Range' }
           ].map((option) => (
-            <label key={option.value} className="flex items-center">
+            <label key={option.value} className={`flex items-center p-2 rounded cursor-pointer transition-colors ${
+              value.type === option.value 
+                ? 'bg-blue-50 border border-blue-200' 
+                : 'hover:bg-gray-50'
+            }`}>
               <input
                 type="radio"
                 name="dateRange"
                 value={option.value}
                 checked={value.type === option.value}
                 onChange={() => handleTypeChange(option.value as DateRange['type'])}
-                className="mr-2"
+                className="mr-3 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm">{option.label}</span>
+              <span className={`text-sm font-medium ${
+                value.type === option.value ? 'text-blue-900' : 'text-gray-700'
+              }`}>{option.label}</span>
             </label>
           ))}
         </div>
