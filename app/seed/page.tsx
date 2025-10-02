@@ -31,7 +31,8 @@ export default function SeedPage() {
     setLoading(true)
     
     try {
-      const response = await fetch('/api/sales')
+      // Test with Denver coordinates (from the ZIP lookup result)
+      const response = await fetch('/api/sales?lat=39.6799474&lng=-104.963391&distanceKm=25')
       const data = await response.json()
       setResult(data)
     } catch (error) {
