@@ -39,6 +39,19 @@ export async function POST(request: NextRequest) {
           .maybeSingle()
 
         if (existing) {
+          // Update existing sale with categories if missing
+          if (!existing.tags || existing.tags.length === 0) {
+            const { error: updateError } = await supabase
+              .from('yard_sales')
+              .update({ tags: seed.categories })
+              .eq('id', existing.id)
+            
+            if (updateError) {
+              console.log(`⚠️  Failed to update categories for ${seed.title}: ${updateError.message}`)
+            } else {
+              console.log(`✅ Updated categories for existing: ${seed.title}`)
+            }
+          }
           skipped++
           console.log(`⏭️  Skipped existing: ${seed.title}`)
           continue
@@ -59,6 +72,7 @@ export async function POST(request: NextRequest) {
             lng: seed.lng,
             start_at: seed.starts_at,
             end_at: seed.ends_at,
+            tags: seed.categories, // Add categories as tags
             status: 'active',
             source: 'manual',
           })
