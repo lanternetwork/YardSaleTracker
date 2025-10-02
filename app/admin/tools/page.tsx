@@ -34,6 +34,17 @@ export default async function AdminToolsPage() {
 
   const unauthenticated = !user
 
+  // Version info
+  const sha = (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 7)
+  const env = process.env.VERCEL_ENV || 'local'
+  const schema = process.env.NEXT_PUBLIC_SUPABASE_SCHEMA || 'public'
+  let deployedAt: string | null = null
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/health/version`, { cache: 'no-store' })
+    const json = await res.json()
+    if (json?.ok) deployedAt = json.deployedAt
+  } catch {}
+
   return (
     <main className="mx-auto max-w-6xl space-y-6 p-6">
       <header className="flex items-center justify-between">
@@ -47,6 +58,21 @@ export default async function AdminToolsPage() {
       </header>
 
       <div className="grid grid-cols-1 gap-6">
+        <Section title="Overview & Version" description="High-level app info, build version, and deployment environment.">
+          <div className="text-sm text-neutral-700 space-y-2">
+            <div className="flex items-center gap-2">
+              <div>Commit:</div>
+              <code className="rounded bg-neutral-100 px-1 py-0.5">{sha}</code>
+              <button className="rounded border px-2 py-1 text-xs" onClick={() => navigator.clipboard.writeText(sha)}>Copy</button>
+            </div>
+            <div>Environment: <span className="font-mono">{env}</span></div>
+            <div>Schema: <span className="font-mono">{schema}</span></div>
+            <div>Deployed: <span className="font-mono">{deployedAt || 'unknown'}</span></div>
+            <div>
+              <button className="rounded border px-2 py-1 text-xs" onClick={() => navigator.clipboard.writeText(`Commit: ${sha}\nEnvironment: ${env}\nSchema: ${schema}\nDeployed: ${deployedAt || 'unknown'}`)}>Copy diagnostics summary</button>
+            </div>
+          </div>
+        </Section>
         <Section title="Overview & Version" description="High-level app info, build version, and deployment environment.">
           <div className="text-sm text-neutral-700 space-y-1">
             <div>Vercel env: <span className="font-mono">{process.env.VERCEL_ENV || 'local'}</span></div>
