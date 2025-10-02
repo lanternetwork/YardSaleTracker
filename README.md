@@ -16,6 +16,36 @@ A modern web application for discovering and managing yard sales, garage sales, 
 
 **No third-party scraping**: LootAura uses native listings and mock seed data for demos. We do not scrape external websites like Craigslist.
 
+## ZIP Codes (Full US) — Free Lookups
+
+LootAura includes a comprehensive US ZIP code database for instant, free geocoding lookups:
+
+### Database Storage
+- **Table**: `lootaura_v2.zipcodes` with public read access via RLS
+- **Data**: All US ZIP codes with lat/lng coordinates, city, and state
+- **Access**: Public read-only access for anonymous and authenticated users
+
+### One-Time Setup
+1. **Set Environment Variable**: Add `SEED_TOKEN` to Vercel (Preview/Production)
+2. **Ingest Data**: 
+   ```bash
+   POST /api/admin/seed/zipcodes
+   Authorization: Bearer <SEED_TOKEN>
+   ```
+3. **Optional Preview**: Add `?dryRun=true` to preview counts without writing data
+
+### Geocoding API
+- **Endpoint**: `/api/geocoding/zip?zip=XXXXX`
+- **Local First**: Queries `lootaura_v2.zipcodes` table for instant results
+- **Fallback**: Nominatim geocoding (throttled to 1 request/second)
+- **Write-back**: Optional storage of Nominatim results (set `ENABLE_ZIP_WRITEBACK=true`)
+
+### Benefits
+- **Free Lookups**: No paid geocoding services required for ZIP codes
+- **Instant Results**: Local table provides immediate responses
+- **Complete Coverage**: All US ZIP codes included
+- **No Mapbox**: ZIP lookups use local database, not Mapbox geocoding
+
 ## Configuration
 
 This project uses configurable Supabase schemas via environment variables. The schema is determined by the `NEXT_PUBLIC_SUPABASE_SCHEMA` environment variable, which defaults to `'public'` if not set.
