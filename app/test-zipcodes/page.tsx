@@ -8,6 +8,9 @@ export default function TestZipcodesPage() {
   const [error, setError] = useState<string | null>(null)
   const [seedLoading, setSeedLoading] = useState(false)
   const [seedResult, setSeedResult] = useState<any>(null)
+  const [zipLookup, setZipLookup] = useState('')
+  const [lookupResult, setLookupResult] = useState<any>(null)
+  const [lookupLoading, setLookupLoading] = useState(false)
 
   const fetchZipcodes = async () => {
     setLoading(true)
@@ -51,6 +54,26 @@ export default function TestZipcodesPage() {
     }
   }
 
+  const lookupZip = async () => {
+    if (!zipLookup || !/^\d{5}$/.test(zipLookup)) {
+      setLookupResult({ ok: false, error: 'Please enter a valid 5-digit ZIP code' })
+      return
+    }
+    
+    setLookupLoading(true)
+    setLookupResult(null)
+    
+    try {
+      const response = await fetch(`/api/geocoding/zip?zip=${zipLookup}`)
+      const data = await response.json()
+      setLookupResult(data)
+    } catch (err) {
+      setLookupResult({ ok: false, error: 'Network error' })
+    } finally {
+      setLookupLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchZipcodes()
   }, [])
@@ -60,7 +83,7 @@ export default function TestZipcodesPage() {
       <h1 className="text-2xl font-bold mb-6">ZIP Codes Table Test</h1>
       
       <div className="mb-6 space-y-4">
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           <button
             onClick={fetchZipcodes}
             disabled={loading}
@@ -78,10 +101,40 @@ export default function TestZipcodesPage() {
           </button>
         </div>
         
+        <div className="flex gap-4 items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Test ZIP Lookup
+            </label>
+            <input
+              type="text"
+              value={zipLookup}
+              onChange={(e) => setZipLookup(e.target.value)}
+              placeholder="Enter 5-digit ZIP (e.g., 90210)"
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              maxLength={5}
+            />
+          </div>
+          <button
+            onClick={lookupZip}
+            disabled={lookupLoading}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+          >
+            {lookupLoading ? 'Looking up...' : 'Lookup ZIP'}
+          </button>
+        </div>
+        
         {seedResult && (
           <div className={`p-4 rounded ${seedResult.ok ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
             <h3 className="font-bold">Seed Result:</h3>
             <pre className="mt-2 text-sm">{JSON.stringify(seedResult, null, 2)}</pre>
+          </div>
+        )}
+        
+        {lookupResult && (
+          <div className={`p-4 rounded ${lookupResult.ok ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
+            <h3 className="font-bold">ZIP Lookup Result:</h3>
+            <pre className="mt-2 text-sm">{JSON.stringify(lookupResult, null, 2)}</pre>
           </div>
         )}
       </div>
