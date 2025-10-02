@@ -16,9 +16,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServerClient()
+    const { searchParams } = new URL(req.url)
+    const dryRun = searchParams.get('dryRun') === 'true'
     
-    console.log('[ZIPSEED] Starting ZIP codes ingestion...')
+    const supabase = createSupabaseServerClient()
+    const startedAt = new Date().toISOString()
+    
+    console.log(`[ZIPSEED] Starting ZIP codes ingestion... dryRun=${dryRun}`)
     
     // Import the zipcodes package
     const zipcodes = require('zipcodes')
@@ -42,24 +46,44 @@ export async function POST(req: NextRequest) {
     }
     
     const zipArray = Array.from(uniqueZips.values())
-    console.log(`[ZIPSEED] Processing ${zipArray.length} unique 5-digit ZIP codes`)
+    const totalFound = zipArray.length
+    const chunkSize = 500
+    const estimatedBatches = Math.ceil(totalFound / chunkSize)
     
-    // Process in chunks
-    const CHUNK_SIZE = 500
-    const totalChunks = Math.ceil(zipArray.length / CHUNK_SIZE)
+    console.log(`[ZIPSEED] Processing ${totalFound} unique 5-digit ZIP codes`)
+    console.log(`[ZIPSEED] Chunk size: ${chunkSize}, Estimated batches: ${estimatedBatches}`)
+    
+    if (dryRun) {
+      console.log(`[ZIPSEED] DRY RUN - No data will be written`)
+      const finishedAt = new Date().toISOString()
+      const durationMs = new Date(finishedAt).getTime() - new Date(startedAt).getTime()
+      
+      return NextResponse.json({
+        ok: true,
+        dryRun: true,
+        totalFound,
+        chunkSize,
+        estimatedBatches,
+        startedAt,
+        finishedAt,
+        durationMs
+      })
+    }
+    
+    // Real run - process in chunks
     let totalInserted = 0
     let totalUpdated = 0
     let totalSkipped = 0
     let firstError: string | null = null
     
-    for (let i = 0; i < totalChunks; i++) {
-      const startTime = Date.now()
-      const start = i * CHUNK_SIZE
-      const end = Math.min(start + CHUNK_SIZE, zipArray.length)
+    for (let i = 0; i < estimatedBatches; i++) {
+      const batchStartTime = Date.now()
+      const start = i * chunkSize
+      const end = Math.min(start + chunkSize, zipArray.length)
       const chunk = zipArray.slice(start, end)
       
       try {
-        console.log(`[ZIPSEED] Processing batch ${i + 1}/${totalChunks}, count=${chunk.length}`)
+        console.log(`[ZIPSEED] Processing batch ${i + 1}/${estimatedBatches}, count=${chunk.length}`)
         
         // Upsert the chunk
         const { data, error } = await supabase
@@ -78,8 +102,8 @@ export async function POST(req: NextRequest) {
         const inserted = chunk.length // We'll assume all were processed
         totalInserted += inserted
         
-        const batchTime = Date.now() - startTime
-        console.log(`[ZIPSEED] batch ${i + 1}/${totalChunks} count=${chunk.length} time=${batchTime}ms`)
+        const batchTime = Date.now() - batchStartTime
+        console.log(`[ZIPSEED] batch ${i + 1}/${estimatedBatches} count=${chunk.length} time=${batchTime}ms`)
         
       } catch (error: any) {
         const errorMsg = `Batch ${i + 1} failed: ${error.message}`
@@ -94,21 +118,34 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    const finishedAt = new Date().toISOString()
+    const durationMs = new Date(finishedAt).getTime() - new Date(startedAt).getTime()
+    
     if (firstError) {
+      console.log(`[ZIPSEED] Failed after ${durationMs}ms: ${firstError}`)
       return NextResponse.json({ 
         ok: false, 
-        error: firstError 
+        error: firstError,
+        startedAt,
+        finishedAt,
+        durationMs
       }, { status: 500 })
     }
     
-    console.log(`[ZIPSEED] Completed: inserted=${totalInserted}, updated=${totalUpdated}, skipped=${totalSkipped}`)
+    console.log(`[ZIPSEED] Completed in ${durationMs}ms: inserted=${totalInserted}, updated=${totalUpdated}, skipped=${totalSkipped}`)
     
     return NextResponse.json({
       ok: true,
-      total: zipArray.length,
+      dryRun: false,
+      totalFound,
+      chunkSize,
+      estimatedBatches,
       inserted: totalInserted,
       updated: totalUpdated,
-      skipped: totalSkipped
+      skipped: totalSkipped,
+      startedAt,
+      finishedAt,
+      durationMs
     })
     
   } catch (error: any) {
