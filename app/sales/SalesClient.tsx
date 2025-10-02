@@ -57,19 +57,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const fetchSales = useCallback(async () => {
     setLoading(true)
     
-    // If no location, try to get user's location automatically
+    // If no location, don't try to fetch sales yet
     if (!filters.lat || !filters.lng) {
-      console.log('[SALES] No location provided, attempting to get user location')
-      try {
-        await getLocation()
-      } catch (error) {
-        console.log('[SALES] Could not get user location, showing location prompt')
-        setSales([])
-        setDateWindow(null)
-        setDegraded(false)
-        setLoading(false)
-        return
-      }
+      console.log('[SALES] No location provided, waiting for location')
+      setSales([])
+      setDateWindow(null)
+      setDegraded(false)
+      setLoading(false)
       return
     }
 
@@ -132,12 +126,17 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   useEffect(() => {
     if (location && location.lat && location.lng) {
+      console.log('[SALES] Location found, updating filters and fetching sales')
       updateFilters({
         lat: location.lat,
         lng: location.lng
       })
+      // Trigger sales fetch after a short delay to ensure filters are updated
+      setTimeout(() => {
+        fetchSales()
+      }, 100)
     }
-  }, [location, updateFilters])
+  }, [location, updateFilters, fetchSales])
 
   // Initialize location from cookie on mount
   useEffect(() => {
@@ -152,6 +151,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             lng: locationData.lng,
             city: locationData.city
           })
+          // Trigger sales fetch after a short delay to ensure filters are updated
+          setTimeout(() => {
+            fetchSales()
+          }, 100)
         }
       } catch (error) {
         console.error('Failed to parse location cookie:', error)
