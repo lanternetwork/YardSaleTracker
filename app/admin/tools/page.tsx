@@ -3,6 +3,7 @@ import CopyButton from './CopyButton'
 import HealthChecks from './HealthChecks'
 import SchemaSection from './SchemaSection'
 import MapPreview from './MapPreview'
+import ZipLookupTool from './ZipLookupTool'
 
 export const dynamic = 'force-dynamic'
 
@@ -155,8 +156,8 @@ export default async function AdminToolsPage() {
           <MapPreview />
         </Section>
 
-        <Section title="ZIP Lookup Tools" description="ZIP local lookup vs. Nominatim fallback, write-back status, and common ZIP probes.">
-          <div className="text-sm text-neutral-700">Placeholders for ZIP tools.</div>
+        <Section title="ZIP Lookup Tools" description="Test /api/geocoding/zip; never uses paid geocoders.">
+          <ZipLookupTool />
         </Section>
 
         <Section title="Sales API Tester" description="Quick tester for /api/sales with lat/lng/km and category filters.">
