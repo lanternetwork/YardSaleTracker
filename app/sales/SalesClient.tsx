@@ -116,13 +116,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     fetchSales()
   }, [fetchSales])
 
-  // Automatically request location on page load if not already set
-  useEffect(() => {
-    if (!filters.lat || !filters.lng) {
-      console.log('[SALES] Auto-requesting user location on page load')
-      getLocation()
-    }
-  }, []) // Only run on mount
+  // Don't automatically request location - let user choose
 
   useEffect(() => {
     if (location && location.lat && location.lng) {
@@ -285,6 +279,12 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                   center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : { lat: 38.2527, lng: -85.7585 }}
                   zoom={filters.lat && filters.lng ? 12 : 10}
                 />
+                {/* Debug info */}
+                {filters.lat && filters.lng && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    Center: {filters.lat.toFixed(4)}, {filters.lng.toFixed(4)} | Sales: {sales.length}
+                  </div>
+                )}
               </div>
               
               {/* Location Info */}
