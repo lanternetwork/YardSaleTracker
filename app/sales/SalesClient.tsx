@@ -178,7 +178,11 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     const newUrl = `${window.location.pathname}?${params.toString()}`
     router.push(newUrl)
     
-    // fetchSales will be triggered automatically by the useEffect dependency on filters
+    // Force a manual fetch to ensure it happens
+    console.log(`[ZIP] Manually triggering fetchSales after ZIP lookup`)
+    setTimeout(() => {
+      fetchSales()
+    }, 100)
   }
 
   const handleZipError = (error: string) => {
