@@ -57,20 +57,26 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const fetchSales = useCallback(async () => {
     setLoading(true)
     
-    // If no location, show message to user
+    // If no location, try to get user's location automatically
     if (!filters.lat || !filters.lng) {
-      console.log('[SALES] No location provided, showing location prompt')
-      setSales([])
-      setDateWindow(null)
-      setDegraded(false)
-      setLoading(false)
+      console.log('[SALES] No location provided, attempting to get user location')
+      try {
+        await getLocation()
+      } catch (error) {
+        console.log('[SALES] Could not get user location, showing location prompt')
+        setSales([])
+        setDateWindow(null)
+        setDegraded(false)
+        setLoading(false)
+        return
+      }
       return
     }
 
     const params: GetSalesParams = {
       lat: filters.lat,
       lng: filters.lng,
-      distanceKm: filters.distance,
+      distanceKm: filters.distance || 40.2336, // Default 25 miles
       city: filters.city,
       categories: filters.categories.length > 0 ? filters.categories : undefined,
       dateRange: filters.dateRange !== 'any' ? filters.dateRange : undefined,
@@ -115,6 +121,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   useEffect(() => {
     fetchSales()
   }, [fetchSales])
+
+  // Automatically request location on page load if not already set
+  useEffect(() => {
+    if (!filters.lat || !filters.lng) {
+      console.log('[SALES] Auto-requesting user location on page load')
+      getLocation()
+    }
+  }, []) // Only run on mount
 
   useEffect(() => {
     if (location && location.lat && location.lng) {
@@ -195,18 +209,19 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              {/* ZIP Input */}
-              <div className="flex-1 sm:flex-none">
-                <ZipInput
-                  onLocationFound={handleZipLocationFound}
-                  onError={handleZipError}
-                  placeholder="Enter ZIP code"
-                  className="w-full sm:w-auto"
-                />
-                {zipError && (
-                  <p className="text-red-500 text-sm mt-1">{zipError}</p>
-                )}
-              </div>
+                  {/* ZIP Input */}
+                  <div className="flex-1 sm:flex-none">
+                    <div className="text-xs text-gray-500 mb-1">Search different area:</div>
+                    <ZipInput
+                      onLocationFound={handleZipLocationFound}
+                      onError={handleZipError}
+                      placeholder="Enter ZIP code"
+                      className="w-full sm:w-auto"
+                    />
+                    {zipError && (
+                      <p className="text-red-500 text-sm mt-1">{zipError}</p>
+                    )}
+                  </div>
               
               {/* Location Button */}
               <UseLocationButton 
@@ -231,6 +246,19 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading sales...</span>
+              </div>
+            ) : (!filters.lat || !filters.lng) ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📍</div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
+                <p className="text-gray-500 mb-4">We're finding yard sales near you...</p>
+                <div className="flex justify-center">
+                  <UseLocationButton 
+                    onClick={handleLocationClick} 
+                    loading={locationLoading} 
+                    error={locationError?.message || null} 
+                  />
+                </div>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">
