@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { T } from '@/lib/supabase/tables'
 import { SEED_DATA } from '@/lib/admin/seedDataset'
+import { RateLimiter } from '@/lib/rateLimiter'
+import { checkAndSetIdempotency } from '@/lib/admin/idempotency'
 
 function authOk(req: NextRequest): boolean {
   const token = process.env.SEED_TOKEN
@@ -36,6 +38,20 @@ function addHours(isoString: string, hours: number): string {
 export async function POST(req: NextRequest) {
   if (!authOk(req)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Rate limit: 5/min per IP
+  const limiter = new RateLimiter({ windowMs: 60 * 1000, maxRequests: 5 })
+  const rate = await limiter.checkLimit(req as any)
+  if (!rate.success) {
+    return NextResponse.json({ ok: false, error: 'Too many requests' }, { status: 429 })
+  }
+
+  // Idempotency: 24h replay protection
+  const idKey = req.headers.get('Idempotency-Key') || req.headers.get('idempotency-key')
+  const idStatus = checkAndSetIdempotency(idKey)
+  if (idStatus === 'replay') {
+    return NextResponse.json({ ok: true, status: 'idempotent_replay' })
   }
 
   const supabase = createSupabaseServerClient()
