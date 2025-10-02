@@ -81,6 +81,9 @@ export async function GET(request: NextRequest) {
     const latRange = distanceKm / 111 // 1 degree ≈ 111 km
     const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
     
+    console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
+    console.log(`[SALES] Range: lat[${latitude - latRange}, ${latitude + latRange}], lng[${longitude - lngRange}, ${longitude + lngRange}]`)
+    
     let query = supabase
       .from('yard_sales')
       .select('*')
