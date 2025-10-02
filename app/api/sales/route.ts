@@ -73,68 +73,115 @@ export async function GET(request: NextRequest) {
     }
     
     let results: any[] = []
-    let degraded = true // Always use bounding box for now
+    let degraded = false
     
-    // 4. Use bounding box approximation (skip PostGIS for now)
-    console.log(`[SALES] Using bounding box approach for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
-    
-    const latRange = distanceKm / 111 // 1 degree ≈ 111 km
-    const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
-    
-    console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
-    console.log(`[SALES] Range: lat[${latitude - latRange}, ${latitude + latRange}], lng[${longitude - lngRange}, ${longitude + lngRange}]`)
-    
-    let query = supabase
-      .from('yard_sales')
-      .select('*')
-      .eq('status', 'active')
-      .gte('lat', latitude - latRange)
-      .lte('lat', latitude + latRange)
-      .gte('lng', longitude - lngRange)
-      .lte('lng', longitude + lngRange)
-      .order('start_at', { ascending: true })
-      .limit(limit)
-      .range(offset, offset + limit - 1)
-    
-    // Apply category filter
-    if (categories.length > 0) {
-      query = query.overlaps('tags', categories)
+    // 4. Try PostGIS distance calculation first
+    try {
+      console.log(`[SALES] Attempting PostGIS distance calculation for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
+      
+      const { data: postgisData, error: postgisError } = await supabase
+        .rpc('search_sales_by_distance', {
+          search_lat: latitude,
+          search_lng: longitude,
+          max_distance_km: distanceKm,
+          date_filter: dateRange !== 'any' ? dateRange : null,
+          category_filter: categories.length > 0 ? categories : null,
+          text_filter: q || null,
+          result_limit: limit,
+          result_offset: offset
+        })
+      
+      if (postgisError) {
+        throw new Error(`PostGIS RPC failed: ${postgisError.message}`)
+      }
+      
+      console.log(`[SALES] PostGIS returned ${postgisData?.length || 0} results`)
+      
+      // Apply date filtering in application layer for PostGIS results
+      results = (postgisData || [])
+        .filter((row: any) => {
+          if (!dateWindow) return true
+          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
+        })
+        .map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          starts_at: row.start_at,
+          ends_at: row.end_at,
+          latitude: row.lat,
+          longitude: row.lng,
+          city: row.city,
+          state: row.state,
+          zip: row.zip,
+          categories: row.tags || [],
+          cover_image_url: null,
+          distance_m: row.distance_m
+        }))
+        
+      console.log(`[SALES] PostGIS success: ${results.length} results`)
+      
+    } catch (postgisError: any) {
+      console.log(`[SALES] PostGIS failed: ${postgisError.message}, falling back to bounding box`)
+      degraded = true
+      
+      // Fallback to bounding box approximation
+      const latRange = distanceKm / 111 // 1 degree ≈ 111 km
+      const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
+      
+      console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
+      
+      let query = supabase
+        .from('yard_sales')
+        .select('*')
+        .eq('status', 'active')
+        .gte('lat', latitude - latRange)
+        .lte('lat', latitude + latRange)
+        .gte('lng', longitude - lngRange)
+        .lte('lng', longitude + lngRange)
+        .order('start_at', { ascending: true })
+        .limit(limit)
+        .range(offset, offset + limit - 1)
+      
+      // Apply category filter
+      if (categories.length > 0) {
+        query = query.overlaps('tags', categories)
+      }
+      
+      // Apply text filter
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
+      }
+      
+      const { data: bboxData, error: bboxError } = await query
+      
+      if (bboxError) {
+        console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
+        return NextResponse.json({ 
+          ok: false, 
+          error: 'Database query failed' 
+        }, { status: 500 })
+      }
+      
+      // Apply date filtering in application layer for bounding box results
+      results = (bboxData || [])
+        .filter((row: any) => {
+          if (!dateWindow) return true
+          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
+        })
+        .map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          starts_at: row.start_at,
+          ends_at: row.end_at,
+          latitude: row.lat,
+          longitude: row.lng,
+          city: row.city,
+          state: row.state,
+          zip: row.zip,
+          categories: row.tags || [],
+          cover_image_url: null
+        }))
     }
-    
-    // Apply text filter
-    if (q) {
-      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
-    }
-    
-    const { data: bboxData, error: bboxError } = await query
-    
-    if (bboxError) {
-      console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Database query failed' 
-      }, { status: 500 })
-    }
-    
-    // Apply date filtering in application layer for bounding box results
-    results = (bboxData || [])
-      .filter((row: any) => {
-        if (!dateWindow) return true
-        return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
-      })
-      .map((row: any) => ({
-        id: row.id,
-        title: row.title,
-        starts_at: row.start_at,
-        ends_at: row.end_at,
-        latitude: row.lat,
-        longitude: row.lng,
-        city: row.city,
-        state: row.state,
-        zip: row.zip,
-        categories: row.tags || [],
-        cover_image_url: null
-      }))
     
     // 5. Return normalized response
     const response = {
