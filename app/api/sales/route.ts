@@ -73,70 +73,67 @@ export async function GET(request: NextRequest) {
     }
     
     let results: any[] = []
-    let degraded = false
+    let degraded = true // Always use bounding box for now
     
-        // Skip PostGIS for now - use bounding box approach directly
-        console.log(`[SALES] Using bounding box approach for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
-        degraded = true
-      
-      // 5. Fallback to bounding box approximation
-      const latRange = distanceKm / 111 // 1 degree ≈ 111 km
-      const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
-      
-      let query = supabase
-        .from('yard_sales')
-        .select('*')
-        .eq('status', 'active')
-        .gte('lat', latitude - latRange)
-        .lte('lat', latitude + latRange)
-        .gte('lng', longitude - lngRange)
-        .lte('lng', longitude + lngRange)
-        .order('start_at', { ascending: true })
-        .limit(limit)
-        .range(offset, offset + limit - 1)
-      
-      // Apply category filter
-      if (categories.length > 0) {
-        query = query.overlaps('tags', categories)
-      }
-      
-      // Apply text filter
-      if (q) {
-        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
-      }
-      
-      const { data: bboxData, error: bboxError } = await query
-      
-      if (bboxError) {
-        console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
-        return NextResponse.json({ 
-          ok: false, 
-          error: 'Database query failed' 
-        }, { status: 500 })
-      }
-      
-      // Apply date filtering in application layer for bounding box results
-      results = (bboxData || [])
-        .filter((row: any) => {
-          if (!dateWindow) return true
-          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
-        })
-        .map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          starts_at: row.start_at,
-          ends_at: row.end_at,
-          latitude: row.lat,
-          longitude: row.lng,
-          city: row.city,
-          state: row.state,
-          zip: row.zip,
-          categories: row.tags || [],
-          cover_image_url: null
-        }))
+    // 4. Use bounding box approximation (skip PostGIS for now)
+    console.log(`[SALES] Using bounding box approach for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
+    
+    const latRange = distanceKm / 111 // 1 degree ≈ 111 km
+    const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
+    
+    let query = supabase
+      .from('yard_sales')
+      .select('*')
+      .eq('status', 'active')
+      .gte('lat', latitude - latRange)
+      .lte('lat', latitude + latRange)
+      .gte('lng', longitude - lngRange)
+      .lte('lng', longitude + lngRange)
+      .order('start_at', { ascending: true })
+      .limit(limit)
+      .range(offset, offset + limit - 1)
+    
+    // Apply category filter
+    if (categories.length > 0) {
+      query = query.overlaps('tags', categories)
     }
     
-    // 6. Return normalized response
+    // Apply text filter
+    if (q) {
+      query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
+    }
+    
+    const { data: bboxData, error: bboxError } = await query
+    
+    if (bboxError) {
+      console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Database query failed' 
+      }, { status: 500 })
+    }
+    
+    // Apply date filtering in application layer for bounding box results
+    results = (bboxData || [])
+      .filter((row: any) => {
+        if (!dateWindow) return true
+        return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
+      })
+      .map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        starts_at: row.start_at,
+        ends_at: row.end_at,
+        latitude: row.lat,
+        longitude: row.lng,
+        city: row.city,
+        state: row.state,
+        zip: row.zip,
+        categories: row.tags || [],
+        cover_image_url: null
+      }))
+    
+    // 5. Return normalized response
     const response = {
       ok: true,
       data: results,
@@ -167,83 +164,40 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Create Supabase client with explicit public schema
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!url || !anon) {
-      return NextResponse.json({ ok: false, error: 'Missing Supabase configuration' }, { status: 500 })
-    }
-    
-    const { createServerClient } = await import('@supabase/ssr')
-    const { cookies } = await import('next/headers')
-    
-    const supabase = createServerClient(url, anon, {
-      cookies: {
-        get(name: string) {
-          return cookies().get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookies().set({ name, value, ...options })
-        },
-        remove(name: string, options: any) {
-          cookies().set({ name, value: '', ...options, maxAge: 0 })
-        },
-      },
-      // Use default public schema
-    })
-    
+    const supabase = createSupabaseServerClient()
     const body = await request.json()
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Unauthorized' 
-      }, { status: 401 })
-    }
+    const { title, description, address, city, state, zip, lat, lng, start_at, end_at, tags, contact } = body
     
-    console.log(`[SALES][POST] Creating sale for user ${user.id}`)
-    
-    const { data: sale, error } = await supabase
+    const { data, error } = await supabase
       .from('yard_sales')
       .insert({
-        owner_id: user.id,
-        title: body.title,
-        description: body.description,
-        address: body.address,
-        city: body.city,
-        state: body.state,
-        zip: body.zip_code,
-        lat: body.lat,
-        lng: body.lng,
-        start_at: body.date_start ? `${body.date_start}T${body.time_start || '08:00'}:00Z` : null,
-        end_at: body.date_end ? `${body.date_end}T${body.time_end || '12:00'}:00Z` : null,
-        status: body.status || 'active',
-        source: 'user'
+        title,
+        description,
+        address,
+        city,
+        state,
+        zip,
+        lat,
+        lng,
+        start_at,
+        end_at,
+        tags: tags || [],
+        contact,
+        status: 'active',
+        source: 'manual'
       })
       .select()
       .single()
     
     if (error) {
-      console.log(`[SALES][POST][ERROR] code=${error.code}, message=${error.message}, details=${error.details}, hint=${error.hint}`)
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Failed to create sale' 
-      }, { status: 500 })
+      console.error('Sales insert error:', error)
+      return NextResponse.json({ error: 'Failed to create sale' }, { status: 500 })
     }
     
-    return NextResponse.json({ 
-      ok: true, 
-      data: sale 
-    })
-    
+    return NextResponse.json({ ok: true, data })
   } catch (error: any) {
-    console.log(`[SALES][POST][ERROR] Unexpected error: ${error?.message || error}`)
-    return NextResponse.json({ 
-      ok: false, 
-      error: 'Internal server error' 
-    }, { status: 500 })
+    console.error('Sales POST error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
