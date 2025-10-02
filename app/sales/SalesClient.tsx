@@ -11,8 +11,19 @@ import { useLocation } from '@/lib/location/useLocation'
 import SaleCard from '@/components/SaleCard'
 import FiltersModal from '@/components/filters/FiltersModal'
 import FilterTrigger from '@/components/filters/FilterTrigger'
+import DateWindowLabel from '@/components/filters/DateWindowLabel'
+import DegradedBanner from '@/components/DegradedBanner'
 import { useFilters } from '@/lib/hooks/useFilters'
 import { User } from '@supabase/supabase-js'
+
+// Cookie utility functions
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+  return null
+}
 
 interface SalesClientProps {
   initialSales: Sale[]
@@ -40,6 +51,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [loading, setLoading] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
   const [zipError, setZipError] = useState<string | null>(null)
+  const [dateWindow, setDateWindow] = useState<any>(null)
+  const [degraded, setDegraded] = useState(false)
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -52,9 +65,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         const data = await res.json()
         if (data.ok) {
           setSales(data.data || [])
+          setDateWindow(data.dateWindow || null)
+          setDegraded(data.degraded || false)
         } else {
           console.error('Sales API error:', data.error)
           setSales([])
+          setDateWindow(null)
+          setDegraded(false)
         }
       } catch (error) {
         console.error('Error fetching sales:', error)
@@ -94,9 +111,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       const data = await res.json()
       if (data.ok) {
         setSales(data.data || [])
+        setDateWindow(data.dateWindow || null)
+        setDegraded(data.degraded || false)
       } else {
         console.error('Sales API error:', data.error)
         setSales([])
+        setDateWindow(null)
+        setDegraded(false)
       }
     } catch (error) {
       console.error('Error fetching sales:', error)
@@ -119,11 +140,31 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     }
   }, [location, updateFilters])
 
+  // Initialize location from cookie on mount
+  useEffect(() => {
+    const cookieData = getCookie('la_loc')
+    if (cookieData && !filters.lat && !filters.lng) {
+      try {
+        const locationData = JSON.parse(cookieData)
+        if (locationData.lat && locationData.lng) {
+          console.log(`[SALES] Loading location from cookie: ${locationData.zip} (${locationData.city}, ${locationData.state})`)
+          updateFilters({
+            lat: locationData.lat,
+            lng: locationData.lng,
+            city: locationData.city
+          })
+        }
+      } catch (error) {
+        console.error('Failed to parse location cookie:', error)
+      }
+    }
+  }, []) // Only run on mount
+
   const handleLocationClick = () => {
     getLocation()
   }
 
-  const handleZipLocationFound = (lat: number, lng: number, city?: string, state?: string) => {
+  const handleZipLocationFound = (lat: number, lng: number, city?: string, state?: string, zip?: string) => {
     setZipError(null)
     updateFilters({
       lat,
@@ -131,15 +172,19 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       city: city || undefined
     })
     
-    // Update URL with new location
+    // Update URL with new location and ZIP
     const params = new URLSearchParams(searchParams.toString())
     params.set('lat', lat.toString())
     params.set('lng', lng.toString())
     if (city) params.set('city', city)
     if (state) params.set('state', state)
+    if (zip) params.set('zip', zip)
     
     const newUrl = `${window.location.pathname}?${params.toString()}`
     router.push(newUrl)
+    
+    // Refetch sales with new location
+    fetchSales()
   }
 
   const handleZipError = (error: string) => {
@@ -152,7 +197,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         {/* Main Content */}
         <div className="lg:w-2/3">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <h1 className="text-3xl font-bold mb-4 sm:mb-0">Sales Search</h1>
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Sales Search</h1>
+              {dateWindow && (
+                <DateWindowLabel dateWindow={dateWindow} className="mb-4" />
+              )}
+              {degraded && (
+                <DegradedBanner className="mb-4" />
+              )}
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               {/* ZIP Input */}
@@ -198,7 +251,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                 <p className="text-gray-400 mt-2">Try adjusting your filters or location.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="sales-grid">
                 {sales.map((sale) => (
                   <SaleCard key={sale.id} sale={sale} />
                 ))}

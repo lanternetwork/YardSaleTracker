@@ -5,7 +5,7 @@ import { Sale } from '@/lib/types'
 export default function SaleCard({ sale }: { sale: Sale }) {
 
   return (
-    <div className="rounded-xl border p-4 bg-white flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow">
+    <div className="rounded-xl border p-4 bg-white flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow" data-testid="sale-card">
       <div className="flex justify-between">
         <h3 className="text-xl font-semibold line-clamp-1">{sale.title}</h3>
         <FavoriteButton saleId={sale.id} initial={false} />

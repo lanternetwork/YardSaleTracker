@@ -2,7 +2,32 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FaTimes, FaFilter, FaMapMarkerAlt, FaCalendarAlt, FaTags } from 'react-icons/fa'
+// Simple SVG icons
+const CloseIcon = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+)
+
+const MapMarkerIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+)
+
+const CalendarIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+)
+
+const TagsIcon = () => (
+  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+  </svg>
+)
+import DateSelector, { DateRange } from './DateSelector'
 
 interface FiltersModalProps {
   isOpen: boolean
@@ -12,7 +37,7 @@ interface FiltersModalProps {
 
 interface FilterState {
   distance: number
-  dateRange: 'today' | 'weekend' | 'any'
+  dateRange: DateRange
   categories: string[]
 }
 
@@ -36,19 +61,25 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
   const searchParams = useSearchParams()
   const [filters, setFilters] = useState<FilterState>({
     distance: 25,
-    dateRange: 'any',
+    dateRange: { type: 'any' },
     categories: []
   })
 
   // Initialize filters from URL params
   useEffect(() => {
     const distance = searchParams.get('dist') ? parseInt(searchParams.get('dist')!) : 25
-    const dateRange = (searchParams.get('date') as 'today' | 'weekend' | 'any') || 'any'
+    const dateType = searchParams.get('date') || 'any'
+    const startDate = searchParams.get('startDate') || undefined
+    const endDate = searchParams.get('endDate') || undefined
     const categories = searchParams.get('cat') ? searchParams.get('cat')!.split(',') : []
 
     setFilters({
       distance: Math.max(1, Math.min(100, distance)),
-      dateRange,
+      dateRange: { 
+        type: dateType as DateRange['type'], 
+        startDate, 
+        endDate 
+      },
       categories
     })
   }, [searchParams])
@@ -68,10 +99,18 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
     }
     
     // Update date range
-    if (updatedFilters.dateRange !== 'any') {
-      params.set('date', updatedFilters.dateRange)
+    if (updatedFilters.dateRange.type !== 'any') {
+      params.set('date', updatedFilters.dateRange.type)
+      if (updatedFilters.dateRange.startDate) {
+        params.set('startDate', updatedFilters.dateRange.startDate)
+      }
+      if (updatedFilters.dateRange.endDate) {
+        params.set('endDate', updatedFilters.dateRange.endDate)
+      }
     } else {
       params.delete('date')
+      params.delete('startDate')
+      params.delete('endDate')
     }
     
     // Update categories
@@ -90,7 +129,7 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
     updateFilters({ distance })
   }
 
-  const handleDateRangeChange = (dateRange: 'today' | 'weekend' | 'any') => {
+  const handleDateRangeChange = (dateRange: DateRange) => {
     updateFilters({ dateRange })
   }
 
@@ -105,12 +144,12 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
   const handleClearFilters = () => {
     updateFilters({
       distance: 25,
-      dateRange: 'any',
+      dateRange: { type: 'any' },
       categories: []
     })
   }
 
-  const hasActiveFilters = filters.distance !== 25 || filters.dateRange !== 'any' || filters.categories.length > 0
+  const hasActiveFilters = filters.distance !== 25 || filters.dateRange.type !== 'any' || filters.categories.length > 0
 
   return (
     <>
@@ -134,7 +173,7 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
-              <FaTimes className="h-5 w-5 text-gray-500" />
+              <CloseIcon />
             </button>
           </div>
 
@@ -181,7 +220,7 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
 interface FiltersContentProps {
   filters: FilterState
   onDistanceChange: (distance: number) => void
-  onDateRangeChange: (dateRange: 'today' | 'weekend' | 'any') => void
+  onDateRangeChange: (dateRange: DateRange) => void
   onCategoryToggle: (category: string) => void
   onClearFilters: () => void
   hasActiveFilters: boolean
@@ -200,7 +239,8 @@ function FiltersContent({
       {/* Distance Filter */}
       <div>
         <div className="flex items-center mb-3">
-          <FaMapMarkerAlt className="h-4 w-4 text-gray-500 mr-2" />
+          <MapMarkerIcon />
+          <span className="text-gray-500 mr-2"></span>
           <label className="text-sm font-medium text-gray-700">
             Distance: {filters.distance} miles
           </label>
@@ -222,34 +262,21 @@ function FiltersContent({
       {/* Date Range Filter */}
       <div>
         <div className="flex items-center mb-3">
-          <FaCalendarAlt className="h-4 w-4 text-gray-500 mr-2" />
+          <CalendarIcon />
+          <span className="text-gray-500 mr-2"></span>
           <label className="text-sm font-medium text-gray-700">Date Range</label>
         </div>
-        <div className="space-y-2">
-          {[
-            { value: 'today', label: 'Today' },
-            { value: 'weekend', label: 'This Weekend' },
-            { value: 'any', label: 'Any Date' }
-          ].map((option) => (
-            <label key={option.value} className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                name="dateRange"
-                value={option.value}
-                checked={filters.dateRange === option.value}
-                onChange={(e) => onDateRangeChange(e.target.value as 'today' | 'weekend' | 'any')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-              />
-              <span className="ml-2 text-sm text-gray-700">{option.label}</span>
-            </label>
-          ))}
-        </div>
+        <DateSelector
+          value={filters.dateRange}
+          onChange={onDateRangeChange}
+        />
       </div>
 
       {/* Categories Filter */}
       <div>
         <div className="flex items-center mb-3">
-          <FaTags className="h-4 w-4 text-gray-500 mr-2" />
+          <TagsIcon />
+          <span className="text-gray-500 mr-2"></span>
           <label className="text-sm font-medium text-gray-700">Categories</label>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -284,8 +311,11 @@ function FiltersContent({
               {filters.distance !== 25 && (
                 <li>• Distance: {filters.distance} miles</li>
               )}
-              {filters.dateRange !== 'any' && (
-                <li>• Date: {filters.dateRange === 'today' ? 'Today' : 'This Weekend'}</li>
+              {filters.dateRange.type !== 'any' && (
+                <li>• Date: {filters.dateRange.type === 'today' ? 'Today' : 
+                            filters.dateRange.type === 'weekend' ? 'This Weekend' :
+                            filters.dateRange.type === 'next_weekend' ? 'Next Weekend' :
+                            'Custom Range'}</li>
               )}
               {filters.categories.length > 0 && (
                 <li>• Categories: {filters.categories.length} selected</li>

@@ -1,205 +1,191 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { T } from '@/lib/supabase/tables'
+import { getDateWindow, saleOverlapsWindow, formatDateWindow } from '@/lib/date/dateWindows'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
-    // Create Supabase client with explicit public schema
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    if (!url || !anon) {
-      return NextResponse.json({ ok: false, error: 'Missing Supabase configuration' }, { status: 500 })
-    }
-    
-    const { createServerClient } = await import('@supabase/ssr')
-    const { cookies } = await import('next/headers')
-    
-    const supabase = createServerClient(url, anon, {
-      cookies: {
-        get(name: string) {
-          return cookies().get(name)?.value
-        },
-        set(name: string, value: string, options: any) {
-          cookies().set({ name, value, ...options })
-        },
-        remove(name: string, options: any) {
-          cookies().set({ name, value: '', ...options, maxAge: 0 })
-        },
-      },
-      // Use default public schema
-    })
-    
+    const supabase = createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     
-    console.log(`[SALES] Using public schema`)
+    // 1. Parse & validate required location
+    const lat = searchParams.get('lat')
+    const lng = searchParams.get('lng')
     
-    // Parse inputs explicitly
-    const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
-    const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : undefined
-    const distanceKm = searchParams.get('distanceKm') ? parseFloat(searchParams.get('distanceKm')!) : undefined
-    const dateRange = searchParams.get('dateRange') || undefined
-    const categories = searchParams.get('categories')?.split(',') || undefined
-    const q = searchParams.get('q') || undefined
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50
-    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0
-    
-    // Log parameters to server console
-    console.log(`[SALES] params lat=${lat}, lng=${lng}, distKm=${distanceKm}, dateRange=${dateRange}, cats=${categories?.join(',')}, q=${q}, limit=${limit}, offset=${offset}`)
-
-    // If no location provided, show all sales (for initial page load)
-    if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
-      console.log(`[SALES][NO_LOCATION] Showing all sales without distance filter`)
-      return await runBaseline()
+    if (!lat || !lng) {
+      console.log(`[SALES] Missing location: lat=${lat}, lng=${lng}`)
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Missing location' 
+      }, { status: 400 })
     }
-
-    // Clamp distance to reasonable bounds (1-160km, default ~25 miles)
-    const km = Math.max(1, Math.min(distanceKm ?? 40.2336, 160)) // 25 miles ≈ 40.2336 km
     
-    // Helper: baseline query to avoid hard-fail (degraded mode)
-    async function runBaseline() {
-      console.log(`[SALES][BASELINE] Attempting simple query on table: ${T.sales}`)
-      // Use yard_sales table in public schema
-      const { data, error: baseErr } = await supabase
-        .from('yard_sales')
-        .select('id,title,city,state,lat,lng,start_at,end_at,tags')
-        .eq('status', 'active')
-        .order('start_at', { ascending: true })
-        .limit(24)
-      if (baseErr) {
-        console.log(`[SALES][ERROR][BASELINE] code=${baseErr.code}, message=${baseErr.message}, details=${baseErr.details}, hint=${baseErr.hint}`)
-        return NextResponse.json({ ok: false, error: 'Database query failed', debug: { code: baseErr.code, message: baseErr.message } }, { status: 500 })
-      }
-      const mapped = (data || []).map((row: any) => {
-        return {
-          id: row.id,
-          title: row.title,
-          city: row.city,
-          state: row.state,
-          latitude: row.lat,
-          longitude: row.lng,
-          starts_at: row.start_at,
-          ends_at: row.end_at,
-          categories: row.tags || [],
-          cover_image_url: null,
-        }
-      })
-      return NextResponse.json({ ok: true, degraded: true, count: mapped.length, data: mapped })
+    const latitude = parseFloat(lat)
+    const longitude = parseFloat(lng)
+    
+    if (isNaN(latitude) || isNaN(longitude)) {
+      console.log(`[SALES] Invalid location: lat=${lat}, lng=${lng}`)
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Invalid location coordinates' 
+      }, { status: 400 })
     }
-
+    
+    // 2. Parse & validate other parameters
+    const distanceKm = Math.max(1, Math.min(
+      searchParams.get('distanceKm') ? parseFloat(searchParams.get('distanceKm')!) : 40.2336,
+      160
+    ))
+    
+    const dateRange = searchParams.get('dateRange') || 'any'
+    const startDate = searchParams.get('startDate') || undefined
+    const endDate = searchParams.get('endDate') || undefined
+    
+    const categoriesParam = searchParams.get('categories')
+    const categories = categoriesParam 
+      ? categoriesParam.split(',').map(c => c.trim()).filter(c => c.length > 0).slice(0, 10)
+      : []
+    
+    const q = searchParams.get('q')
+    if (q && q.length > 64) {
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Search query too long' 
+      }, { status: 400 })
+    }
+    
+    const limit = Math.min(searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50, 100)
+    const offset = Math.max(searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0, 0)
+    
+    // Log parameters
+    console.log(`[SALES] lat=${latitude},lng=${longitude},km=${distanceKm},dateRange=${dateRange},cats=${categories.join(',')},q=${q} -> returned=count degraded?=bool`)
+    
+    // 3. Compute date window if needed
+    const dateWindow = dateRange !== 'any' ? getDateWindow(dateRange, startDate, endDate) : null
+    if (dateRange !== 'any' && !dateWindow) {
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Invalid date range parameters' 
+      }, { status: 400 })
+    }
+    
+    let results: any[] = []
+    let degraded = false
+    
     try {
-      // Build distance query with bounding box fallback
-      console.log(`[SALES][DISTANCE] Using distance filter: ${km}km from (${lat}, ${lng})`)
-      
-      // Try PostGIS RPC first
-      const { data: rpcData, error: rpcError } = await supabase.rpc('search_sales_by_distance', {
-        search_lat: lat,
-        search_lng: lng,
-        max_distance_km: km,
-        date_filter: dateRange,
-        category_filter: categories,
-        text_filter: q,
+      // 4. Try PostGIS distance query first
+      const { data: postgisData, error: postgisError } = await supabase.rpc('search_sales_by_distance', {
+        search_lat: latitude,
+        search_lng: longitude,
+        max_distance_km: distanceKm,
+        date_filter: dateRange !== 'any' ? dateRange : null,
+        category_filter: categories.length > 0 ? categories : null,
+        text_filter: q || null,
         result_limit: limit,
         result_offset: offset
       })
-
-      if (!rpcError && rpcData) {
-        console.log(`[SALES][POSTGIS] Success, found ${rpcData.length} results`)
-        const mappedData = (rpcData || []).map((row: any) => {
-          return {
-            id: row.id,
-            title: row.title,
-            city: row.city,
-            state: row.state,
-            latitude: row.lat,
-            longitude: row.lng,
-            starts_at: row.start_at,
-            ends_at: row.end_at,
-            categories: row.tags || [],
-            cover_image_url: null,
-            distance_m: row.distance_m
-          }
-        })
-        return NextResponse.json({ ok: true, degraded: false, count: mappedData.length, data: mappedData })
+      
+      if (!postgisError && postgisData) {
+        console.log(`[SALES][POSTGIS] Success, found ${postgisData.length} results`)
+        results = postgisData.map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          starts_at: row.start_at,
+          ends_at: row.end_at,
+          latitude: row.lat,
+          longitude: row.lng,
+          city: row.city,
+          state: row.state,
+          zip: row.zip,
+          categories: row.tags || [],
+          cover_image_url: null,
+          distance_m: row.distance_m
+        }))
+      } else {
+        throw new Error('PostGIS query failed')
       }
-
-      // Fallback to bounding box query
+      
+    } catch (postgisErr) {
       console.log(`[SALES][FALLBACK] PostGIS unavailable, using bounding box`)
-      const latRange = km / 111 // 1 degree ≈ 111 km
-      const lngRange = km / (111 * Math.cos(lat * Math.PI / 180)) // Adjust for latitude
+      degraded = true
+      
+      // 5. Fallback to bounding box approximation
+      const latRange = distanceKm / 111 // 1 degree ≈ 111 km
+      const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
       
       let query = supabase
         .from('yard_sales')
         .select('*')
         .eq('status', 'active')
-        .gte('lat', lat - latRange)
-        .lte('lat', lat + latRange)
-        .gte('lng', lng - lngRange)
-        .lte('lng', lng + lngRange)
-        .order('created_at', { ascending: false })
+        .gte('lat', latitude - latRange)
+        .lte('lat', latitude + latRange)
+        .gte('lng', longitude - lngRange)
+        .lte('lng', longitude + lngRange)
+        .order('start_at', { ascending: true })
         .limit(limit)
         .range(offset, offset + limit - 1)
-
-      // Apply additional filters
-      if (dateRange && dateRange !== 'any') {
-        const today = new Date()
-        const todayStr = today.toISOString().split('T')[0]
-        
-        if (dateRange === 'today') {
-          query = query.gte('start_at', `${todayStr}T00:00:00Z`).lt('start_at', `${todayStr}T23:59:59Z`)
-        } else if (dateRange === 'weekend') {
-          const dayOfWeek = today.getDay()
-          const daysUntilSaturday = (6 - dayOfWeek) % 7
-          const daysUntilSunday = (7 - dayOfWeek) % 7
-          
-          const saturday = new Date(today)
-          saturday.setDate(today.getDate() + daysUntilSaturday)
-          
-          const sunday = new Date(today)
-          sunday.setDate(today.getDate() + daysUntilSunday)
-          
-          query = query
-            .gte('start_at', saturday.toISOString().split('T')[0])
-            .lte('start_at', sunday.toISOString().split('T')[0])
-        }
-      }
-
-      if (categories && categories.length > 0) {
+      
+      // Apply category filter
+      if (categories.length > 0) {
         query = query.overlaps('tags', categories)
       }
-
+      
+      // Apply text filter
       if (q) {
         query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
       }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.log(`[SALES][ERROR][BOUNDING_BOX] ${error.message}`)
-        return await runBaseline()
+      
+      const { data: bboxData, error: bboxError } = await query
+      
+      if (bboxError) {
+        console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
+        return NextResponse.json({ 
+          ok: false, 
+          error: 'Database query failed' 
+        }, { status: 500 })
       }
-
-      const mappedData = (data || []).map((row: any) => {
-        return {
+      
+      // Apply date filtering in application layer for bounding box results
+      results = (bboxData || [])
+        .filter((row: any) => {
+          if (!dateWindow) return true
+          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
+        })
+        .map((row: any) => ({
           id: row.id,
           title: row.title,
-          city: row.city,
-          state: row.state,
-          latitude: row.lat,
-          longitude: row.lng,
           starts_at: row.start_at,
           ends_at: row.end_at,
+          latitude: row.lat,
+          longitude: row.lng,
+          city: row.city,
+          state: row.state,
+          zip: row.zip,
           categories: row.tags || [],
           cover_image_url: null
-        }
-      })
-
-      return NextResponse.json({ ok: true, degraded: true, count: mappedData.length, data: mappedData })
-
-    } catch (advErr: any) {
-      console.log(`[SALES][ERROR][ADVANCED] ${advErr?.message || advErr}`)
-      return await runBaseline()
+        }))
     }
+    
+    // 6. Return normalized response
+    const response = {
+      ok: true,
+      data: results,
+      center: { lat: latitude, lng: longitude },
+      distanceKm,
+      count: results.length,
+      ...(degraded && { degraded: true }),
+      ...(dateWindow && { dateWindow: {
+        label: dateWindow.label,
+        start: dateWindow.start.toISOString(),
+        end: dateWindow.end.toISOString(),
+        display: formatDateWindow(dateWindow)
+      }})
+    }
+    
+    console.log(`[SALES] lat=${latitude},lng=${longitude},km=${distanceKm},dateRange=${dateRange},cats=${categories.join(',')},q=${q} -> returned=${results.length} degraded=${degraded}`)
+    
+    return NextResponse.json(response)
     
   } catch (error: any) {
     console.log(`[SALES][ERROR] Unexpected error: ${error?.message || error}`)

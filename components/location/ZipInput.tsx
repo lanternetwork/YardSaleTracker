@@ -3,16 +3,23 @@
 import { useState } from 'react'
 
 interface ZipInputProps {
-  onLocationFound: (lat: number, lng: number, city?: string, state?: string) => void
+  onLocationFound: (lat: number, lng: number, city?: string, state?: string, zip?: string) => void
   onError: (error: string) => void
   placeholder?: string
   className?: string
 }
 
+// Cookie utility functions
+function setCookie(name: string, value: string, days: number = 1) {
+  const expires = new Date()
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000))
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
+}
+
 export default function ZipInput({ 
   onLocationFound, 
   onError, 
-  placeholder = "Enter ZIP code (e.g., 90210)",
+  placeholder = "Enter ZIP code",
   className = ""
 }: ZipInputProps) {
   const [zip, setZip] = useState('')
@@ -34,8 +41,19 @@ export default function ZipInput({
       const data = await response.json()
 
       if (data.ok) {
-        onLocationFound(data.lat, data.lng, data.city, data.state)
-        console.log(`[ZIP_INPUT] Found location for ${zip}: ${data.city}, ${data.state}`)
+        // Write location cookie with ZIP, city, state info
+        const locationData = {
+          zip: data.zip,
+          city: data.city,
+          state: data.state,
+          lat: data.lat,
+          lng: data.lng,
+          source: data.source
+        }
+        setCookie('la_loc', JSON.stringify(locationData), 1) // 24 hours
+        
+        onLocationFound(data.lat, data.lng, data.city, data.state, data.zip)
+        console.log(`[ZIP_INPUT] Found location for ${zip}: ${data.city}, ${data.state} (${data.source})`)
       } else {
         onError(data.error || 'ZIP code not found')
       }
@@ -63,7 +81,7 @@ export default function ZipInput({
         disabled={loading || !zip || zip.length !== 5}
         className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? 'Looking up...' : 'Search'}
+        {loading ? 'Looking up...' : 'Set'}
       </button>
     </form>
   )
