@@ -42,10 +42,24 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const fetchSales = useCallback(async () => {
     setLoading(true)
     
-    // Only fetch if we have location or if this is the initial load
+    // If no location, fetch all sales (initial load)
     if (!filters.lat || !filters.lng) {
-      console.log('[SALES] No location provided, skipping fetch until location is available')
-      setLoading(false)
+      console.log('[SALES] No location provided, fetching all sales')
+      try {
+        const res = await fetch('/api/sales')
+        const data = await res.json()
+        if (data.ok) {
+          setSales(data.data || [])
+        } else {
+          console.error('Sales API error:', data.error)
+          setSales([])
+        }
+      } catch (error) {
+        console.error('Error fetching sales:', error)
+        setSales([])
+      } finally {
+        setLoading(false)
+      }
       return
     }
 

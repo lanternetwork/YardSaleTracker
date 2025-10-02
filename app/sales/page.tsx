@@ -36,34 +36,8 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   const categories = searchParams.categories ? searchParams.categories.split(',') : undefined
   const pageSize = searchParams.pageSize ? parseInt(searchParams.pageSize) : 50
 
-  // Fetch initial sales data using the new API
+  // Start with empty sales - let client handle the initial fetch
   let initialSales = []
-  try {
-    const queryParams = new URLSearchParams()
-    // Only add location params if they exist
-    if (lat !== undefined && lng !== undefined) {
-      queryParams.set('lat', lat.toString())
-      queryParams.set('lng', lng.toString())
-      if (distanceKm !== undefined) queryParams.set('distanceKm', distanceKm.toString())
-    }
-    if (city) queryParams.set('city', city)
-    if (categories && categories.length > 0) queryParams.set('categories', categories.join(','))
-    queryParams.set('limit', pageSize.toString())
-
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/sales?${queryParams.toString()}`)
-    const data = await response.json()
-    
-    if (data.ok) {
-      initialSales = data.data || []
-    } else {
-      console.error('Initial sales fetch failed:', data.error)
-      initialSales = []
-    }
-  } catch (err) {
-    console.error('Sales page initial fetch failed:', err)
-    initialSales = []
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
