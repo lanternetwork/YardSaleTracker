@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const allCategories = new Set<string>()
     sales?.forEach(sale => {
       if (sale.tags) {
-        sale.tags.forEach(tag => allCategories.add(tag))
+        sale.tags.forEach((tag: string) => allCategories.add(tag))
       }
     })
     
