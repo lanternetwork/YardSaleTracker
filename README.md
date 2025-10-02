@@ -132,3 +132,25 @@ LootAura uses advanced PostGIS distance calculations for accurate location-based
 - **Normal Mode**: PostGIS distance calculations (most accurate)
 - **Degraded Mode**: Only appears if PostGIS fails (rare)
 - **Real-time**: Results update as filters change
+
+## Admin Tools (Debug & Seeding)
+
+- Access: set `ENABLE_ADMIN_TOOLS=true` for the target environment and visit `/admin/tools`.
+- Purpose: a consolidated hub for diagnostics and safe admin actions. Intended for maintainers only; do not link in public navigation.
+- Sections:
+  - Overview & Version: commit (7-char), environment, schema, deployed timestamp, quick copy buttons.
+  - Environment & Configuration: presence-only booleans for critical env vars with risks and usage.
+  - Health Checks: runs `/api/health/*` (env, db, schema, postgis, mapbox, auth) with status icons and timings.
+  - Database & Schema: v2 table presence (profiles/sales/items/favorites/zipcodes), RLS on/off booleans, counts, and PostGIS checks (e.g., `missing_geom`).
+  - Maps & Location: Mapbox token status and tiny map preview with safe fallback if token is missing/invalid.
+  - ZIP Lookup Tools: call `/api/geocoding/zip?zip=XXXXX`, show `{lat,lng,city,state,source}`, set cookie/open Sales URL, never calls paid geocoders.
+  - Sales API Tester: run `/api/sales` with real params; shows `durationMs`, `degraded`, `count`, first 5 titles.
+  - Seeding & Data Tools: explicit `SEED_TOKEN` required per action; supports dry run for ZIP ingest and logs progress; idempotency and rate limits enforced server-side.
+  - Usage & Telemetry: optional session counters (mapLoads, geocodeCalls) gated by `ENABLE_USAGE_LOGS`.
+  - Danger Zone / Admin Only: guidance and links to README guardrails; destructive actions require explicit confirmation and token.
+
+- Safety & Guardrails:
+  - No secrets are displayed; only booleans or masked values.
+  - Admin actions (seed endpoints) require pasting `SEED_TOKEN` per action; the token is not stored.
+  - Rate limiting and an `Idempotency-Key` (24h) protect admin endpoints from accidental replays/bursts.
+  - Prefer non-Production usage; on Production, take backups and verify safeguards.
