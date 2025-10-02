@@ -6,6 +6,7 @@ import MapPreview from './MapPreview'
 import ZipLookupTool from './ZipLookupTool'
 import SalesTester from './SalesTester'
 import SeedingTools from './SeedingTools'
+import UsageSection from './UsageSection'
 
 export const dynamic = 'force-dynamic'
 
@@ -170,8 +171,8 @@ export default async function AdminToolsPage() {
           <SeedingTools />
         </Section>
 
-        <Section title="Usage & Telemetry" description="Usage logs, web vitals, and performance timing counters.">
-          <div className="text-sm text-neutral-700">Placeholders for usage & telemetry.</div>
+        <Section title="Usage & Telemetry" description="Session counters and optional server snapshot.">
+          <UsageSection enabled={Boolean(process.env.ENABLE_USAGE_LOGS || process.env.NEXT_PUBLIC_ENABLE_USAGE_LOGS)} />
         </Section>
 
         <Section title="Danger Zone / Admin Only" description="Destructive actions with explicit token-only controls and warnings.">
