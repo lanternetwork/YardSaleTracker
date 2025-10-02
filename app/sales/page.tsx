@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { getSales } from '@/lib/data/sales'
 import SalesClient from './SalesClient'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
@@ -37,18 +36,27 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
   const categories = searchParams.categories ? searchParams.categories.split(',') : undefined
   const pageSize = searchParams.pageSize ? parseInt(searchParams.pageSize) : 50
 
-  // Fetch initial sales data
-  let initialSales = [] as Awaited<ReturnType<typeof getSales>>
+  // Fetch initial sales data using the new API
+  let initialSales = []
   try {
-    initialSales = await getSales({
-      lat,
-      lng,
-      distanceKm,
-      city,
-      categories,
-      limit: pageSize,
-      offset: 0
-    })
+    const queryParams = new URLSearchParams()
+    if (lat !== undefined) queryParams.set('lat', lat.toString())
+    if (lng !== undefined) queryParams.set('lng', lng.toString())
+    if (distanceKm !== undefined) queryParams.set('distanceKm', distanceKm.toString())
+    if (city) queryParams.set('city', city)
+    if (categories && categories.length > 0) queryParams.set('categories', categories.join(','))
+    queryParams.set('limit', pageSize.toString())
+
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/sales?${queryParams.toString()}`)
+    const data = await response.json()
+    
+    if (data.ok) {
+      initialSales = data.data || []
+    } else {
+      console.error('Initial sales fetch failed:', data.error)
+      initialSales = []
+    }
   } catch (err) {
     console.error('Sales page initial fetch failed:', err)
     initialSales = []

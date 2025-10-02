@@ -66,11 +66,17 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     ).toString()
 
     try {
-      const res = await fetch(`/api/sales/search?${queryString}`)
+      const res = await fetch(`/api/sales?${queryString}`)
       const data = await res.json()
-      setSales(data.sales || [])
+      if (data.ok) {
+        setSales(data.data || [])
+      } else {
+        console.error('Sales API error:', data.error)
+        setSales([])
+      }
     } catch (error) {
       console.error('Error fetching sales:', error)
+      setSales([])
     } finally {
       setLoading(false)
     }

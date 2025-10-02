@@ -90,11 +90,11 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Build PostGIS distance query
-      console.log(`[SALES][POSTGIS] Using distance filter: ${km}km from (${lat}, ${lng})`)
+      // Build distance query with bounding box fallback
+      console.log(`[SALES][DISTANCE] Using distance filter: ${km}km from (${lat}, ${lng})`)
       
-      // Use PostGIS RPC for distance filtering
-      const { data, error } = await supabase.rpc('search_sales_by_distance', {
+      // Try PostGIS RPC first
+      const { data: rpcData, error: rpcError } = await supabase.rpc('search_sales_by_distance', {
         search_lat: lat,
         search_lng: lng,
         max_distance_km: km,
@@ -105,18 +105,79 @@ export async function GET(request: NextRequest) {
         result_offset: offset
       })
 
-      if (error) {
-        console.log(`[SALES][ERROR][POSTGIS] ${error.message}`)
-        // If PostGIS fails, return 503 with degraded message
-        return NextResponse.json({ 
-          ok: false, 
-          error: 'Distance search temporarily unavailable' 
-        }, { status: 503 })
+      if (!rpcError && rpcData) {
+        console.log(`[SALES][POSTGIS] Success, found ${rpcData.length} results`)
+        const mappedData = (rpcData || []).map((row: any) => {
+          return {
+            id: row.id,
+            title: row.title,
+            city: row.city,
+            state: row.state,
+            latitude: row.lat,
+            longitude: row.lng,
+            starts_at: row.start_at,
+            ends_at: row.end_at,
+            categories: row.tags || [],
+            cover_image_url: null,
+            distance_m: row.distance_m
+          }
+        })
+        return NextResponse.json({ ok: true, degraded: false, count: mappedData.length, data: mappedData })
       }
 
-      // If no RPC function exists, fall back to baseline
-      if (!data) {
-        console.log(`[SALES][FALLBACK] No RPC function, using baseline query`)
+      // Fallback to bounding box query
+      console.log(`[SALES][FALLBACK] PostGIS unavailable, using bounding box`)
+      const latRange = km / 111 // 1 degree ≈ 111 km
+      const lngRange = km / (111 * Math.cos(lat * Math.PI / 180)) // Adjust for latitude
+      
+      let query = supabase
+        .from('yard_sales')
+        .select('*')
+        .eq('status', 'active')
+        .gte('lat', lat - latRange)
+        .lte('lat', lat + latRange)
+        .gte('lng', lng - lngRange)
+        .lte('lng', lng + lngRange)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+        .range(offset, offset + limit - 1)
+
+      // Apply additional filters
+      if (dateRange && dateRange !== 'any') {
+        const today = new Date()
+        const todayStr = today.toISOString().split('T')[0]
+        
+        if (dateRange === 'today') {
+          query = query.gte('start_at', `${todayStr}T00:00:00Z`).lt('start_at', `${todayStr}T23:59:59Z`)
+        } else if (dateRange === 'weekend') {
+          const dayOfWeek = today.getDay()
+          const daysUntilSaturday = (6 - dayOfWeek) % 7
+          const daysUntilSunday = (7 - dayOfWeek) % 7
+          
+          const saturday = new Date(today)
+          saturday.setDate(today.getDate() + daysUntilSaturday)
+          
+          const sunday = new Date(today)
+          sunday.setDate(today.getDate() + daysUntilSunday)
+          
+          query = query
+            .gte('start_at', saturday.toISOString().split('T')[0])
+            .lte('start_at', sunday.toISOString().split('T')[0])
+        }
+      }
+
+      if (categories && categories.length > 0) {
+        query = query.overlaps('tags', categories)
+      }
+
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        console.log(`[SALES][ERROR][BOUNDING_BOX] ${error.message}`)
         return await runBaseline()
       }
 
@@ -131,12 +192,11 @@ export async function GET(request: NextRequest) {
           starts_at: row.start_at,
           ends_at: row.end_at,
           categories: row.tags || [],
-          cover_image_url: null,
-          distance_m: row.distance_m
+          cover_image_url: null
         }
       })
 
-      return NextResponse.json({ ok: true, degraded: false, count: mappedData.length, data: mappedData })
+      return NextResponse.json({ ok: true, degraded: true, count: mappedData.length, data: mappedData })
 
     } catch (advErr: any) {
       console.log(`[SALES][ERROR][ADVANCED] ${advErr?.message || advErr}`)
