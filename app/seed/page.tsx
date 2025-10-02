@@ -41,6 +41,20 @@ export default function SeedPage() {
     }
   }
 
+  const handleCheckSalesSearch = async () => {
+    setLoading(true)
+    
+    try {
+      const response = await fetch('/api/sales/search')
+      const data = await response.json()
+      setResult(data)
+    } catch (error) {
+      setResult({ error: 'Failed to fetch sales from search API' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Database Seed Tool</h1>
@@ -60,6 +74,14 @@ export default function SeedPage() {
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 ml-4"
         >
           {loading ? 'Checking...' : 'Check Sales'}
+        </button>
+        
+        <button
+          onClick={handleCheckSalesSearch}
+          disabled={loading}
+          className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 ml-4"
+        >
+          {loading ? 'Checking...' : 'Check Sales Search'}
         </button>
       </div>
       
