@@ -133,6 +133,7 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
   }
 
   const handleDateRangeChange = (dateRange: DateRange) => {
+    console.log('[FiltersModal] handleDateRangeChange called with:', dateRange)
     updateFilters({ dateRange })
   }
 
@@ -273,6 +274,10 @@ function FiltersContent({
           value={filters.dateRange}
           onChange={onDateRangeChange}
         />
+        {/* Debug info */}
+        <div className="text-xs text-gray-500 mt-2">
+          Debug: {JSON.stringify(filters.dateRange)}
+        </div>
       </div>
 
       {/* Categories Filter */}
