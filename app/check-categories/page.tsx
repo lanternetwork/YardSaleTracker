@@ -32,18 +32,39 @@ export default function CheckCategoriesPage() {
     }
   }
 
+  const fixCategories = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/fix-categories', { method: 'POST' })
+      const data = await response.json()
+      setResult({ fixResult: data })
+    } catch (error) {
+      setResult({ error: 'Fix network error' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Check Categories Status</h1>
       
       <div className="space-y-4">
-        <div className="flex gap-4">
+        <div className="flex gap-4 flex-wrap">
           <button
             onClick={checkCategories}
             disabled={loading}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
           >
             {loading ? 'Checking...' : 'Check Categories'}
+          </button>
+          
+          <button
+            onClick={fixCategories}
+            disabled={loading}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+          >
+            {loading ? 'Fixing...' : 'Fix Categories (Robust)'}
           </button>
           
           <button
