@@ -6,6 +6,7 @@ import { Sale } from '@/lib/types'
 import { GetSalesParams, formatDistance } from '@/lib/data/sales'
 import SalesMap from '@/components/location/SalesMap'
 import UseLocationButton from '@/components/location/UseLocationButton'
+import ZipInput from '@/components/location/ZipInput'
 import { useLocation } from '@/lib/location/useLocation'
 import SaleCard from '@/components/SaleCard'
 import FiltersModal from '@/components/filters/FiltersModal'
@@ -38,6 +39,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
+  const [zipError, setZipError] = useState<string | null>(null)
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -121,6 +123,29 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     getLocation()
   }
 
+  const handleZipLocationFound = (lat: number, lng: number, city?: string, state?: string) => {
+    setZipError(null)
+    updateFilters({
+      lat,
+      lng,
+      city: city || undefined
+    })
+    
+    // Update URL with new location
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('lat', lat.toString())
+    params.set('lng', lng.toString())
+    if (city) params.set('city', city)
+    if (state) params.set('state', state)
+    
+    const newUrl = `${window.location.pathname}?${params.toString()}`
+    router.push(newUrl)
+  }
+
+  const handleZipError = (error: string) => {
+    setZipError(error)
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -130,6 +155,19 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             <h1 className="text-3xl font-bold mb-4 sm:mb-0">Sales Search</h1>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {/* ZIP Input */}
+              <div className="flex-1 sm:flex-none">
+                <ZipInput
+                  onLocationFound={handleZipLocationFound}
+                  onError={handleZipError}
+                  placeholder="Enter ZIP code"
+                  className="w-full sm:w-auto"
+                />
+                {zipError && (
+                  <p className="text-red-500 text-sm mt-1">{zipError}</p>
+                )}
+              </div>
+              
               {/* Location Button */}
               <UseLocationButton 
                 onClick={handleLocationClick} 
