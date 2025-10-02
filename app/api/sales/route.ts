@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getDateWindow, saleOverlapsWindow, formatDateWindow } from '@/lib/date/dateWindows'
+import { haversineKm } from '@/lib/distance'
 import { getSchema } from '@/lib/supabase/schema'
 
 // CRITICAL: This API MUST require lat/lng - never remove this validation
@@ -69,8 +70,10 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
     
-    const limit = Math.min(searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50, 100)
+    const limitRaw = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 24
+    const limit = Math.min(Math.max(limitRaw, 1), 48)
     const offset = Math.max(searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0, 0)
+    const cursor = searchParams.get('cursor')
     
     // Log parameters
     console.log(`[SALES] lat=${latitude},lng=${longitude},km=${distanceKm},dateRange=${dateRange},cats=${categories.join(',')},q=${q} -> returned=count degraded?=bool`)
@@ -93,6 +96,8 @@ export async function GET(request: NextRequest) {
       console.log(`[SALES] Attempting PostGIS (v2) for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
 
       // Prefer v2 search function that uses geom + RLS
+      // Fetch more than needed to allow cursor-based trimming
+      const fetchLimit = limit + 50
       const { data: postgisData, error: postgisError } = await supabase
         .rpc('search_sales_within_distance', {
           user_lat: latitude,
@@ -102,7 +107,7 @@ export async function GET(request: NextRequest) {
           search_categories: categories.length > 0 ? categories : null,
           date_start_filter: dateWindow ? dateWindow.start.toISOString().slice(0, 10) : null,
           date_end_filter: dateWindow ? dateWindow.end.toISOString().slice(0, 10) : null,
-          limit_count: limit
+          limit_count: fetchLimit
         })
 
       if (postgisError) {
@@ -112,7 +117,7 @@ export async function GET(request: NextRequest) {
       console.log(`[SALES] PostGIS v2 returned ${postgisData?.length || 0} results`)
 
       // Map v2 fields to the legacy response shape
-      results = (postgisData || [])
+      let mapped = (postgisData || [])
         .filter((row: any) => {
           if (!dateWindow) return true
           const startAt = row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : undefined
@@ -139,6 +144,32 @@ export async function GET(request: NextRequest) {
           }
         })
 
+      // Stable ordering for cursor (distance, starts_at, id)
+      mapped.sort((a: { distance_m?: number; starts_at?: string | null; id: string }, b: { distance_m?: number; starts_at?: string | null; id: string }) => {
+        const ad = a.distance_m ?? 0, bd = b.distance_m ?? 0
+        if (ad !== bd) return ad - bd
+        const as = a.starts_at || '', bs = b.starts_at || ''
+        if (as !== bs) return as < bs ? -1 : 1
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+      })
+
+      // Apply cursor if provided
+      if (cursor) {
+        try {
+          const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) as { d: number; s: string; id: string }
+          mapped = mapped.filter((r: any) => {
+            const cmp = (r.distance_m ?? 0) - decoded.d
+            if (cmp > 0) return true
+            if (cmp < 0) return false
+            if ((r.starts_at || '') > decoded.s) return true
+            if ((r.starts_at || '') < decoded.s) return false
+            return r.id > decoded.id
+          })
+        } catch {}
+      }
+
+      results = mapped.slice(0, limit)
+
       console.log(`[SALES] PostGIS v2 success: ${results.length} results`)
 
     } catch (postgisError: any) {
@@ -160,8 +191,7 @@ export async function GET(request: NextRequest) {
         .gte('lng', longitude - lngRange)
         .lte('lng', longitude + lngRange)
         .order('date_start', { ascending: true })
-        .limit(limit)
-        .range(offset, offset + limit - 1)
+        .limit(limit + 50)
 
       // Apply category filter
       if (categories.length > 0) {
@@ -184,7 +214,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Apply date filtering in application layer for bounding box results
-      results = (bboxData || [])
+      let mapped = (bboxData || [])
         .filter((row: any) => {
           if (!dateWindow) return true
           const startAt = row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : undefined
@@ -192,29 +222,69 @@ export async function GET(request: NextRequest) {
           if (!startAt) return true
           return saleOverlapsWindow(startAt, endAt, dateWindow)
         })
-        .map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          starts_at: row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : null,
-          ends_at: row.date_end ? `${row.date_end}T${row.time_end ?? '23:59:59'}` : null,
-          latitude: row.lat,
-          longitude: row.lng,
-          city: row.city,
-          state: row.state,
-          zip: row.zip_code,
-          categories: row.tags || [],
-          cover_image_url: null
-        }))
+        .map((row: any) => {
+          const starts_at = row.date_start ? `${row.date_start}T${row.time_start ?? '00:00:00'}` : null
+          const ends_at = row.date_end ? `${row.date_end}T${row.time_end ?? '23:59:59'}` : null
+          const distKm = haversineKm({ lat: latitude, lng: longitude }, { lat: row.lat, lng: row.lng })
+          return {
+            id: row.id,
+            title: row.title,
+            starts_at,
+            ends_at,
+            latitude: row.lat,
+            longitude: row.lng,
+            city: row.city,
+            state: row.state,
+            zip: row.zip_code,
+            categories: row.tags || [],
+            cover_image_url: null,
+            distance_m: Math.round((distKm ?? 0) * 1000)
+          }
+        })
+
+      // Stable order and cursor application
+      mapped.sort((a: { distance_m?: number; starts_at?: string | null; id: string }, b: { distance_m?: number; starts_at?: string | null; id: string }) => {
+        const ad = a.distance_m ?? 0, bd = b.distance_m ?? 0
+        if (ad !== bd) return ad - bd
+        const as = a.starts_at || '', bs = b.starts_at || ''
+        if (as !== bs) return as < bs ? -1 : 1
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+      })
+      if (cursor) {
+        try {
+          const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) as { d: number; s: string; id: string }
+      mapped = mapped.filter((r: any) => {
+            const cmp = (r.distance_m ?? 0) - decoded.d
+            if (cmp > 0) return true
+            if (cmp < 0) return false
+            if ((r.starts_at || '') > decoded.s) return true
+            if ((r.starts_at || '') < decoded.s) return false
+            return r.id > decoded.id
+          })
+        } catch {}
+      }
+
+      results = mapped.slice(0, limit)
     }
     
     // 5. Return normalized response
     const durationMs = Date.now() - startedAt
+    // Compute nextCursor if more may exist
+    let nextCursor: string | undefined = undefined
+    if (results.length === limit) {
+      const last = results[results.length - 1]
+      try {
+        nextCursor = Buffer.from(JSON.stringify({ d: last.distance_m ?? 0, s: last.starts_at || '', id: last.id })).toString('base64')
+      } catch {}
+    }
+
     const response = {
       ok: true,
       data: results,
       center: { lat: latitude, lng: longitude },
       distanceKm,
       count: results.length,
+      nextCursor,
       durationMs,
       ...(degraded && { degraded: true }),
       ...(dateWindow && { dateWindow: {

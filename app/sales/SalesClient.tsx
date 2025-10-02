@@ -49,6 +49,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)
+  const [cursor, setCursor] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
   const [zipError, setZipError] = useState<string | null>(null)
   const [dateWindow, setDateWindow] = useState<any>(null)
@@ -75,8 +77,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       city: filters.city,
       categories: filters.categories.length > 0 ? filters.categories : undefined,
       dateRange: filters.dateRange !== 'any' ? filters.dateRange : undefined,
-      limit: 50,
-      offset: 0,
+      limit: 24,
+      ...(cursor ? { cursor } : { offset: 0 })
     }
 
     const queryString = new URLSearchParams(
@@ -99,15 +101,19 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       console.log(`[SALES] API response:`, data)
       
       if (data.ok) {
-        setSales(data.data || [])
+        setSales(prev => cursor ? [...prev, ...(data.data || [])] : (data.data || []))
         setDateWindow(data.dateWindow || null)
         setDegraded(data.degraded || false)
+        setHasMore(Boolean(data.nextCursor))
+        setCursor(data.nextCursor || null)
         console.log(`[SALES] Set ${data.data?.length || 0} sales`)
       } else {
         console.error('Sales API error:', data.error)
         setSales([])
         setDateWindow(null)
         setDegraded(false)
+        setCursor(null)
+        setHasMore(false)
       }
     } catch (error) {
       console.error('Error fetching sales:', error)
@@ -115,11 +121,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     } finally {
       setLoading(false)
     }
-  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange])
+  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange, cursor])
 
   useEffect(() => {
+    // Reset pagination on filter change
+    setCursor(null)
+    setHasMore(false)
     fetchSales()
-  }, [fetchSales])
+  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange])
 
   // Don't automatically request location - let user choose
 
@@ -263,11 +272,25 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                 <p className="text-gray-400 mt-2">Try adjusting your filters or location.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="sales-grid">
-                {sales.map((sale) => (
-                  <SaleCard key={sale.id} sale={sale} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="sales-grid">
+                  {sales.map((sale) => (
+                    <SaleCard key={sale.id} sale={sale} />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      type="button"
+                      className="rounded border px-4 py-2"
+                      disabled={loading}
+                      onClick={() => fetchSales()}
+                    >
+                      {loading ? 'Loading…' : 'Load more'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

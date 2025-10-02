@@ -41,8 +41,9 @@ const GetSalesParamsSchema = z.object({
   lng: z.number().optional(),
   dateRange: z.enum(['today', 'weekend', 'any']).optional(),
   categories: z.array(z.string()).optional(),
-  limit: z.number().default(50),
-  offset: z.number().default(0),
+  limit: z.number().default(24),
+  offset: z.number().default(0).optional(),
+  cursor: z.string().optional(),
 })
 
 // TypeScript types
@@ -151,13 +152,14 @@ export async function getSales(params: GetSalesParams = { distanceKm: 25, limit:
     }
     
     // Fallback to regular query without distance filtering
-    let query = supabase
+  const off = validatedParams.offset ?? 0
+  let query = supabase
       .from(T.sales)
       .select('*')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
-      .limit(validatedParams.limit)
-      .range(validatedParams.offset, validatedParams.offset + validatedParams.limit - 1)
+    .limit(validatedParams.limit)
+    .range(off, off + validatedParams.limit - 1)
 
     // Filter by city
     if (validatedParams.city) {
