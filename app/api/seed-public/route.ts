@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         // Check if sale already exists
         const { data: existing } = await supabase
           .from('yard_sales')
-          .select('id')
+          .select('id, tags')
           .eq('owner_id', seed.seller_id)
           .ilike('title', seed.title)
           .eq('start_at', seed.starts_at)
