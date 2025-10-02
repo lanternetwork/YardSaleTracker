@@ -34,34 +34,24 @@ export async function middleware(req: NextRequest) {
 
   // If accessing a protected route without authentication
   if (isProtectedRoute && !user) {
-    const loginUrl = new URL('/login', req.url)
-    loginUrl.searchParams.set('redirectTo', req.nextUrl.pathname)
+    const loginUrl = new URL('/auth/signin', req.url)
+    loginUrl.searchParams.set('returnTo', req.nextUrl.pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // If user is authenticated, auto-upsert profile on first request
+  // If user is authenticated, auto-upsert v2 profile on first request (idempotent)
   if (user) {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-
-      // If no profile exists, create one
-      if (!profile) {
-        await supabase
-          .from('profiles')
-          .upsert({
-            user_id: user.id,
-            display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            avatar_url: user.user_metadata?.avatar_url || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-      }
+      const display = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
+      await supabase
+        .from('lootaura_v2.profiles')
+        .upsert({
+          user_id: user.id,
+          display_name: display,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' })
     } catch (error) {
-      console.error('Error upserting profile:', error)
+      console.error('Error upserting v2 profile:', error)
       // Don't block the request if profile creation fails
     }
   }

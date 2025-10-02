@@ -47,6 +47,29 @@ export function createSupabaseServerClient() {
         cookieStore.set({ name, value: '', ...options, maxAge: 0 })
       },
     },
-    db: { schema: 'public' }, // Force public schema
+    db: { schema: 'public' }, // We use fully qualified names for v2 tables
   });
+}
+
+export async function ensureUserProfile(supabase: ReturnType<typeof createServerClient>) {
+  // Try to get user session
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ensured: false }
+
+  // Build display name from email prefix if missing
+  const email = user.email || ''
+  const display = email.includes('@') ? email.split('@')[0] : email
+
+  // Upsert into lootaura_v2.profiles by idempotent key user_id
+  // Note: fully-qualified table name; rely on RLS (must allow owner upsert or use service role in admin context)
+  const { error } = await (supabase as any)
+    .from('lootaura_v2.profiles')
+    .upsert({ user_id: user.id, display_name: display }, { onConflict: 'user_id' })
+
+  if (error) {
+    console.warn('[Profile] ensureUserProfile upsert failed:', error.message)
+    return { ensured: false, error: error.message }
+  }
+
+  return { ensured: true }
 }
