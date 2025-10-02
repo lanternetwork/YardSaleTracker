@@ -110,8 +110,8 @@ export async function GET(request: NextRequest) {
             throw new Error(`PostGIS query failed: ${postgisError?.message || 'No data returned'}`)
           }
           
-        } catch (postgisErr) {
-          console.log(`[SALES][FALLBACK] PostGIS unavailable (${postgisErr?.message}), using bounding box`)
+        } catch (postgisErr: any) {
+          console.log(`[SALES][FALLBACK] PostGIS unavailable (${postgisErr?.message || postgisErr}), using bounding box`)
           degraded = true
       
       // 5. Fallback to bounding box approximation
