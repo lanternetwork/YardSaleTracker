@@ -75,44 +75,9 @@ export async function GET(request: NextRequest) {
     let results: any[] = []
     let degraded = false
     
-        try {
-          // 4. Try PostGIS distance query first
-          console.log(`[SALES][POSTGIS] Attempting PostGIS query for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
-          const { data: postgisData, error: postgisError } = await supabase.rpc('search_sales_by_distance', {
-            search_lat: latitude,
-            search_lng: longitude,
-            max_distance_km: distanceKm,
-            date_filter: dateRange !== 'any' ? dateRange : null,
-            category_filter: categories.length > 0 ? categories : null,
-            text_filter: q || null,
-            result_limit: limit,
-            result_offset: offset
-          })
-          
-          if (!postgisError && postgisData) {
-            console.log(`[SALES][POSTGIS] Success, found ${postgisData.length} results`)
-            results = postgisData.map((row: any) => ({
-              id: row.id,
-              title: row.title,
-              starts_at: row.start_at,
-              ends_at: row.end_at,
-              latitude: row.lat,
-              longitude: row.lng,
-              city: row.city,
-              state: row.state,
-              zip: row.zip,
-              categories: row.tags || [],
-              cover_image_url: null,
-              distance_m: row.distance_m
-            }))
-          } else {
-            console.log(`[SALES][POSTGIS] PostGIS query failed: ${postgisError?.message || 'No data returned'}`)
-            throw new Error(`PostGIS query failed: ${postgisError?.message || 'No data returned'}`)
-          }
-          
-        } catch (postgisErr: any) {
-          console.log(`[SALES][FALLBACK] PostGIS unavailable (${postgisErr?.message || postgisErr}), using bounding box`)
-          degraded = true
+        // Skip PostGIS for now - use bounding box approach directly
+        console.log(`[SALES] Using bounding box approach for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
+        degraded = true
       
       // 5. Fallback to bounding box approximation
       const latRange = distanceKm / 111 // 1 degree ≈ 111 km
