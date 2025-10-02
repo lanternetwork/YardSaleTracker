@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     // Parse inputs explicitly
     const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
     const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : undefined
-    const distanceKm = searchParams.get('distanceKm') ? parseFloat(searchParams.get('distanceKm')!) : 25
+    const distanceKm = searchParams.get('distanceKm') ? parseFloat(searchParams.get('distanceKm')!) : undefined
     const dateRange = searchParams.get('dateRange') || undefined
     const categories = searchParams.get('categories')?.split(',') || undefined
     const q = searchParams.get('q') || undefined
@@ -46,6 +46,17 @@ export async function GET(request: NextRequest) {
     
     // Log parameters to server console
     console.log(`[SALES] params lat=${lat}, lng=${lng}, distKm=${distanceKm}, dateRange=${dateRange}, cats=${categories?.join(',')}, q=${q}, limit=${limit}, offset=${offset}`)
+
+    // Validate location parameters
+    if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Missing location. Provide lat & lng.' 
+      }, { status: 400 })
+    }
+
+    // Clamp distance to reasonable bounds (1-160km, default ~25 miles)
+    const km = Math.max(1, Math.min(distanceKm ?? 40.2336, 160)) // 25 miles ≈ 40.2336 km
     
     // Helper: baseline query to avoid hard-fail (degraded mode)
     async function runBaseline() {
@@ -79,64 +90,54 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      // Build advanced query with filters
-      let query = supabase
-        .from('yard_sales')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(limit)
-        .range(offset, offset + limit - 1)
+      // Build PostGIS distance query
+      console.log(`[SALES][POSTGIS] Using distance filter: ${km}km from (${lat}, ${lng})`)
+      
+      // Use PostGIS RPC for distance filtering
+      const { data, error } = await supabase.rpc('search_sales_by_distance', {
+        search_lat: lat,
+        search_lng: lng,
+        max_distance_km: km,
+        date_filter: dateRange,
+        category_filter: categories,
+        text_filter: q,
+        result_limit: limit,
+        result_offset: offset
+      })
 
-      // Apply filters
-      if (lat && lng && distanceKm) {
-        const latRange = distanceKm / 111 // 1 degree ≈ 111 km
-        const lngRange = distanceKm / (111 * Math.cos(lat * Math.PI / 180)) // Adjust for latitude
-        query = query
-          .gte('lat', lat - latRange)
-          .lte('lat', lat + latRange)
-          .gte('lng', lng - lngRange)
-          .lte('lng', lng + lngRange)
-      }
-
-      if (dateRange && dateRange !== 'any') {
-        const today = new Date()
-        const todayStr = today.toISOString().split('T')[0]
-        
-        if (dateRange === 'today') {
-          query = query.gte('start_at', `${todayStr}T00:00:00Z`).lt('start_at', `${todayStr}T23:59:59Z`)
-        } else if (dateRange === 'weekend') {
-          const dayOfWeek = today.getDay()
-          const daysUntilSaturday = (6 - dayOfWeek) % 7
-          const daysUntilSunday = (7 - dayOfWeek) % 7
-          
-          const saturday = new Date(today)
-          saturday.setDate(today.getDate() + daysUntilSaturday)
-          
-          const sunday = new Date(today)
-          sunday.setDate(today.getDate() + daysUntilSunday)
-          
-          query = query
-            .gte('start_at', saturday.toISOString().split('T')[0])
-            .lte('start_at', sunday.toISOString().split('T')[0])
-        }
-      }
-
-      if (categories && categories.length > 0) {
-        query = query.overlaps('tags', categories)
-      }
-
-      if (q) {
-        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
-      }
-
-      const { data: sales, error } = await query
       if (error) {
-        console.log(`[SALES][ERROR] code=${error.code}, message=${error.message}, details=${error.details}, hint=${error.hint}`)
+        console.log(`[SALES][ERROR][POSTGIS] ${error.message}`)
+        // If PostGIS fails, return 503 with degraded message
+        return NextResponse.json({ 
+          ok: false, 
+          error: 'Distance search temporarily unavailable' 
+        }, { status: 503 })
+      }
+
+      // If no RPC function exists, fall back to baseline
+      if (!data) {
+        console.log(`[SALES][FALLBACK] No RPC function, using baseline query`)
         return await runBaseline()
       }
 
-      return NextResponse.json({ ok: true, degraded: false, count: sales?.length || 0, data: sales || [] })
+      const mappedData = (data || []).map((row: any) => {
+        return {
+          id: row.id,
+          title: row.title,
+          city: row.city,
+          state: row.state,
+          latitude: row.lat,
+          longitude: row.lng,
+          starts_at: row.start_at,
+          ends_at: row.end_at,
+          categories: row.tags || [],
+          cover_image_url: null,
+          distance_m: row.distance_m
+        }
+      })
+
+      return NextResponse.json({ ok: true, degraded: false, count: mappedData.length, data: mappedData })
+
     } catch (advErr: any) {
       console.log(`[SALES][ERROR][ADVANCED] ${advErr?.message || advErr}`)
       return await runBaseline()
