@@ -71,7 +71,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     const params: GetSalesParams = {
       lat: filters.lat,
       lng: filters.lng,
-      distanceKm: filters.distance || 40.2336, // Default 25 miles
+      distanceKm: (filters.distance || 25) * 1.60934, // Convert miles to km
       city: filters.city,
       categories: filters.categories.length > 0 ? filters.categories : undefined,
       dateRange: filters.dateRange !== 'any' ? filters.dateRange : undefined,
