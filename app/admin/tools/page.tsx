@@ -4,6 +4,7 @@ import HealthChecks from './HealthChecks'
 import SchemaSection from './SchemaSection'
 import MapPreview from './MapPreview'
 import ZipLookupTool from './ZipLookupTool'
+import SalesTester from './SalesTester'
 
 export const dynamic = 'force-dynamic'
 
@@ -160,8 +161,8 @@ export default async function AdminToolsPage() {
           <ZipLookupTool />
         </Section>
 
-        <Section title="Sales API Tester" description="Quick tester for /api/sales with lat/lng/km and category filters.">
-          <div className="text-sm text-neutral-700">Placeholders for API tester UI.</div>
+        <Section title="Sales API Tester" description="Run /api/sales with real params and inspect results.">
+          <SalesTester />
         </Section>
 
         <Section title="Seeding & Data Tools" description="Admin seeders with Idempotency-Key and rate limits. Token required for writes.">
