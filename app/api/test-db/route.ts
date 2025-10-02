@@ -8,19 +8,32 @@ export async function GET(request: NextRequest) {
     const supabase = createSupabaseServerClient()
     
     // Test basic connection with simple query
+    console.log('[TEST-DB] Testing yard_sales table...')
     const { data, error } = await supabase
       .from('yard_sales')
       .select('id, title, city, state, lat, lng')
       .eq('status', 'active')
       .limit(5)
     
+    console.log('[TEST-DB] Query result:', { data: data?.length, error: error?.message })
+    
     if (error) {
       console.error('[TEST-DB] Database error:', error)
+      
+      // Try to get table info
+      const { data: tableInfo, error: tableError } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_schema', 'public')
+        .limit(10)
+      
       return NextResponse.json({ 
         ok: false, 
         error: 'Database query failed',
         details: error.message,
-        code: error.code
+        code: error.code,
+        availableTables: tableInfo?.map(t => t.table_name) || [],
+        tableError: tableError?.message
       }, { status: 500 })
     }
     
