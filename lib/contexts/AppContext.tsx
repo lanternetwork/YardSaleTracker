@@ -73,6 +73,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getInitialLocation()
   }, [])
 
+  // Load preloaded sales from localStorage on app start
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('preloaded_sales')
+      if (stored) {
+        const { sales, timestamp, location: storedLocation } = JSON.parse(stored)
+        // Use cached sales if they're less than 5 minutes old
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          console.log(`[APP] Loading cached sales: ${sales.length} items`)
+          setPreloadedSales(sales)
+          if (storedLocation) {
+            setLocation(storedLocation)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load cached sales:', error)
+    }
+  }, [])
+
   // Pre-fetch sales when location is available
   useEffect(() => {
     if (location && preloadedSales.length === 0) {
@@ -86,6 +106,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (data.ok && data.data) {
             console.log(`[APP] Pre-loaded ${data.data.length} sales`)
             setPreloadedSales(data.data)
+            // Cache the sales in localStorage
+            try {
+              localStorage.setItem('preloaded_sales', JSON.stringify({
+                sales: data.data,
+                timestamp: Date.now(),
+                location: location
+              }))
+            } catch (error) {
+              console.error('Failed to cache sales:', error)
+            }
           }
         } catch (error) {
           console.error('Failed to pre-load sales:', error)

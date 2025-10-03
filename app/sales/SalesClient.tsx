@@ -54,6 +54,24 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   }, [appLocation, preloadedSales.length, isPreloading])
 
   const [sales, setSales] = useState<Sale[]>(initialSales)
+  
+  // Load cached sales immediately if available
+  useEffect(() => {
+    if (preloadedSales.length > 0 && sales.length === 0 && initialSales.length === 0) {
+      console.log(`[SALES] Loading cached sales immediately: ${preloadedSales.length} items`)
+      setSales(preloadedSales)
+      setUsingPreloadedSales(true)
+      if (appLocation) {
+        updateFilters({
+          lat: appLocation.lat,
+          lng: appLocation.lng,
+          city: appLocation.city
+        })
+        setLocationInitialized(true)
+        setInitialLocationLoading(false)
+      }
+    }
+  }, [preloadedSales, sales.length, initialSales.length, appLocation, updateFilters])
   const [loading, setLoading] = useState(false)
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -366,14 +384,18 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             {loading || (isPreloading && preloadedSales.length === 0) ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">{isPreloading ? 'Pre-loading sales...' : 'Loading sales...'}</span>
+                <span className="ml-2">{isPreloading ? 'Refreshing sales...' : 'Loading sales...'}</span>
               </div>
             ) : (initialLocationLoading && initialSales.length === 0 && preloadedSales.length === 0 && !filters.lat && !filters.lng) ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">📍</div>
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
-                <p className="text-gray-500 mb-4">We're finding yard sales near you...</p>
-                <p className="text-xs text-gray-400 mt-2">Debug: loading={initialLocationLoading}, sales={initialSales.length}, preloaded={preloadedSales.length}, lat={filters.lat}, lng={filters.lng}</p>
+                <div className="animate-pulse">
+                  <div className="text-6xl mb-4">📍</div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Finding Yard Sales Near You</h3>
+                  <p className="text-gray-500 mb-4">This will only take a moment...</p>
+                  <div className="flex justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  </div>
+                </div>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">
