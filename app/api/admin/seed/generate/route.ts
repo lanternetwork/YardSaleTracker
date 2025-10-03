@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { T } from '@/lib/supabase/tables'
 import { checkAndSetIdempotency } from '@/lib/admin/idempotency'
@@ -273,7 +274,7 @@ export async function POST(req: NextRequest) {
   return await processGenerateRequest(req)
 }
 
-async function processGenerateRequest(req: NextRequest) {
+async function processGenerateRequest(req: NextRequest): Promise<NextResponse> {
   if (!authOk(req)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
   }
@@ -284,10 +285,7 @@ async function processGenerateRequest(req: NextRequest) {
 
     // Validate inputs
     if (!count || count < 1 || count > 1000) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Count must be between 1 and 1000' 
-      }, { status: 400 })
+      return NextResponse.json({ ok: false, error: 'Count must be between 1 and 1000' }, { status: 400 })
     }
 
     const supabase = createSupabaseServerClient()
@@ -447,20 +445,17 @@ async function processGenerateRequest(req: NextRequest) {
 
     console.log(`[GENERATE] Completed in ${durationMs}ms: inserted=${inserted}, skipped=${skipped}, itemsInserted=${itemsInserted}`)
 
-    return {
+    return NextResponse.json({
       ok: errors.length === 0,
       inserted,
       skipped,
       itemsInserted,
       durationMs,
       errors: errors.length > 0 ? errors : undefined
-    }
+    })
 
   } catch (error: any) {
     console.error('[GENERATE] Fatal error:', error.message)
-    return { 
-      ok: false, 
-      error: error.message 
-    }
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
   }
 }
