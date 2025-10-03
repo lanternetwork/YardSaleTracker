@@ -185,6 +185,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     if (!filters.lat && !filters.lng && !ipLookupStarted.current) {
       ipLookupStarted.current = true
       inferFromIp()
+      // Final fallback: if IP lookup fails, set a neutral default after short delay
+      const fallbackTimer = setTimeout(() => {
+        if (!filters.lat && !filters.lng) {
+          updateFilters({ lat: 38.2527, lng: -85.7585, city: undefined })
+        }
+      }, 1500)
+      return () => clearTimeout(fallbackTimer)
     }
   }, [filters.lat, filters.lng, updateFilters])
 
