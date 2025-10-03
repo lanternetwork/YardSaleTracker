@@ -80,28 +80,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
-  // Check if we have cached sales immediately to avoid location UI
-  const [initialLocationLoading, setInitialLocationLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('preloaded_sales')
-        console.log(`[SALES] Checking cached sales on mount:`, stored ? 'found' : 'not found')
-        if (stored) {
-          const { sales: cachedSales, timestamp } = JSON.parse(stored)
-          const age = Date.now() - timestamp
-          console.log(`[SALES] Cached sales: ${cachedSales.length} items, age: ${Math.round(age / 1000)}s`)
-          if (age < 5 * 60 * 1000 && cachedSales.length > 0) {
-            console.log(`[SALES] Using cached sales, skipping location UI`)
-            return false // We have cached sales, no need for location UI
-          }
-        }
-      } catch (error) {
-        console.error('Failed to check cached sales:', error)
-      }
-    }
-    console.log(`[SALES] No cached sales, showing location UI`)
-    return true // No cached sales, show location UI
-  })
+  const [initialLocationLoading, setInitialLocationLoading] = useState(false) // Start with false
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const [usingPreloadedSales, setUsingPreloadedSales] = useState(false) // Track if we're using preloaded sales
   const widenedOnceRef = useRef(false)
@@ -409,21 +388,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
           {/* Sales Grid */}
           <div className="mb-6">
-            {loading || (isPreloading && preloadedSales.length === 0) ? (
+            {loading || (sales.length === 0 && !filters.lat && !filters.lng) ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">{isPreloading ? 'Refreshing sales...' : 'Loading sales...'}</span>
-              </div>
-            ) : (initialLocationLoading && initialSales.length === 0 && sales.length === 0 && !filters.lat && !filters.lng) ? (
-              <div className="text-center py-12">
-                <div className="animate-pulse">
-                  <div className="text-6xl mb-4">📍</div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Finding Yard Sales Near You</h3>
-                  <p className="text-gray-500 mb-4">This will only take a moment...</p>
-                  <div className="flex justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  </div>
-                </div>
+                <span className="ml-2">Loading yard sales...</span>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">
