@@ -12,11 +12,8 @@ body {
   outline-offset: 2px;
 }
 
-/* Ensure all interactive elements have proper touch targets */
+/* Prefer component-level touch targets; avoid inflating inputs globally */
 button, 
-input, 
-select, 
-textarea, 
 a[role="button"],
 [role="button"] {
   min-height: 44px;

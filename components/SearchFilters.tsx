@@ -141,7 +141,7 @@ export default function SearchFilters({
               key={tag}
               onClick={() => toggleTag(tag)}
               aria-label={`${f.tags?.includes(tag) ? 'Remove' : 'Add'} ${tag} filter`}
-              className={`min-h-[44px] min-w-[44px] px-4 py-2 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                 f.tags?.includes(tag)
                   ? 'bg-amber-500 text-white'
                   : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
