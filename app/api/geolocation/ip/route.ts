@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (vercelLat && vercelLng) {
       return NextResponse.json({
+        ok: true,
         lat: parseFloat(vercelLat),
         lng: parseFloat(vercelLng),
         city: vercelCity,
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
     
     if (data.latitude && data.longitude) {
       return NextResponse.json({
+        ok: true,
         lat: parseFloat(data.latitude),
         lng: parseFloat(data.longitude),
         city: data.city,
@@ -50,6 +52,7 @@ export async function GET(request: NextRequest) {
 
     // Final fallback to Louisville, KY
     return NextResponse.json({
+      ok: true,
       lat: 38.2527,
       lng: -85.7585,
       city: 'Louisville',
@@ -63,6 +66,7 @@ export async function GET(request: NextRequest) {
     
     // Return fallback location on error
     return NextResponse.json({
+      ok: true,
       lat: 38.2527,
       lng: -85.7585,
       city: 'Louisville',
