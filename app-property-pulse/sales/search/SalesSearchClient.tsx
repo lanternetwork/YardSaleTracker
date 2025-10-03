@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sale } from '@/lib/types'
 import SalesMap from '@/components/location/SalesMap'
-import UseLocationButton from '@/components/location/UseLocationButton'
 import SaleCard from '@/components/SaleCard'
 import { useLocationSearch } from '@/lib/location/useLocation'
 
@@ -135,11 +134,6 @@ export default function SalesSearchClient({
           <div className="space-y-4">
             <h3 className="font-medium text-gray-700">Location</h3>
             
-            <UseLocationButton
-              onClick={() => handleLocationUpdate(currentCenter)}
-              loading={false}
-              error={null}
-            />
             
             {location && (
               <div className="space-y-2">

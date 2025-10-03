@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Sale } from '@/lib/types'
 import SalesMap from '@/components/location/SalesMap'
-import UseLocationButton from '@/components/location/UseLocationButton'
 import { useLocationSearch } from '@/lib/location/useLocation'
 
 interface HomeClientProps {
@@ -80,14 +79,6 @@ export default function HomeClient({ initialSales, user }: HomeClientProps) {
           Discover yard sales, garage sales, and estate sales in your area
         </p>
         
-        {/* Location Button */}
-        <div className="flex justify-center">
-          <UseLocationButton
-            onClick={() => handleLocationUpdate(location || { lat: 38.2527, lng: -85.7585 })}
-            loading={false}
-            error={null}
-          />
-        </div>
       </div>
 
       {/* Compact Map Banner */}

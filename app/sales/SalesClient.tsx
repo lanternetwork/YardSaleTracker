@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Sale } from '@/lib/types'
 import { GetSalesParams, formatDistance } from '@/lib/data/sales'
 import SalesMap from '@/components/location/SalesMap'
-import UseLocationButton from '@/components/location/UseLocationButton'
 import ZipInput from '@/components/location/ZipInput'
 import { useLocation } from '@/lib/location/useLocation'
 import SaleCard from '@/components/SaleCard'
@@ -172,9 +171,6 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     }
   }, []) // Only run on mount
 
-  const handleLocationClick = () => {
-    getLocation()
-  }
 
   // Fallback: Infer approximate location from IP if no cookie or browser location
   const ipLookupStarted = useRef(false)
@@ -290,12 +286,6 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                     )}
                   </div>
               
-              {/* Location Button */}
-              <UseLocationButton 
-                onClick={handleLocationClick} 
-                loading={locationLoading} 
-                error={locationError?.message || null} 
-              />
               
               {/* Mobile Filter Trigger */}
               <FilterTrigger
@@ -319,13 +309,6 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                 <div className="text-6xl mb-4">📍</div>
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
                 <p className="text-gray-500 mb-4">We're finding yard sales near you...</p>
-                <div className="flex justify-center">
-                  <UseLocationButton 
-                    onClick={handleLocationClick} 
-                    loading={locationLoading} 
-                    error={locationError?.message || null} 
-                  />
-                </div>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">
