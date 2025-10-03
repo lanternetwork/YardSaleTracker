@@ -47,7 +47,7 @@ export function createSupabaseServerClient() {
         cookieStore.set({ name, value: '', ...options, maxAge: 0 })
       },
     },
-    db: { schema: 'public' }, // We use fully qualified names for v2 tables
+    db: { schema: schema },
   });
 }
 

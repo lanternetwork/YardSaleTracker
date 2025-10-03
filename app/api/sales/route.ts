@@ -101,8 +101,9 @@ export async function GET(request: NextRequest) {
       // Prefer v2 search function that uses geom + RLS
       // Fetch more than needed to allow cursor-based trimming
       const fetchLimit = limit + 50
+      const schema = getSchema()
       const { data: postgisData, error: postgisError } = await supabase
-        .rpc('lootaura_v2.search_sales_within_distance', {
+        .rpc(`${schema}.search_sales_within_distance` as any, {
           user_lat: latitude,
           user_lng: longitude,
           distance_meters: Math.round(distanceKm * 1000),
@@ -185,8 +186,9 @@ export async function GET(request: NextRequest) {
 
       console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
 
+      // Use the fully-qualified path only in select; client db schema is set via getSchema()
       let query = supabase
-        .from('lootaura_v2.sales')
+        .from(`${getSchema()}.sales` as any)
         .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
         .gte('lat', latitude - latRange)
         .lte('lat', latitude + latRange)
@@ -224,7 +226,7 @@ export async function GET(request: NextRequest) {
       if (!bboxError && (bboxData?.length ?? 0) === 0) {
         console.log('[SALES][bbox] No rows on first attempt; retrying without status constraints')
         const retry = await supabase
-          .from('lootaura_v2.sales')
+          .from(`${getSchema()}.sales` as any)
           .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
           .gte('lat', latitude - latRange)
           .lte('lat', latitude + latRange)
