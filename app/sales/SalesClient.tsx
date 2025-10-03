@@ -55,6 +55,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [zipError, setZipError] = useState<string | null>(null)
   const [dateWindow, setDateWindow] = useState<any>(null)
   const [degraded, setDegraded] = useState(false)
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -198,6 +199,25 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     setZipError(error)
   }
 
+  const handleSaleClick = (sale: Sale) => {
+    setSelectedSaleId(sale.id)
+    
+    // Scroll to the corresponding card
+    const cardElement = document.getElementById(`sale-card-${sale.id}`)
+    if (cardElement) {
+      cardElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      })
+      
+      // Add a temporary highlight effect
+      cardElement.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-50')
+      setTimeout(() => {
+        cardElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50')
+      }, 2000)
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -275,7 +295,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="sales-grid">
                   {sales.map((sale) => (
-                    <SaleCard key={sale.id} sale={sale} />
+                    <div 
+                      key={sale.id} 
+                      id={`sale-card-${sale.id}`}
+                      className={`transition-all duration-200 ${
+                        selectedSaleId === sale.id ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                      }`}
+                    >
+                      <SaleCard sale={sale} />
+                    </div>
                   ))}
                 </div>
                 {hasMore && (
@@ -309,6 +337,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                   sales={sales}
                   center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : { lat: 38.2527, lng: -85.7585 }}
                   zoom={filters.lat && filters.lng ? 12 : 10}
+                  onSaleClick={handleSaleClick}
+                  selectedSaleId={selectedSaleId || undefined}
                 />
                 {/* Debug info */}
                 {filters.lat && filters.lng && (
