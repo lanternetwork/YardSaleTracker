@@ -54,24 +54,6 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   }, [appLocation, preloadedSales.length, isPreloading])
 
   const [sales, setSales] = useState<Sale[]>(initialSales)
-  
-  // Load cached sales immediately if available
-  useEffect(() => {
-    if (preloadedSales.length > 0 && sales.length === 0 && initialSales.length === 0) {
-      console.log(`[SALES] Loading cached sales immediately: ${preloadedSales.length} items`)
-      setSales(preloadedSales)
-      setUsingPreloadedSales(true)
-      if (appLocation) {
-        updateFilters({
-          lat: appLocation.lat,
-          lng: appLocation.lng,
-          city: appLocation.city
-        })
-        setLocationInitialized(true)
-        setInitialLocationLoading(false)
-      }
-    }
-  }, [preloadedSales, sales.length, initialSales.length, appLocation, updateFilters])
   const [loading, setLoading] = useState(false)
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -81,7 +63,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
-  const [initialLocationLoading, setInitialLocationLoading] = useState(!initialSearchParams.lat || !initialSearchParams.lng) // Track initial location loading
+  const [initialLocationLoading, setInitialLocationLoading] = useState(false) // Start with false, will be set based on actual state
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const [usingPreloadedSales, setUsingPreloadedSales] = useState(false) // Track if we're using preloaded sales
   const widenedOnceRef = useRef(false)
@@ -93,19 +75,24 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       console.log(`[SALES] Using preloaded sales: ${preloadedSales.length} items`)
       setSales(preloadedSales)
       setUsingPreloadedSales(true)
+      setLocationInitialized(true)
+      setInitialLocationLoading(false)
       if (appLocation) {
         updateFilters({
           lat: appLocation.lat,
           lng: appLocation.lng,
           city: appLocation.city
         })
-        setLocationInitialized(true)
-        setInitialLocationLoading(false)
       }
       // Don't fetch from API when using preloaded sales
       return
     }
-  }, [preloadedSales, initialSales.length, sales.length, appLocation, updateFilters])
+    
+    // If no preloaded sales and no initial sales, we need to load
+    if (preloadedSales.length === 0 && initialSales.length === 0 && sales.length === 0 && !initialSearchParams.lat && !initialSearchParams.lng) {
+      setInitialLocationLoading(true)
+    }
+  }, [preloadedSales, initialSales.length, sales.length, appLocation, updateFilters, initialSearchParams.lat, initialSearchParams.lng])
 
   // Check if we already have location from initial state
   useEffect(() => {
