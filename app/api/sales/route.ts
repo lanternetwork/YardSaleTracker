@@ -188,8 +188,9 @@ export async function GET(request: NextRequest) {
       console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
 
       // Target v2 schema explicitly via per-query schema switch
+      const bboxSchema = getSchema()
       let query = (supabase as any)
-        .schema(schema)
+        .schema(bboxSchema)
         .from('sales')
         .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
         .gte('lat', latitude - latRange)
@@ -228,7 +229,7 @@ export async function GET(request: NextRequest) {
       if (!bboxError && (bboxData?.length ?? 0) === 0) {
         console.log('[SALES][bbox] No rows on first attempt; retrying without status constraints')
         const retry = await (supabase as any)
-          .schema(schema)
+          .schema(bboxSchema)
           .from('sales')
           .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
           .gte('lat', latitude - latRange)
