@@ -13,6 +13,7 @@ import FilterTrigger from '@/components/filters/FilterTrigger'
 import DateWindowLabel from '@/components/filters/DateWindowLabel'
 import DegradedBanner from '@/components/DegradedBanner'
 import { useFilters } from '@/lib/hooks/useFilters'
+import { useApp } from '@/lib/contexts/AppContext'
 import { User } from '@supabase/supabase-js'
 
 // Cookie utility functions
@@ -45,6 +46,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const searchParams = useSearchParams()
   const { location, getLocation, loading: locationLoading, error: locationError } = useLocation()
   const { filters, updateFilters, hasActiveFilters } = useFilters()
+  const { location: appLocation, preloadedSales, isPreloading } = useApp()
 
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)
@@ -59,6 +61,23 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [initialLocationLoading, setInitialLocationLoading] = useState(!initialSearchParams.lat || !initialSearchParams.lng) // Track initial location loading
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const widenedOnceRef = useRef(false)
+
+  // Use preloaded sales if available and no initial sales
+  useEffect(() => {
+    if (preloadedSales.length > 0 && initialSales.length === 0 && !filters.lat && !filters.lng) {
+      console.log(`[SALES] Using preloaded sales: ${preloadedSales.length} items`)
+      setSales(preloadedSales)
+      if (appLocation) {
+        updateFilters({
+          lat: appLocation.lat,
+          lng: appLocation.lng,
+          city: appLocation.city
+        })
+        setLocationInitialized(true)
+        setInitialLocationLoading(false)
+      }
+    }
+  }, [preloadedSales, initialSales.length, filters.lat, filters.lng, appLocation, updateFilters])
 
   // Check if we already have location from initial state
   useEffect(() => {
@@ -327,17 +346,17 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
           {/* Sales Grid */}
           <div className="mb-6">
-            {loading ? (
+            {loading || (isPreloading && preloadedSales.length === 0) ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">Loading sales...</span>
+                <span className="ml-2">{isPreloading ? 'Pre-loading sales...' : 'Loading sales...'}</span>
               </div>
-            ) : (initialLocationLoading && initialSales.length === 0 && !filters.lat && !filters.lng) ? (
+            ) : (initialLocationLoading && initialSales.length === 0 && preloadedSales.length === 0 && !filters.lat && !filters.lng) ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📍</div>
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
                 <p className="text-gray-500 mb-4">We're finding yard sales near you...</p>
-                <p className="text-xs text-gray-400 mt-2">Debug: loading={initialLocationLoading}, sales={initialSales.length}, lat={filters.lat}, lng={filters.lng}</p>
+                <p className="text-xs text-gray-400 mt-2">Debug: loading={initialLocationLoading}, sales={initialSales.length}, preloaded={preloadedSales.length}, lat={filters.lat}, lng={filters.lng}</p>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">

@@ -1,6 +1,7 @@
 import "./globals.css"
 import { Metadata } from 'next'
 import { Providers } from './providers'
+import { AppProvider } from '@/lib/contexts/AppContext'
 import WebVitals from '@/components/WebVitals'
 import { Header } from './Header'
 import { PWAComponents } from './PWAComponents'
@@ -39,10 +40,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(createOrganizationStructuredData()) }}
         />
         <Providers>
-          <Header />
-          <WebVitals />
-          {children}
-          <PWAComponents />
+          <AppProvider>
+            <Header />
+            <WebVitals />
+            {children}
+            <PWAComponents />
+          </AppProvider>
         </Providers>
       </body>
     </html>
