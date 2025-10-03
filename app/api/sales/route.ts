@@ -188,7 +188,6 @@ export async function GET(request: NextRequest) {
       let query = supabase
         .from('lootaura_v2.sales')
         .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
-        .eq('status', 'published')
         .gte('lat', latitude - latRange)
         .lte('lat', latitude + latRange)
         .gte('lng', longitude - lngRange)
@@ -206,7 +205,7 @@ export async function GET(request: NextRequest) {
         query = query.or(`title.ilike.%${q}%,city.ilike.%${q}%`)
       }
 
-      const { data: bboxData, error: bboxError } = await query
+      let { data: bboxData, error: bboxError } = await query
 
       if (bboxError) {
         console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
@@ -214,6 +213,23 @@ export async function GET(request: NextRequest) {
           ok: false, 
           error: 'Database query failed' 
         }, { status: 500 })
+      }
+
+      // If zero results and we previously filtered by status on the server in legacy code, try a relaxed retry without status
+      if (!bboxError && (bboxData?.length ?? 0) === 0) {
+        console.log('[SALES][bbox] No rows on first attempt; retrying without status constraints')
+        const retry = await supabase
+          .from('lootaura_v2.sales')
+          .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
+          .gte('lat', latitude - latRange)
+          .lte('lat', latitude + latRange)
+          .gte('lng', longitude - lngRange)
+          .lte('lng', longitude + lngRange)
+          .order('date_start', { ascending: true })
+          .limit(limit + 50)
+        if (!retry.error) {
+          bboxData = retry.data
+        }
       }
 
       // Apply date filtering in application layer for bounding box results
