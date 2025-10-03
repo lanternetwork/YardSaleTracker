@@ -53,7 +53,24 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     console.log(`[SALES] AppContext state: appLocation=${!!appLocation}, preloadedSales=${preloadedSales.length}, isPreloading=${isPreloading}`)
   }, [appLocation, preloadedSales.length, isPreloading])
 
-  const [sales, setSales] = useState<Sale[]>(initialSales)
+  // Check for cached sales immediately on mount
+  const [sales, setSales] = useState<Sale[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('preloaded_sales')
+        if (stored) {
+          const { sales: cachedSales, timestamp } = JSON.parse(stored)
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            console.log(`[SALES] Loading cached sales immediately on mount: ${cachedSales.length} items`)
+            return cachedSales
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load cached sales on mount:', error)
+      }
+    }
+    return initialSales
+  })
   const [loading, setLoading] = useState(false)
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
@@ -63,7 +80,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
-  const [initialLocationLoading, setInitialLocationLoading] = useState(false) // Start with false, will be set based on actual state
+  const [initialLocationLoading, setInitialLocationLoading] = useState(true) // Start with true to prevent flash
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const [usingPreloadedSales, setUsingPreloadedSales] = useState(false) // Track if we're using preloaded sales
   const widenedOnceRef = useRef(false)
@@ -71,6 +88,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   // Use preloaded sales if available and no initial sales
   useEffect(() => {
     console.log(`[SALES] Preloaded check: preloaded=${preloadedSales.length}, initial=${initialSales.length}, current=${sales.length}, appLocation=${!!appLocation}`)
+    
+    // If we already have sales (from cache), set loading to false
+    if (sales.length > 0) {
+      setInitialLocationLoading(false)
+      setLocationInitialized(true)
+      return
+    }
+    
     if (preloadedSales.length > 0 && initialSales.length === 0 && sales.length === 0) {
       console.log(`[SALES] Using preloaded sales: ${preloadedSales.length} items`)
       setSales(preloadedSales)
