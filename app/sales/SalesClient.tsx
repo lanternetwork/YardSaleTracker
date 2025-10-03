@@ -55,6 +55,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [dateWindow, setDateWindow] = useState<any>(null)
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
+  const [locationInitialized, setLocationInitialized] = useState(false) // Track if location has been initialized
+  const [initialLocationLoading, setInitialLocationLoading] = useState(true) // Track initial location loading
   const widenedOnceRef = useRef(false)
 
   const fetchSales = useCallback(async () => {
@@ -164,10 +166,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             lng: locationData.lng,
             city: locationData.city
           })
+          setLocationInitialized(true)
+          setInitialLocationLoading(false)
         }
       } catch (error) {
         console.error('Failed to parse location cookie:', error)
       }
+    } else {
+      // No cookie, will try IP lookup
+      setInitialLocationLoading(false)
     }
   }, []) // Only run on mount
 
@@ -184,6 +191,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         const { lat, lng, city, state } = data
         if (typeof lat === 'number' && typeof lng === 'number' && !filters.lat && !filters.lng) {
           updateFilters({ lat, lng, city })
+          setLocationInitialized(true)
+          setInitialLocationLoading(false)
           // Kick off a fetch immediately after updating filters to avoid timing races
           setTimeout(() => {
             fetchSales()
@@ -198,6 +207,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       const fallbackTimer = setTimeout(() => {
         if (!filters.lat && !filters.lng) {
           updateFilters({ lat: 38.2527, lng: -85.7585, city: undefined })
+          setLocationInitialized(true)
+          setInitialLocationLoading(false)
         }
       }, 1500)
       return () => clearTimeout(fallbackTimer)
@@ -213,6 +224,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       lng,
       city: city || undefined
     })
+    setLocationInitialized(true)
     
     // Update URL with new location and ZIP
     const params = new URLSearchParams(searchParams.toString())
@@ -304,7 +316,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading sales...</span>
               </div>
-            ) : (!filters.lat || !filters.lng) ? (
+            ) : (initialLocationLoading || (!locationInitialized && (!filters.lat || !filters.lng))) ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📍</div>
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
