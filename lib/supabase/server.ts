@@ -47,7 +47,9 @@ export function createSupabaseServerClient() {
         cookieStore.set({ name, value: '', ...options, maxAge: 0 })
       },
     },
-    db: { schema: schema },
+    // Supabase JS only supports 'public' or 'graphql_public' here; use fully-qualified
+    // table/function names elsewhere for non-public schemas.
+    db: { schema: 'public' },
   });
 }
 
