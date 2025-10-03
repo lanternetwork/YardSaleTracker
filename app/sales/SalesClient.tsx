@@ -80,7 +80,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
-  const [initialLocationLoading, setInitialLocationLoading] = useState(false) // Start with false
+  const [initialLocationLoading, setInitialLocationLoading] = useState(true) // Start with true to prevent flash
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const [usingPreloadedSales, setUsingPreloadedSales] = useState(false) // Track if we're using preloaded sales
   const widenedOnceRef = useRef(false)
@@ -105,6 +105,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     }
   }, [preloadedSales, initialSales.length, sales.length, appLocation, updateFilters])
 
+  // If we have cached sales, immediately set loading to false
+  useEffect(() => {
+    if (sales.length > 0) {
+      setInitialLocationLoading(false)
+      setLocationInitialized(true)
+    }
+  }, [sales.length])
+
   // Check if we already have location from initial state
   useEffect(() => {
     if (filters.lat && filters.lng) {
@@ -120,12 +128,6 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     }
   }, [filters.lat, filters.lng, locationInitialized, isSettingLocation])
 
-  // Set loading state only when we actually need to load
-  useEffect(() => {
-    if (sales.length === 0 && initialSales.length === 0 && preloadedSales.length === 0 && !initialSearchParams.lat && !initialSearchParams.lng) {
-      setInitialLocationLoading(true)
-    }
-  }, [sales.length, initialSales.length, preloadedSales.length, initialSearchParams.lat, initialSearchParams.lng])
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
