@@ -45,9 +45,8 @@ ALTER TABLE lootaura_v2.profiles
 ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 
 -- Add missing columns to favorites table
-ALTER TABLE lootaura_v2.favorites 
-ADD COLUMN IF NOT EXISTS id UUID PRIMARY KEY DEFAULT gen_random_uuid();
-
+-- Note: favorites table already has a composite primary key (user_id, sale_id)
+-- So we only add the created_at column
 ALTER TABLE lootaura_v2.favorites 
 ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
 

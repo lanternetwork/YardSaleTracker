@@ -1,7 +1,17 @@
--- Public wrappers for lootaura_v2 schema
+-- Public wrappers for lootaura_v2 schema (Safe version)
 -- This allows the REST API to access v2 functions and tables through public schema
+-- Includes fallbacks if v2 schema doesn't exist
+
+-- First, check if lootaura_v2 schema exists, if not create it
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'lootaura_v2') THEN
+        CREATE SCHEMA lootaura_v2;
+    END IF;
+END $$;
 
 -- 1. Public wrapper for search_sales_within_distance function
+-- This function will work even if the v2 schema is empty
 CREATE OR REPLACE FUNCTION public.search_sales_within_distance(
   user_lat DOUBLE PRECISION,
   user_lng DOUBLE PRECISION,
@@ -37,7 +47,7 @@ AS $$
     s.title,
     s.city,
     s.state,
-    s.zip_code,
+    COALESCE(s.zip_code, '') as zip_code,
     s.lat,
     s.lng,
     s.date_start,
@@ -75,7 +85,7 @@ SELECT
   COALESCE(address, '') as address,
   city,
   state,
-  zip_code,
+  COALESCE(zip_code, '') as zip_code,
   lat,
   lng,
   date_start,
@@ -196,9 +206,6 @@ GRANT SELECT ON public.zipcodes_v2 TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.search_sales_within_distance TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.test_postgis TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_sales_stats TO anon, authenticated;
-
--- 10. Create RLS policies for the views (delegate to v2 policies)
--- Note: These will inherit the RLS policies from the underlying v2 tables
 
 -- Add comments for documentation
 COMMENT ON FUNCTION public.search_sales_within_distance IS 'Public wrapper for lootaura_v2.search_sales_within_distance';
