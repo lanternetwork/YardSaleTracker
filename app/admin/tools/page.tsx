@@ -149,6 +149,17 @@ export default async function AdminToolsPage() {
           <HealthChecks />
         </Section>
 
+        <Section title="Quick Actions (Fallback)" description="Direct links to core health endpoints in case the client widget fails to render.">
+          <ul className="list-disc pl-5 text-sm">
+            <li><a className="text-blue-600 underline" href="/api/health/env" target="_blank" rel="noreferrer">/api/health/env</a></li>
+            <li><a className="text-blue-600 underline" href="/api/health/db" target="_blank" rel="noreferrer">/api/health/db</a></li>
+            <li><a className="text-blue-600 underline" href="/api/health/schema" target="_blank" rel="noreferrer">/api/health/schema</a></li>
+            <li><a className="text-blue-600 underline" href="/api/health/postgis" target="_blank" rel="noreferrer">/api/health/postgis</a></li>
+            <li><a className="text-blue-600 underline" href="/api/health/mapbox" target="_blank" rel="noreferrer">/api/health/mapbox</a></li>
+            <li><a className="text-blue-600 underline" href="/api/health/auth" target="_blank" rel="noreferrer">/api/health/auth</a></li>
+          </ul>
+        </Section>
+
         <Section title="Database & Schema" description="Schema details, RLS status, and geometry/index verifications.">
           <SchemaSection />
         </Section>
