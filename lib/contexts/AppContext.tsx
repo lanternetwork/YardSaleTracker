@@ -21,6 +21,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Get location on app load
   useEffect(() => {
     async function getInitialLocation() {
+      console.log('[APP] Starting location detection...')
       // First try to get location from cookie
       const cookieData = getCookie('la_loc')
       if (cookieData) {
@@ -58,6 +59,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('IP geolocation failed:', error)
         // Set fallback location
+        console.log('[APP] Using fallback location: Louisville')
         setLocation({
           lat: 38.2527,
           lng: -85.7585,

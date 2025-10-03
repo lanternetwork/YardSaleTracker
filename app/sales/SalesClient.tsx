@@ -64,7 +64,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
   // Use preloaded sales if available and no initial sales
   useEffect(() => {
-    if (preloadedSales.length > 0 && initialSales.length === 0 && !filters.lat && !filters.lng) {
+    console.log(`[SALES] Preloaded check: preloaded=${preloadedSales.length}, initial=${initialSales.length}, current=${sales.length}, appLocation=${!!appLocation}`)
+    if (preloadedSales.length > 0 && initialSales.length === 0 && sales.length === 0) {
       console.log(`[SALES] Using preloaded sales: ${preloadedSales.length} items`)
       setSales(preloadedSales)
       if (appLocation) {
@@ -77,7 +78,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         setInitialLocationLoading(false)
       }
     }
-  }, [preloadedSales, initialSales.length, filters.lat, filters.lng, appLocation, updateFilters])
+  }, [preloadedSales, initialSales.length, sales.length, appLocation, updateFilters])
 
   // Check if we already have location from initial state
   useEffect(() => {
