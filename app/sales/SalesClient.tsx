@@ -56,6 +56,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [dateWindow, setDateWindow] = useState<any>(null)
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
+  const widenedOnceRef = useRef(false)
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -108,6 +109,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         setHasMore(Boolean(data.nextCursor))
         setCursor(data.nextCursor || null)
         console.log(`[SALES] Set ${data.data?.length || 0} sales`)
+
+        // If first page and zero results, auto-widen radius once to improve first-load experience
+        if (!cursor && (!data.data || data.data.length === 0) && !widenedOnceRef.current) {
+          widenedOnceRef.current = true
+          const widened = Math.min((filters.distance || 25) * 2, 100)
+          console.log(`[SALES] No results; widening distance to ${widened} miles and refetching`)
+          updateFilters({ distance: widened })
+        }
       } else {
         console.error('Sales API error:', data.error)
         setSales([])
