@@ -377,7 +377,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
           {/* Sales Grid */}
           <div className="mb-6">
-            {loading || (sales.length === 0 && !filters.lat && !filters.lng) ? (
+            {loading || (sales.length === 0 && !filters.lat && !filters.lng && preloadedSales.length === 0) ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading yard sales...</span>
