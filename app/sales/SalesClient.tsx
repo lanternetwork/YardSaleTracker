@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sale } from '@/lib/types'
 import { GetSalesParams, formatDistance } from '@/lib/data/sales'
@@ -166,6 +166,27 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const handleLocationClick = () => {
     getLocation()
   }
+
+  // Fallback: Infer approximate location from IP if no cookie or browser location
+  const ipLookupStarted = useRef(false)
+  useEffect(() => {
+    async function inferFromIp() {
+      try {
+        const res = await fetch('/api/geolocation/ip')
+        if (!res.ok) return
+        const data = await res.json().catch(() => null)
+        if (!data || !data.ok) return
+        const { lat, lng, city, state } = data
+        if (typeof lat === 'number' && typeof lng === 'number' && !filters.lat && !filters.lng) {
+          updateFilters({ lat, lng, city })
+        }
+      } catch {}
+    }
+    if (!filters.lat && !filters.lng && !ipLookupStarted.current) {
+      ipLookupStarted.current = true
+      inferFromIp()
+    }
+  }, [filters.lat, filters.lng, updateFilters])
 
   const handleZipLocationFound = (lat: number, lng: number, city?: string, state?: string, zip?: string) => {
     setZipError(null)
