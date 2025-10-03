@@ -219,19 +219,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     fetchSales()
   }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange, usingPreloadedSales, preloadedSales.length])
 
-  // Don't automatically request location - let user choose
 
-  useEffect(() => {
-    if (location && location.lat && location.lng) {
-      console.log('[SALES] Location found, updating filters')
-      updateFilters({
-        lat: location.lat,
-        lng: location.lng
-      })
-    }
-  }, [location, updateFilters])
-
-  // Initialize location from cookie on mount
+  // Removed location detection to prevent pin UI
   useEffect(() => {
     const cookieData = getCookie('la_loc')
     if (cookieData && !filters.lat && !filters.lng) {
