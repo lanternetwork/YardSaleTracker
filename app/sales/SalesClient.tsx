@@ -55,9 +55,17 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [dateWindow, setDateWindow] = useState<any>(null)
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
-  const [locationInitialized, setLocationInitialized] = useState(false) // Track if location has been initialized
-  const [initialLocationLoading, setInitialLocationLoading] = useState(true) // Track initial location loading
+  const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
+  const [initialLocationLoading, setInitialLocationLoading] = useState(!initialSearchParams.lat || !initialSearchParams.lng) // Track initial location loading
   const widenedOnceRef = useRef(false)
+
+  // Check if we already have location from initial state
+  useEffect(() => {
+    if (filters.lat && filters.lng) {
+      setLocationInitialized(true)
+      setInitialLocationLoading(false)
+    }
+  }, [filters.lat, filters.lng])
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -316,7 +324,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading sales...</span>
               </div>
-            ) : (initialLocationLoading || (!locationInitialized && (!filters.lat || !filters.lng))) ? (
+            ) : (initialLocationLoading && initialSales.length === 0) ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📍</div>
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
