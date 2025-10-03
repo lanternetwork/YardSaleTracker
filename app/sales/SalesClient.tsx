@@ -57,6 +57,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
   const [initialLocationLoading, setInitialLocationLoading] = useState(!initialSearchParams.lat || !initialSearchParams.lng) // Track initial location loading
+  const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const widenedOnceRef = useRef(false)
 
   // Check if we already have location from initial state
@@ -65,10 +66,14 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       console.log(`[SALES] Location detected in filters: ${filters.lat}, ${filters.lng}`)
       setLocationInitialized(true)
       setInitialLocationLoading(false)
+      // Clear the setting location flag after a short delay
+      if (isSettingLocation) {
+        setTimeout(() => setIsSettingLocation(false), 100)
+      }
     } else if (locationInitialized && !filters.lat && !filters.lng) {
       console.log(`[SALES] Location lost from filters - this shouldn't happen`)
     }
-  }, [filters.lat, filters.lng, locationInitialized])
+  }, [filters.lat, filters.lng, locationInitialized, isSettingLocation])
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -203,6 +208,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         const { lat, lng, city, state } = data
         if (typeof lat === 'number' && typeof lng === 'number' && !filters.lat && !filters.lng) {
           console.log(`[SALES] IP lookup found location: ${lat}, ${lng} (${city})`)
+          setIsSettingLocation(true)
           updateFilters({ lat, lng, city })
           setLocationInitialized(true)
           setInitialLocationLoading(false)

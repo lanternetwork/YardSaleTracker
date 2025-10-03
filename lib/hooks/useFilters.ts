@@ -40,14 +40,15 @@ export function useFilters(): UseFiltersReturn {
     const categories = searchParams.get('cat') ? searchParams.get('cat')!.split(',') : []
     const city = searchParams.get('city') || undefined
 
-    setFilters({
-      lat,
-      lng,
+    setFilters(prevFilters => ({
+      // Preserve existing location if URL doesn't have it and we already have location
+      lat: lat ?? (prevFilters.lat && !searchParams.get('lat') ? prevFilters.lat : undefined),
+      lng: lng ?? (prevFilters.lng && !searchParams.get('lng') ? prevFilters.lng : undefined),
       distance: Math.max(1, Math.min(100, distance)),
       dateRange,
       categories,
-      city
-    })
+      city: city ?? (prevFilters.city && !searchParams.get('city') ? prevFilters.city : undefined)
+    }))
   }, [searchParams])
 
   const updateFilters = useCallback((newFilters: Partial<FilterState>) => {
