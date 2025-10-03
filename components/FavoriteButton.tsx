@@ -47,7 +47,7 @@ export default function FavoriteButton({
       } disabled:opacity-50 disabled:cursor-not-allowed`}
       onClick={handleToggle}
     >
-      {isFavorited ? '♥ Saved' : '♡ Save'}
+      {isFavorited ? '♥' : '♡'}
     </button>
   )
 }

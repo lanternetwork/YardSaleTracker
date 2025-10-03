@@ -38,7 +38,7 @@ describe('FavoriteButton', () => {
       </TestWrapper>
     )
 
-    expect(screen.getByText('♡ Save')).toBeInTheDocument()
+    expect(screen.getByText('♡')).toBeInTheDocument()
   })
 
   it('renders saved button when favorited', () => {
@@ -54,7 +54,7 @@ describe('FavoriteButton', () => {
       </TestWrapper>
     )
 
-    expect(screen.getByText('♥ Saved')).toBeInTheDocument()
+    expect(screen.getByText('♥')).toBeInTheDocument()
   })
 
   it('calls toggle function when clicked', async () => {
