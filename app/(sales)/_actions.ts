@@ -7,18 +7,34 @@ import { revalidatePath } from 'next/cache'
 
 // Zod schemas for validation
 const SaleInputSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+  title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
   description: z.string().optional(),
-  starts_at: z.string().min(1, 'Start date is required'),
-  ends_at: z.string().optional(),
-  latitude: z.number().min(-90).max(90, 'Invalid latitude'),
-  longitude: z.number().min(-180).max(180, 'Invalid longitude'),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  categories: z.array(z.string()).optional(),
-  cover_image_url: z.string().url().optional(),
+  date_start: z.string().min(1, 'Start date is required'),
+  time_start: z.string().min(1, 'Start time is required'),
+  date_end: z.string().optional(),
+  time_end: z.string().optional(),
+  lat: z.number().min(-90).max(90, 'Invalid latitude'),
+  lng: z.number().min(-180).max(180, 'Invalid longitude'),
+  address: z.string().min(1, 'Address is required'),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State is required'),
+  zip_code: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  price: z.number().min(0, 'Price must be positive').optional(),
+  photos: z.array(z.string()).default([]),
+}).refine((data) => {
+  // If end date is provided, it must be >= start date
+  if (data.date_end && data.date_start) {
+    const startDate = new Date(data.date_start)
+    const endDate = new Date(data.date_end)
+    if (endDate < startDate) {
+      return false
+    }
+  }
+  return true
+}, {
+  message: 'End date must be on or after start date',
+  path: ['date_end']
 })
 
 const ItemInputSchema = z.object({
@@ -65,16 +81,20 @@ export async function createSale(input: SaleInput): Promise<ActionResult> {
         owner_id: user.id,
         title: validatedInput.title,
         description: validatedInput.description,
-        date_start: validatedInput.starts_at,
-        date_end: validatedInput.ends_at,
-        lat: validatedInput.latitude,
-        lng: validatedInput.longitude,
+        date_start: validatedInput.date_start,
+        time_start: validatedInput.time_start,
+        date_end: validatedInput.date_end,
+        time_end: validatedInput.time_end,
+        lat: validatedInput.lat,
+        lng: validatedInput.lng,
         address: validatedInput.address,
         city: validatedInput.city,
         state: validatedInput.state,
-        zip_code: validatedInput.zip,
-        tags: validatedInput.categories,
-        status: 'draft',
+        zip_code: validatedInput.zip_code,
+        tags: validatedInput.tags,
+        price: validatedInput.price,
+        cover_image_url: validatedInput.photos.length > 0 ? validatedInput.photos[0] : null,
+        status: 'published',
         privacy_mode: 'exact',
         is_featured: false,
       })
@@ -113,23 +133,45 @@ export async function updateSale(id: string, input: Partial<SaleInput>): Promise
   try {
     const { supabase, user } = await getAuthenticatedUser()
     
-    // Validate input
-    const validatedInput = SaleInputSchema.partial().parse(input)
+    // Validate input - create a partial schema for updates
+    const UpdateSaleSchema = z.object({
+      title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters').optional(),
+      description: z.string().optional(),
+      date_start: z.string().min(1, 'Start date is required').optional(),
+      time_start: z.string().min(1, 'Start time is required').optional(),
+      date_end: z.string().optional(),
+      time_end: z.string().optional(),
+      lat: z.number().min(-90).max(90, 'Invalid latitude').optional(),
+      lng: z.number().min(-180).max(180, 'Invalid longitude').optional(),
+      address: z.string().min(1, 'Address is required').optional(),
+      city: z.string().min(1, 'City is required').optional(),
+      state: z.string().min(1, 'State is required').optional(),
+      zip_code: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      price: z.number().min(0, 'Price must be positive').optional(),
+      photos: z.array(z.string()).optional(),
+    })
+    
+    const validatedInput = UpdateSaleSchema.parse(input)
     
     const { data, error } = await supabase
       .from(T.sales)
       .update({
         title: validatedInput.title,
         description: validatedInput.description,
-        date_start: validatedInput.starts_at,
-        date_end: validatedInput.ends_at,
-        lat: validatedInput.latitude,
-        lng: validatedInput.longitude,
+        date_start: validatedInput.date_start,
+        time_start: validatedInput.time_start,
+        date_end: validatedInput.date_end,
+        time_end: validatedInput.time_end,
+        lat: validatedInput.lat,
+        lng: validatedInput.lng,
         address: validatedInput.address,
         city: validatedInput.city,
         state: validatedInput.state,
-        zip_code: validatedInput.zip,
-        tags: validatedInput.categories,
+        zip_code: validatedInput.zip_code,
+        tags: validatedInput.tags,
+        price: validatedInput.price,
+        cover_image_url: validatedInput.photos && validatedInput.photos.length > 0 ? validatedInput.photos[0] : null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)

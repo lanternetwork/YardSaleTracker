@@ -1,43 +1,25 @@
-import { Suspense } from 'react'
-import SellWizardClient from './SellWizardClient'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import SaleForm from '@/components/forms/SaleForm'
 
-export default function SellNewPage() {
+export default async function NewSalePage() {
+  const supabase = createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/auth/signin?returnTo=/sell/new')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Suspense fallback={<SellWizardSkeleton />}>
-        <SellWizardClient />
-      </Suspense>
-    </div>
-  )
-}
-
-function SellWizardSkeleton() {
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="space-y-8">
-        {/* Header skeleton */}
-        <div className="text-center space-y-4">
-          <div className="h-8 bg-gray-200 rounded-lg animate-pulse w-1/3 mx-auto"></div>
-          <div className="h-4 bg-gray-200 rounded-lg animate-pulse w-1/2 mx-auto"></div>
-        </div>
-        
-        {/* Progress skeleton */}
-        <div className="flex justify-center">
-          <div className="flex space-x-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
-            ))}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-sm p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Sale</h1>
+            <p className="text-gray-600">List your yard sale to reach more buyers in your area</p>
           </div>
-        </div>
-        
-        {/* Form skeleton */}
-        <div className="bg-white rounded-lg shadow-sm p-8 space-y-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded animate-pulse w-1/4"></div>
-              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          ))}
+          
+          <SaleForm />
         </div>
       </div>
     </div>

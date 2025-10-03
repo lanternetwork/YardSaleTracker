@@ -15,6 +15,7 @@ export type Sale = {
   time_end?: string
   price?: number
   tags?: string[]
+  cover_image_url?: string
   status: 'draft' | 'published' | 'completed' | 'cancelled'
   privacy_mode: 'exact' | 'block_until_24h'
   is_featured: boolean

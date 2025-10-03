@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Block pushes directly to protected branches
+protected_branches="main master"
+
+current_branch="$(git rev-parse --abbrev-ref HEAD)"
+
+for b in $protected_branches; do
+  if [ "$current_branch" = "$b" ]; then
+    echo "\n[Husky] Push blocked: direct pushes to '$b' are not allowed.\n"
+    echo "Create a feature branch and open a PR instead."
+    exit 1
+  fi
+done
+
+exit 0
+
+
+
