@@ -172,25 +172,15 @@ export function useToggleFavorite() {
         throw new Error('Please sign in to save favorites')
       }
 
-      if (isFavorited) {
-        const { error } = await sb
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('sale_id', saleId)
-
-        if (error) {
-          throw new Error(error.message)
-        }
-      } else {
-        const { error } = await sb
-          .from('favorites')
-          .insert({ user_id: user.id, sale_id: saleId })
-
-        if (error) {
-          throw new Error(error.message)
-        }
+      // Use server action for better error handling
+      const { toggleFavorite } = await import('@/app/(sales)/_actions')
+      const result = await toggleFavorite(saleId)
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update favorites')
       }
+      
+      return result.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] })

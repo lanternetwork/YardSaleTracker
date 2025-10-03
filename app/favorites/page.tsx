@@ -2,8 +2,10 @@
 import { useFavorites } from '@/lib/hooks/useAuth'
 import SalesList from '@/components/SalesList'
 import EmptyState from '@/components/EmptyState'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function Favorites() {
+  const { data: user } = useAuth()
   const { data: favorites = [], isLoading, error } = useFavorites()
 
   if (isLoading) {
@@ -11,7 +13,7 @@ export default function Favorites() {
       <main className="max-w-6xl mx-auto p-4">
         <div className="text-center py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
-          <div className="text-neutral-600">Loading favorites...</div>
+          <div className="text-neutral-600">Loading your saved sales...</div>
         </div>
       </main>
     )
@@ -32,7 +34,7 @@ export default function Favorites() {
   return (
     <main className="max-w-6xl mx-auto p-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Your Favorites</h1>
+        <h1 className="text-3xl font-bold mb-2">Your Saved Sales</h1>
         <p className="text-neutral-600">
           {favorites.length} saved sale{favorites.length !== 1 ? 's' : ''}
         </p>
@@ -40,18 +42,24 @@ export default function Favorites() {
 
       {favorites.length === 0 ? (
         <EmptyState 
-          title="No favorites yet"
+          title="No saved sales yet"
           cta={
-            <div className="space-y-2">
-              <p className="text-sm text-neutral-500">
-                Start browsing sales and save the ones you're interested in.
-              </p>
-              <a 
-                href="/explore" 
-                className="inline-block text-amber-600 hover:text-amber-700 font-medium"
-              >
-                Browse Sales →
-              </a>
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-6xl mb-4">💝</div>
+                <p className="text-lg text-neutral-600 mb-2">
+                  You haven't saved any sales yet
+                </p>
+                <p className="text-sm text-neutral-500 mb-4">
+                  Browse sales and click the heart icon to save the ones you're interested in.
+                </p>
+                <a 
+                  href="/explore" 
+                  className="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                >
+                  Browse Sales →
+                </a>
+              </div>
             </div>
           }
         />

@@ -35,7 +35,7 @@ export async function middleware(req: NextRequest) {
   // If accessing a protected route without authentication
   if (isProtectedRoute && !user) {
     const loginUrl = new URL('/auth/signin', req.url)
-    loginUrl.searchParams.set('returnTo', req.nextUrl.pathname)
+    loginUrl.searchParams.set('returnTo', req.nextUrl.pathname + req.nextUrl.search)
     return NextResponse.redirect(loginUrl)
   }
 

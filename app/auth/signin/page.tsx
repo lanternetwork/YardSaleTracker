@@ -1,14 +1,18 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSignIn, useSignUp } from '@/lib/hooks/useAuth'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 export default function SignIn() {
   const signIn = useSignIn()
   const signUp = useSignUp()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  const returnTo = searchParams.get('returnTo') || '/explore'
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -16,7 +20,7 @@ export default function SignIn() {
 
     try {
       await signIn.mutateAsync({ email, password })
-      window.location.href = '/explore'
+      window.location.href = returnTo
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     }

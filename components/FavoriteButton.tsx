@@ -1,5 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { useFavorites, useToggleFavorite } from '@/lib/hooks/useAuth'
+import { useToast } from '@/components/ui/Toast'
 
 export default function FavoriteButton({ 
   saleId, 
@@ -10,11 +12,27 @@ export default function FavoriteButton({
 }) {
   const { data: favorites = [] } = useFavorites()
   const toggleFavorite = useToggleFavorite()
+  const { success: toastSuccess, error: toastError } = useToast()
   
-  const isFavorited = favorites.some((fav: any) => fav.id === saleId)
+  // Optimistic state - starts with server state, then tracks local changes
+  const [optimisticFavorited, setOptimisticFavorited] = useState<boolean | null>(null)
+  
+  const serverFavorited = favorites.some((fav: any) => fav.sale_id === saleId || fav.id === saleId)
+  const isFavorited = optimisticFavorited !== null ? optimisticFavorited : serverFavorited
 
-  const handleToggle = () => {
-    toggleFavorite.mutate({ saleId, isFavorited })
+  const handleToggle = async () => {
+    // Optimistic update
+    const newFavorited = !isFavorited
+    setOptimisticFavorited(newFavorited)
+    
+    try {
+      await toggleFavorite.mutateAsync({ saleId, isFavorited: !newFavorited })
+      toastSuccess(newFavorited ? 'Added to favorites!' : 'Removed from favorites!')
+    } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticFavorited(!newFavorited)
+      toastError(error instanceof Error ? error.message : 'Failed to update favorites')
+    }
   }
 
   return (
