@@ -65,6 +65,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
   const [initialLocationLoading, setInitialLocationLoading] = useState(!initialSearchParams.lat || !initialSearchParams.lng) // Track initial location loading
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
+  const [usingPreloadedSales, setUsingPreloadedSales] = useState(false) // Track if we're using preloaded sales
   const widenedOnceRef = useRef(false)
 
   // Use preloaded sales if available and no initial sales
@@ -73,6 +74,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     if (preloadedSales.length > 0 && initialSales.length === 0 && sales.length === 0) {
       console.log(`[SALES] Using preloaded sales: ${preloadedSales.length} items`)
       setSales(preloadedSales)
+      setUsingPreloadedSales(true)
       if (appLocation) {
         updateFilters({
           lat: appLocation.lat,
@@ -82,6 +84,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         setLocationInitialized(true)
         setInitialLocationLoading(false)
       }
+      // Don't fetch from API when using preloaded sales
+      return
     }
   }, [preloadedSales, initialSales.length, sales.length, appLocation, updateFilters])
 
@@ -180,8 +184,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     // Reset pagination on filter change
     setCursor(null)
     setHasMore(false)
+    
+    // Don't fetch from API if we're using preloaded sales and this is the initial load
+    if (usingPreloadedSales && preloadedSales.length > 0) {
+      console.log(`[SALES] Skipping API call - using preloaded sales`)
+      return
+    }
+    
     fetchSales()
-  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange])
+  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange, usingPreloadedSales, preloadedSales.length])
 
   // Don't automatically request location - let user choose
 
