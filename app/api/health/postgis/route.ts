@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getSchema } from '@/lib/supabase/schema'
 
 export async function GET() {
   try {
     const supabase = createSupabaseServerClient()
     
     // Test PostGIS functionality with a simple spatial query
-    const { data, error } = await supabase
+    const schema = getSchema()
+    const { data, error } = await (supabase as any)
+      .schema(schema)
       .rpc('test_postgis')
 
     // If the RPC doesn't exist, create a simple test query
     if (error && error.message.includes('function test_postgis')) {
       // Test with a simple PostGIS function
-      const { data: testData, error: testError } = await supabase
-        .from('lootaura_v2.sales')
+      const { data: testData, error: testError } = await (supabase as any)
+        .schema(schema)
+        .from('sales')
         .select('id')
         .not('lat', 'is', null)
         .not('lng', 'is', null)
@@ -28,8 +32,9 @@ export async function GET() {
       }
 
       // Also report missing geom count for v2
-      const { count: missingGeom, error: missingError } = await supabase
-        .from('lootaura_v2.sales')
+      const { count: missingGeom, error: missingError } = await (supabase as any)
+        .schema(schema)
+        .from('sales')
         .select('*', { count: 'exact' })
         .is('geom', null)
         .limit(0)
@@ -60,8 +65,9 @@ export async function GET() {
     }
 
     // Also report missing geom count for v2
-    const { count: missingGeom2, error: missingError2 } = await supabase
-      .from('lootaura_v2.sales')
+    const { count: missingGeom2, error: missingError2 } = await (supabase as any)
+      .schema(schema)
+      .from('sales')
       .select('*', { count: 'exact' })
       .is('geom', null)
       .limit(0)
