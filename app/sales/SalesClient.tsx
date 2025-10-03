@@ -62,6 +62,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   // Check if we already have location from initial state
   useEffect(() => {
     if (filters.lat && filters.lng) {
+      console.log(`[SALES] Location detected in filters: ${filters.lat}, ${filters.lng}`)
       setLocationInitialized(true)
       setInitialLocationLoading(false)
     }
@@ -198,6 +199,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         if (!data || !data.ok) return
         const { lat, lng, city, state } = data
         if (typeof lat === 'number' && typeof lng === 'number' && !filters.lat && !filters.lng) {
+          console.log(`[SALES] IP lookup found location: ${lat}, ${lng} (${city})`)
           updateFilters({ lat, lng, city })
           setLocationInitialized(true)
           setInitialLocationLoading(false)
@@ -324,11 +326,12 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading sales...</span>
               </div>
-            ) : (initialLocationLoading && initialSales.length === 0) ? (
+            ) : (initialLocationLoading && initialSales.length === 0 && !filters.lat && !filters.lng) ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📍</div>
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">Getting Your Location</h3>
                 <p className="text-gray-500 mb-4">We're finding yard sales near you...</p>
+                <p className="text-xs text-gray-400 mt-2">Debug: loading={initialLocationLoading}, sales={initialSales.length}, lat={filters.lat}, lng={filters.lng}</p>
               </div>
             ) : sales.length === 0 ? (
               <div className="text-center py-12">
