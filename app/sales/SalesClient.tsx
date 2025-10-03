@@ -80,7 +80,23 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const [degraded, setDegraded] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null) // Track selected sale for highlighting
   const [locationInitialized, setLocationInitialized] = useState(!!(initialSearchParams.lat && initialSearchParams.lng)) // Track if location has been initialized
-  const [initialLocationLoading, setInitialLocationLoading] = useState(true) // Start with true to prevent flash
+  // Check if we have cached sales immediately to avoid location UI
+  const [initialLocationLoading, setInitialLocationLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('preloaded_sales')
+        if (stored) {
+          const { sales: cachedSales, timestamp } = JSON.parse(stored)
+          if (Date.now() - timestamp < 5 * 60 * 1000 && cachedSales.length > 0) {
+            return false // We have cached sales, no need for location UI
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check cached sales:', error)
+      }
+    }
+    return true // No cached sales, show location UI
+  })
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
   const [usingPreloadedSales, setUsingPreloadedSales] = useState(false) // Track if we're using preloaded sales
   const widenedOnceRef = useRef(false)
