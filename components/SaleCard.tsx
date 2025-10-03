@@ -6,8 +6,8 @@ export default function SaleCard({ sale }: { sale: Sale }) {
 
   return (
     <div className="rounded-xl border p-4 bg-white flex flex-col gap-2 shadow-sm hover:shadow-md transition-shadow" data-testid="sale-card">
-      <div className="flex justify-between">
-        <h3 className="text-xl font-semibold line-clamp-1">{sale.title}</h3>
+      <div className="flex justify-between items-start gap-2">
+        <h3 className="text-lg sm:text-xl font-semibold line-clamp-1 flex-1">{sale.title}</h3>
         <FavoriteButton saleId={sale.id} initial={false} />
       </div>
       
@@ -29,8 +29,9 @@ export default function SaleCard({ sale }: { sale: Sale }) {
         </div>
       )}
       <Link 
-        className="text-amber-600 font-medium hover:text-amber-700" 
+        className="text-amber-600 font-medium hover:text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded min-h-[44px] flex items-center justify-center" 
         href={`/sale/${sale.id}`}
+        aria-label={`View details for ${sale.title}`}
       >
         View Details →
       </Link>

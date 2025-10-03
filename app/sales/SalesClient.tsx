@@ -219,22 +219,22 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex flex-col lg:flex-row gap-6">
+    <div className="container mx-auto px-4 py-2 sm:px-6 sm:py-4">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Main Content */}
-        <div className="lg:w-2/3">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Sales Search</h1>
+        <div className="lg:w-2/3 min-w-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
+            <div className="w-full sm:w-auto">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Sales Search</h1>
               {dateWindow && (
-                <DateWindowLabel dateWindow={dateWindow} className="mb-4" />
+                <DateWindowLabel dateWindow={dateWindow} className="mb-2 sm:mb-4" />
               )}
               {degraded && (
-                <DegradedBanner className="mb-4" />
+                <DegradedBanner className="mb-2 sm:mb-4" />
               )}
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto mt-4 sm:mt-0">
                   {/* ZIP Input */}
                   <div className="flex-1 sm:flex-none">
                     <div className="text-xs text-gray-500 mb-1">Search different area:</div>
@@ -242,7 +242,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                       onLocationFound={handleZipLocationFound}
                       onError={handleZipError}
                       placeholder="Enter ZIP code"
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto min-h-[44px]"
                     />
                     {zipError && (
                       <p className="text-red-500 text-sm mt-1">{zipError}</p>
@@ -293,7 +293,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="sales-grid">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" data-testid="sales-grid">
                   {sales.map((sale) => (
                     <div 
                       key={sale.id} 
@@ -310,15 +310,42 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
                   <div className="mt-6 flex justify-center">
                     <button
                       type="button"
-                      className="rounded border px-4 py-2"
+                      className="min-h-[44px] min-w-[44px] rounded border px-6 py-3 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                       disabled={loading}
                       onClick={() => fetchSales()}
+                      aria-label={loading ? 'Loading more sales...' : 'Load more sales'}
                     >
                       {loading ? 'Loading…' : 'Load more'}
                     </button>
                   </div>
                 )}
               </>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Map Section */}
+        <div className="lg:hidden mb-6">
+          <div className="bg-white rounded-lg shadow-sm border p-4">
+            <h2 className="text-lg font-semibold mb-4">Map View</h2>
+            <div className="h-[250px] rounded-lg overflow-hidden">
+              <SalesMap
+                sales={sales}
+                center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : { lat: 38.2527, lng: -85.7585 }}
+                zoom={filters.lat && filters.lng ? 12 : 10}
+                onSaleClick={handleSaleClick}
+                selectedSaleId={selectedSaleId || undefined}
+              />
+            </div>
+            {filters.lat && filters.lng && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Searching within {filters.distance} miles</strong> of your location
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Found {sales.length} sales
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -331,8 +358,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             
             {/* Map */}
             <div className="bg-white rounded-lg shadow-sm border p-4">
-              <h2 className="text-xl font-semibold mb-4">Map View</h2>
-              <div className="h-[400px] rounded-lg overflow-hidden">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">Map View</h2>
+              <div className="h-[300px] sm:h-[400px] rounded-lg overflow-hidden">
                 <SalesMap
                   sales={sales}
                   center={filters.lat && filters.lng ? { lat: filters.lat, lng: filters.lng } : { lat: 38.2527, lng: -85.7585 }}

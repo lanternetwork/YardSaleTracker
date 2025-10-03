@@ -38,8 +38,9 @@ export default function FavoriteButton({
   return (
     <button 
       aria-pressed={isFavorited} 
+      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
       disabled={toggleFavorite.isPending}
-      className={`rounded px-2 py-1 text-sm font-medium transition-colors ${
+      className={`min-h-[44px] min-w-[44px] rounded px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isFavorited 
           ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' 
           : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'

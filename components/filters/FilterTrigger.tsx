@@ -1,6 +1,6 @@
 'use client'
 
-import { FaFilter, FaTimes } from 'react-icons/fa'
+// Using simple text/icons instead of react-icons to avoid dependency issues
 
 interface FilterTriggerProps {
   isOpen: boolean
@@ -18,12 +18,14 @@ export default function FilterTrigger({
   return (
     <button
       onClick={onToggle}
-      className={`inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px] ${className}`}
+      aria-label={isOpen ? 'Close filters' : `Open filters${activeFiltersCount > 0 ? ` (${activeFiltersCount} active)` : ''}`}
+      aria-expanded={isOpen}
+      className={`inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px] min-w-[44px] ${className}`}
     >
       {isOpen ? (
-        <FaTimes className="h-4 w-4 text-gray-500 mr-2" />
+        <span className="h-4 w-4 text-gray-500 mr-2">✕</span>
       ) : (
-        <FaFilter className="h-4 w-4 text-gray-500 mr-2" />
+        <span className="h-4 w-4 text-gray-500 mr-2">⚙️</span>
       )}
       
       <span className="text-sm font-medium text-gray-700">

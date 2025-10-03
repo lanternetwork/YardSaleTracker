@@ -255,7 +255,9 @@ function FiltersContent({
           max="100"
           value={filters.distance}
           onChange={(e) => onDistanceChange(parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+          aria-label={`Distance: ${filters.distance} miles`}
+          className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          style={{ minHeight: '44px' }}
         />
         <div className="flex justify-between text-xs text-gray-500 mt-1">
           <span>1 mi</span>
