@@ -15,6 +15,12 @@ export function Header() {
             <Link 
               href="/sales" 
               className="text-neutral-700 hover:text-amber-600 font-medium"
+              onClick={() => {
+                // Force refresh if already on sales page
+                if (window.location.pathname === '/sales') {
+                  window.location.reload()
+                }
+              }}
             >
               Browse Sales
             </Link>
