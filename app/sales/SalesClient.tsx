@@ -105,13 +105,17 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     }
   }, [preloadedSales, initialSales.length, sales.length, appLocation, updateFilters])
 
-  // If we have cached sales, immediately set loading to false
+  // If we have cached sales, immediately set loading to false and prevent API calls
   useEffect(() => {
     if (sales.length > 0) {
       setInitialLocationLoading(false)
       setLocationInitialized(true)
+      // If we have sales and they came from cache, prevent API calls
+      if (sales.length > 0 && initialSales.length === 0) {
+        setUsingPreloadedSales(true)
+      }
     }
-  }, [sales.length])
+  }, [sales.length, initialSales.length])
 
   // Check if we already have location from initial state
   useEffect(() => {
