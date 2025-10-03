@@ -72,19 +72,19 @@ export async function POST(req: NextRequest) {
       const startDateTime = parseDateTime(seed.starts_at)
       const endDateTime = seed.ends_at ? parseDateTime(seed.ends_at) : parseDateTime(addHours(seed.starts_at, 4))
 
-      // Dedupe: SELECT existing by key (seller_id, lower(title), date(starts_at), ROUND(latitude,4), ROUND(longitude,4))
-      const { data: existing, error: existErr } = await supabase
-        .from(T.sales)
-        .select('id')
-        .eq('owner_id', seed.seller_id)
-        .ilike('title', seed.title.toLowerCase())
-        .eq('date_start', startDateTime.date)
-        .gte('lat', Number((seed.lat - 0.00005).toFixed(4)))
-        .lte('lat', Number((seed.lat + 0.00005).toFixed(4)))
-        .gte('lng', Number((seed.lng - 0.00005).toFixed(4)))
-        .lte('lng', Number((seed.lng + 0.00005).toFixed(4)))
-        .limit(1)
-        .maybeSingle()
+          // Dedupe: SELECT existing by key (seller_id, lower(title), date(starts_at), ROUND(latitude,4), ROUND(longitude,4))
+          const { data: existing, error: existErr } = await supabase
+            .from('sales_v2')
+            .select('id')
+            .eq('owner_id', seed.seller_id)
+            .ilike('title', seed.title.toLowerCase())
+            .eq('date_start', startDateTime.date)
+            .gte('lat', Number((seed.lat - 0.00005).toFixed(4)))
+            .lte('lat', Number((seed.lat + 0.00005).toFixed(4)))
+            .gte('lng', Number((seed.lng - 0.00005).toFixed(4)))
+            .lte('lng', Number((seed.lng + 0.00005).toFixed(4)))
+            .limit(1)
+            .maybeSingle()
 
       if (existErr) {
         throw existErr
@@ -95,29 +95,30 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // Insert sale
-      const { data: created, error: insErr } = await supabase
-        .from(T.sales)
-        .insert({
-          owner_id: seed.seller_id,
-          title: seed.title,
-          description: null,
-          address: seed.address || null,
-          city: seed.city,
-          state: seed.state,
-          zip_code: null,
-          lat: seed.lat,
-          lng: seed.lng,
-          date_start: startDateTime.date,
-          time_start: startDateTime.time,
-          date_end: endDateTime.date,
-          time_end: endDateTime.time,
-          status: 'published',
-          privacy_mode: 'exact',
-          is_featured: false,
-        })
-        .select('id')
-        .single()
+          // Insert sale (this will need to be done via direct table access since views are read-only)
+          // For now, we'll need to use the original table reference
+          const { data: created, error: insErr } = await supabase
+            .from('lootaura_v2.sales')
+            .insert({
+              owner_id: seed.seller_id,
+              title: seed.title,
+              description: null,
+              address: seed.address || null,
+              city: seed.city,
+              state: seed.state,
+              zip_code: null,
+              lat: seed.lat,
+              lng: seed.lng,
+              date_start: startDateTime.date,
+              time_start: startDateTime.time,
+              date_end: endDateTime.date,
+              time_end: endDateTime.time,
+              status: 'published',
+              privacy_mode: 'exact',
+              is_featured: false,
+            })
+            .select('id')
+            .single()
 
       if (insErr || !created) {
         throw insErr || new Error('Sale insert failed')
@@ -125,22 +126,22 @@ export async function POST(req: NextRequest) {
 
       inserted += 1
 
-      // Insert items with sale_id and price_cents (Math.round(price*100))
-      for (const item of seed.items) {
-        const { error: itemErr } = await supabase
-          .from(T.items)
-          .insert({
-            sale_id: created.id,
-            name: item.name,
-            description: null,
-            price: Math.round(item.price * 100), // Convert to cents
-            category: null,
-            condition: null,
-            images: [],
-            is_sold: false,
-          })
-        if (!itemErr) itemsInserted += 1
-      }
+          // Insert items with sale_id and price_cents (Math.round(price*100))
+          for (const item of seed.items) {
+            const { error: itemErr } = await supabase
+              .from('lootaura_v2.items')
+              .insert({
+                sale_id: created.id,
+                name: item.name,
+                description: null,
+                price: Math.round(item.price * 100), // Convert to cents
+                category: null,
+                condition: null,
+                images: [],
+                is_sold: false,
+              })
+            if (!itemErr) itemsInserted += 1
+          }
     } catch (e: any) {
       errors.push({ title: seed.title, message: String(e?.message || e) })
     }

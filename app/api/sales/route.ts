@@ -94,16 +94,13 @@ export async function GET(request: NextRequest) {
     let degraded = false
     const startedAt = Date.now()
 
-    // 4. Try PostGIS distance calculation first against lootaura_v2.sales
+    // 4. Try PostGIS distance calculation using public wrapper
     try {
-      console.log(`[SALES] Attempting PostGIS (v2) for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
+      console.log(`[SALES] Attempting PostGIS (public wrapper) for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
 
-      // Prefer v2 search function that uses geom + RLS
-      // Fetch more than needed to allow cursor-based trimming
+      // Use public wrapper function that delegates to lootaura_v2
       const fetchLimit = limit + 50
-      const schema = getSchema()
-      const { data: postgisData, error: postgisError } = await (supabase as any)
-        .schema(schema)
+      const { data: postgisData, error: postgisError } = await supabase
         .rpc('search_sales_within_distance', {
           user_lat: latitude,
           user_lng: longitude,
@@ -119,7 +116,7 @@ export async function GET(request: NextRequest) {
         throw new Error(`PostGIS v2 RPC failed: ${postgisError.message}`)
       }
 
-      console.log(`[SALES] PostGIS v2 returned ${postgisData?.length || 0} results`)
+      console.log(`[SALES] PostGIS public wrapper returned ${postgisData?.length || 0} results`)
 
       // Map v2 fields to the legacy response shape
       let mapped = (postgisData || [])
@@ -175,23 +172,21 @@ export async function GET(request: NextRequest) {
 
       results = mapped.slice(0, limit)
 
-      console.log(`[SALES] PostGIS v2 success: ${results.length} results`)
+      console.log(`[SALES] PostGIS public wrapper success: ${results.length} results`)
 
     } catch (postgisError: any) {
-      console.log(`[SALES] PostGIS v2 failed: ${postgisError.message}, falling back to bounding box (v2)`)
+      console.log(`[SALES] PostGIS public wrapper failed: ${postgisError.message}, falling back to bounding box (public view)`)
       degraded = true
 
-      // Fallback to bounding box approximation against lootaura_v2.sales
+      // Fallback to bounding box approximation using public view
       const latRange = distanceKm / 111 // 1 degree ≈ 111 km
       const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
 
       console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
 
-      // Target v2 schema explicitly via per-query schema switch
-      const bboxSchema = getSchema()
-      let query = (supabase as any)
-        .schema(bboxSchema)
-        .from('sales')
+      // Use public view instead of schema switching
+      let query = supabase
+        .from('sales_v2')
         .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
         .gte('lat', latitude - latRange)
         .lte('lat', latitude + latRange)
@@ -228,9 +223,8 @@ export async function GET(request: NextRequest) {
       // If zero results and we previously filtered by status on the server in legacy code, try a relaxed retry without status
       if (!bboxError && (bboxData?.length ?? 0) === 0) {
         console.log('[SALES][bbox] No rows on first attempt; retrying without status constraints')
-        const retry = await (supabase as any)
-          .schema(bboxSchema)
-          .from('sales')
+        const retry = await supabase
+          .from('sales_v2')
           .select('id,title,city,state,zip_code,lat,lng,date_start,time_start,date_end,time_end,tags,status')
           .gte('lat', latitude - latRange)
           .lte('lat', latitude + latRange)

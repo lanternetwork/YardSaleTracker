@@ -13,9 +13,9 @@ export async function GET(request: NextRequest) {
 
     const supabase = createSupabaseServerClient()
 
-    // Count total and missing city/state
+    // Count total and missing city/state using public view
     const { data: totalData, error: totalError } = await supabase
-      .from('lootaura_v2.zipcodes')
+      .from('zipcodes_v2')
       .select('zip', { count: 'exact', head: true })
 
     if (totalError) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: missingData, error: missingError } = await supabase
-      .from('lootaura_v2.zipcodes')
+      .from('zipcodes_v2')
       .select('zip', { count: 'exact', head: true })
       .is('state', null)
 

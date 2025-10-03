@@ -291,11 +291,11 @@ async function processGenerateRequest(req: NextRequest): Promise<NextResponse> {
     const supabase = createSupabaseServerClient()
     const startedAt = Date.now()
 
-    // Get a random seller ID (or create one if none exist)
-    const { data: users } = await supabase
-      .from(T.profiles)
-      .select('user_id')
-      .limit(1)
+        // Get a random seller ID (or create one if none exist)
+        const { data: users } = await supabase
+          .from('profiles_v2')
+          .select('user_id')
+          .limit(1)
 
     let sellerId = 'b2750036-4a71-404a-9020-1734b5b888b1' // Default fallback
     if (users && users.length > 0) {
@@ -306,12 +306,12 @@ async function processGenerateRequest(req: NextRequest): Promise<NextResponse> {
     let centerLat: number | undefined
     let centerLng: number | undefined
     
-    if (centerZip) {
-      const { data: zipData } = await supabase
-        .from('lootaura_v2.zipcodes')
-        .select('lat, lng')
-        .eq('zip', centerZip)
-        .single()
+        if (centerZip) {
+          const { data: zipData } = await supabase
+            .from('zipcodes_v2')
+            .select('lat, lng')
+            .eq('zip', centerZip)
+            .single()
       
       if (zipData) {
         centerLat = zipData.lat
@@ -343,19 +343,19 @@ async function processGenerateRequest(req: NextRequest): Promise<NextResponse> {
         try {
           const saleData = generateSaleData(sellerId, centerZip, centerLat, centerLng, radiusMi, dateWindow)
           
-          // Check for duplicates using the deduplication logic
-          const { data: existing } = await supabase
-            .from(T.sales)
-            .select('id')
-            .eq('owner_id', saleData.owner_id)
-            .ilike('title', saleData.title.toLowerCase())
-            .eq('date_start', saleData.date_start)
-            .gte('lat', Number((saleData.lat - 0.00005).toFixed(4)))
-            .lte('lat', Number((saleData.lat + 0.00005).toFixed(4)))
-            .gte('lng', Number((saleData.lng - 0.00005).toFixed(4)))
-            .lte('lng', Number((saleData.lng + 0.00005).toFixed(4)))
-            .limit(1)
-            .maybeSingle()
+              // Check for duplicates using the deduplication logic
+              const { data: existing } = await supabase
+                .from('sales_v2')
+                .select('id')
+                .eq('owner_id', saleData.owner_id)
+                .ilike('title', saleData.title.toLowerCase())
+                .eq('date_start', saleData.date_start)
+                .gte('lat', Number((saleData.lat - 0.00005).toFixed(4)))
+                .lte('lat', Number((saleData.lat + 0.00005).toFixed(4)))
+                .gte('lng', Number((saleData.lng - 0.00005).toFixed(4)))
+                .lte('lng', Number((saleData.lng + 0.00005).toFixed(4)))
+                .limit(1)
+                .maybeSingle()
 
           if (existing) {
             skipped++
@@ -387,12 +387,12 @@ async function processGenerateRequest(req: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // Insert sales batch
-      if (salesToInsert.length > 0) {
-        const { data: insertedSales, error: salesError } = await supabase
-          .from(T.sales)
-          .insert(salesToInsert)
-          .select('id')
+          // Insert sales batch (direct table access for writes)
+          if (salesToInsert.length > 0) {
+            const { data: insertedSales, error: salesError } = await supabase
+              .from('lootaura_v2.sales')
+              .insert(salesToInsert)
+              .select('id')
 
         if (salesError) {
           errors.push(`Batch ${batch + 1} sales insert failed: ${salesError.message}`)
@@ -425,11 +425,11 @@ async function processGenerateRequest(req: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // Insert items batch
-      if (itemsToInsert.length > 0) {
-        const { error: itemsError } = await supabase
-          .from(T.items)
-          .insert(itemsToInsert)
+          // Insert items batch (direct table access for writes)
+          if (itemsToInsert.length > 0) {
+            const { error: itemsError } = await supabase
+              .from('lootaura_v2.items')
+              .insert(itemsToInsert)
 
         if (itemsError) {
           errors.push(`Batch ${batch + 1} items insert failed: ${itemsError.message}`)

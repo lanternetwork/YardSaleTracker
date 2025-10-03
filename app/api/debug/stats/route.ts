@@ -8,12 +8,12 @@ export async function GET(_req: NextRequest) {
   try {
     const supabase = createSupabaseServerClient()
 
-    // Totals (RLS respected)
+    // Totals using public views (RLS respected)
     const [salesCountRes, itemsCountRes, favsCountRes, zipsCountRes] = await Promise.all([
-      supabase.from('lootaura_v2.sales').select('*', { count: 'exact' }).limit(0),
-      supabase.from('lootaura_v2.items').select('*', { count: 'exact' }).limit(0),
-      supabase.from('lootaura_v2.favorites').select('*', { count: 'exact' }).limit(0),
-      supabase.from('lootaura_v2.zipcodes').select('*', { count: 'exact' }).limit(0),
+      supabase.from('sales_v2').select('*', { count: 'exact' }).limit(0),
+      supabase.from('items_v2').select('*', { count: 'exact' }).limit(0),
+      supabase.from('favorites_v2').select('*', { count: 'exact' }).limit(0),
+      supabase.from('zipcodes_v2').select('*', { count: 'exact' }).limit(0),
     ])
 
     if (salesCountRes.error || itemsCountRes.error || favsCountRes.error || zipsCountRes.error) {
@@ -28,7 +28,7 @@ export async function GET(_req: NextRequest) {
 
     // Categories (approximate by scanning up to 5000 rows under RLS)
     const { data: tagRows, error: tagErr } = await supabase
-      .from('lootaura_v2.sales')
+      .from('sales_v2')
       .select('tags')
       .limit(5000)
 
@@ -51,20 +51,20 @@ export async function GET(_req: NextRequest) {
 
     // Dates
     const [{ data: minRow }, { data: maxRow }] = await Promise.all([
-      supabase.from('lootaura_v2.sales').select('date_start').not('date_start', 'is', null).order('date_start', { ascending: true }).limit(1).maybeSingle(),
-      supabase.from('lootaura_v2.sales').select('date_start').not('date_start', 'is', null).order('date_start', { ascending: false }).limit(1).maybeSingle(),
+      supabase.from('sales_v2').select('date_start').not('date_start', 'is', null).order('date_start', { ascending: true }).limit(1).maybeSingle(),
+      supabase.from('sales_v2').select('date_start').not('date_start', 'is', null).order('date_start', { ascending: false }).limit(1).maybeSingle(),
     ])
 
     const weekend = getWeekendWindow()
     const nextWeekend = getNextWeekendWindow()
 
     const [{ count: thisWeekendCount }, { count: nextWeekendCount }] = await Promise.all([
-      supabase.from('lootaura_v2.sales')
+      supabase.from('sales_v2')
         .select('*', { count: 'exact' })
         .gte('date_start', weekend.start.toISOString().slice(0, 10))
         .lte('date_start', weekend.end.toISOString().slice(0, 10))
         .limit(0),
-      supabase.from('lootaura_v2.sales')
+      supabase.from('sales_v2')
         .select('*', { count: 'exact' })
         .gte('date_start', nextWeekend.start.toISOString().slice(0, 10))
         .lte('date_start', nextWeekend.end.toISOString().slice(0, 10))

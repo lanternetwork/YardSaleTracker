@@ -101,9 +101,9 @@ export async function POST(req: NextRequest) {
       try {
         console.log(`[ZIPSEED] Processing batch ${i + 1}/${estimatedBatches}, count=${chunk.length}`)
         
-        // Upsert the chunk
+        // Upsert the chunk (direct table access for writes)
         const { data, error } = await supabase
-          .from('zipcodes')
+          .from('lootaura_v2.zipcodes')
           .upsert(chunk, { 
             onConflict: 'zip',
             ignoreDuplicates: false 
