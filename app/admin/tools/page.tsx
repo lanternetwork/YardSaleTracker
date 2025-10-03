@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
 import CopyButton from './CopyButton'
 import HealthChecks from './HealthChecks'
 import SchemaSection from './SchemaSection'
@@ -31,10 +32,7 @@ export default async function AdminToolsPage() {
   // Feature flag
   const enabled = process.env.ENABLE_ADMIN_TOOLS === 'true'
   if (!enabled) {
-    // Not found to avoid leaking route existence
-    // Next.js will render 404
-    // @ts-ignore
-    return null
+    notFound()
   }
 
   const supabase = createSupabaseServerClient()
@@ -71,13 +69,16 @@ export default async function AdminToolsPage() {
             <div className="flex items-center gap-2">
               <div>Commit:</div>
               <code className="rounded bg-neutral-100 px-1 py-0.5">{sha}</code>
-              <button className="rounded border px-2 py-1 text-xs" onClick={() => navigator.clipboard.writeText(sha)}>Copy</button>
+              <CopyButton text={sha} className="rounded border px-2 py-1 text-xs">Copy</CopyButton>
             </div>
             <div>Environment: <span className="font-mono">{env}</span></div>
             <div>Schema: <span className="font-mono">{schema}</span></div>
             <div>Deployed: <span className="font-mono">{deployedAt || 'unknown'}</span></div>
             <div>
-              <button className="rounded border px-2 py-1 text-xs" onClick={() => navigator.clipboard.writeText(`Commit: ${sha}\nEnvironment: ${env}\nSchema: ${schema}\nDeployed: ${deployedAt || 'unknown'}`)}>Copy diagnostics summary</button>
+              <CopyButton
+                className="rounded border px-2 py-1 text-xs"
+                text={`Commit: ${sha}\nEnvironment: ${env}\nSchema: ${schema}\nDeployed: ${deployedAt || 'unknown'}`}
+              >Copy diagnostics summary</CopyButton>
             </div>
           </div>
         </Section>
