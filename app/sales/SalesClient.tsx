@@ -65,8 +65,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       console.log(`[SALES] Location detected in filters: ${filters.lat}, ${filters.lng}`)
       setLocationInitialized(true)
       setInitialLocationLoading(false)
+    } else if (locationInitialized && !filters.lat && !filters.lng) {
+      console.log(`[SALES] Location lost from filters - this shouldn't happen`)
     }
-  }, [filters.lat, filters.lng])
+  }, [filters.lat, filters.lng, locationInitialized])
 
   const fetchSales = useCallback(async () => {
     setLoading(true)
@@ -144,6 +146,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange, cursor])
 
   useEffect(() => {
+    console.log(`[SALES] Filters changed: lat=${filters.lat}, lng=${filters.lng}, city=${filters.city}`)
     // Reset pagination on filter change
     setCursor(null)
     setHasMore(false)
@@ -203,10 +206,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
           updateFilters({ lat, lng, city })
           setLocationInitialized(true)
           setInitialLocationLoading(false)
-          // Kick off a fetch immediately after updating filters to avoid timing races
-          setTimeout(() => {
-            fetchSales()
-          }, 50)
+          // Don't call fetchSales here - let the useEffect handle it
         }
       } catch {}
     }
