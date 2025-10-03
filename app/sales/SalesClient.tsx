@@ -188,6 +188,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         const { lat, lng, city, state } = data
         if (typeof lat === 'number' && typeof lng === 'number' && !filters.lat && !filters.lng) {
           updateFilters({ lat, lng, city })
+          // Kick off a fetch immediately after updating filters to avoid timing races
+          setTimeout(() => {
+            fetchSales()
+          }, 50)
         }
       } catch {}
     }
