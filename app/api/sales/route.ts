@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getDateWindow, saleOverlapsWindow, formatDateWindow } from '@/lib/date/dateWindows'
 import { haversineKm } from '@/lib/distance'
 import { getSchema } from '@/lib/supabase/schema'
+import * as Sentry from '@sentry/nextjs'
 
 // CRITICAL: This API MUST require lat/lng - never remove this validation
 // See docs/AI_ASSISTANT_RULES.md for full guidelines
@@ -19,10 +20,12 @@ function logBootOnce(): void {
 }
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
+  const { searchParams } = new URL(request.url)
+  
   try {
     logBootOnce()
     const supabase = createSupabaseServerClient()
-    const { searchParams } = new URL(request.url)
     
     // 1. Parse & validate required location
     const lat = searchParams.get('lat')
@@ -301,6 +304,24 @@ export async function GET(request: NextRequest) {
     
   } catch (error: any) {
     console.log(`[SALES][err] Unexpected error: ${error?.message || error}`)
+    
+    // Capture error to Sentry with context
+    Sentry.captureException(error, {
+      tags: {
+        api: 'sales',
+        method: 'GET'
+      },
+      extra: {
+        lat: searchParams.get('lat'),
+        lng: searchParams.get('lng'),
+        distanceKm: searchParams.get('distanceKm'),
+        dateRange: searchParams.get('dateRange'),
+        categories: searchParams.get('categories'),
+        q: searchParams.get('q'),
+        limit: searchParams.get('limit')
+      }
+    })
+    
     return NextResponse.json({ 
       ok: false, 
       error: 'Internal server error' 
