@@ -96,7 +96,10 @@ export function useUpdateSale() {
 
   return useMutation({
     mutationFn: async ({ id, ...saleData }: { id: string } & Partial<Sale>) => {
-      const parsed = SaleSchema.partial().safeParse(saleData)
+      // SaleSchema is a ZodEffects due to refine(); unwrap inner object schema before partial()
+      const inner = (SaleSchema as any).innerType ? (SaleSchema as any).innerType() : (SaleSchema as any)._def?.schema
+      const UpdateSchema = inner?.partial ? inner.partial() : SaleSchema
+      const parsed = UpdateSchema.safeParse(saleData)
       if (!parsed.success) {
         throw new Error('Invalid sale data')
       }
