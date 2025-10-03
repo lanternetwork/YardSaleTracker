@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import CopyButton from './CopyButton'
 
 type CheckSpec = { name: string; path: string }
 type CheckResult = {
@@ -74,6 +75,14 @@ export default function HealthChecks() {
         <button type="button" className="rounded border px-3 py-1 text-sm" onClick={run} disabled={loading}>
           {loading ? 'Running…' : 'Refresh checks'}
         </button>
+        {!!results.length && (
+          <span className="ml-2 inline-block">
+            <CopyButton
+              className="rounded border px-3 py-1 text-sm"
+              text={JSON.stringify(results, null, 2)}
+            >Copy results (JSON)</CopyButton>
+          </span>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
