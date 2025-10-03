@@ -85,9 +85,13 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('preloaded_sales')
+        console.log(`[SALES] Checking cached sales on mount:`, stored ? 'found' : 'not found')
         if (stored) {
           const { sales: cachedSales, timestamp } = JSON.parse(stored)
-          if (Date.now() - timestamp < 5 * 60 * 1000 && cachedSales.length > 0) {
+          const age = Date.now() - timestamp
+          console.log(`[SALES] Cached sales: ${cachedSales.length} items, age: ${Math.round(age / 1000)}s`)
+          if (age < 5 * 60 * 1000 && cachedSales.length > 0) {
+            console.log(`[SALES] Using cached sales, skipping location UI`)
             return false // We have cached sales, no need for location UI
           }
         }
@@ -95,6 +99,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
         console.error('Failed to check cached sales:', error)
       }
     }
+    console.log(`[SALES] No cached sales, showing location UI`)
     return true // No cached sales, show location UI
   })
   const [isSettingLocation, setIsSettingLocation] = useState(false) // Track if we're currently setting location
