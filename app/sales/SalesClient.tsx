@@ -47,6 +47,11 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   const { location, getLocation, loading: locationLoading, error: locationError } = useLocation()
   const { filters, updateFilters, hasActiveFilters } = useFilters()
   const { location: appLocation, preloadedSales, isPreloading } = useApp()
+  
+  // Debug AppContext state
+  useEffect(() => {
+    console.log(`[SALES] AppContext state: appLocation=${!!appLocation}, preloadedSales=${preloadedSales.length}, isPreloading=${isPreloading}`)
+  }, [appLocation, preloadedSales.length, isPreloading])
 
   const [sales, setSales] = useState<Sale[]>(initialSales)
   const [loading, setLoading] = useState(false)

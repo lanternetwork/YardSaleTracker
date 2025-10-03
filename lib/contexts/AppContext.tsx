@@ -17,6 +17,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState<{ lat: number; lng: number; city?: string } | null>(null)
   const [preloadedSales, setPreloadedSales] = useState<Sale[]>([])
   const [isPreloading, setIsPreloading] = useState(false)
+  
+  console.log('[APP] AppProvider initialized')
 
   // Get location on app load
   useEffect(() => {
