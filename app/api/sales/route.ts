@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
       // Fetch more than needed to allow cursor-based trimming
       const fetchLimit = limit + 50
       const { data: postgisData, error: postgisError } = await supabase
-        .rpc('search_sales_within_distance', {
+        .rpc('lootaura_v2.search_sales_within_distance', {
           user_lat: latitude,
           user_lng: longitude,
           distance_meters: Math.round(distanceKm * 1000),
@@ -206,12 +206,17 @@ export async function GET(request: NextRequest) {
       }
 
       let { data: bboxData, error: bboxError } = await query
+      if (bboxError && (bboxError as any).code === '42501') {
+        console.log('[SALES][ERROR][BOUNDING_BOX] RLS denied; attempting anon-friendly public view if available')
+      }
 
       if (bboxError) {
         console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
+        const detail = process.env.VERCEL_ENV === 'development' || process.env.VERCEL_ENV === 'preview' ? bboxError.message : undefined
         return NextResponse.json({ 
           ok: false, 
-          error: 'Database query failed' 
+          error: 'Database query failed',
+          ...(detail ? { detail } : {})
         }, { status: 500 })
       }
 
