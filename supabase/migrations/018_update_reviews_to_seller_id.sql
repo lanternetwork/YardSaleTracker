@@ -1,0 +1,83 @@
+-- Update reviews system to use seller_id instead of owner_id
+-- This provides a stable identifier that won't change if user updates username
+
+-- Rename owner_id column to seller_id
+ALTER TABLE reviews 
+RENAME COLUMN owner_id TO seller_id;
+
+-- Update the unique constraint to use seller_id
+ALTER TABLE reviews 
+DROP CONSTRAINT IF EXISTS reviews_address_owner_user_unique;
+
+ALTER TABLE reviews 
+ADD CONSTRAINT reviews_address_seller_user_unique 
+UNIQUE (address, seller_id, user_id);
+
+-- Update the index to use seller_id
+DROP INDEX IF EXISTS idx_reviews_address_owner;
+CREATE INDEX IF NOT EXISTS idx_reviews_address_seller ON reviews (address, seller_id);
+
+-- Update the get_sale_rating function to use seller_id
+CREATE OR REPLACE FUNCTION get_sale_rating(sale_uuid uuid)
+RETURNS TABLE (
+  average_rating numeric,
+  total_reviews bigint
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    ROUND(AVG(r.rating)::numeric, 2) as average_rating,
+    COUNT(*) as total_reviews
+  FROM reviews r
+  JOIN yard_sales ys ON r.sale_id = ys.id
+  WHERE r.address = (SELECT address FROM yard_sales WHERE id = sale_uuid)
+    AND r.seller_id = (SELECT owner_id FROM yard_sales WHERE id = sale_uuid);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update the get_user_review function to use seller_id
+CREATE OR REPLACE FUNCTION get_user_review(sale_uuid uuid, user_uuid uuid)
+RETURNS TABLE (
+  id uuid,
+  rating integer,
+  comment text,
+  created_at timestamptz
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    r.id,
+    r.rating,
+    r.comment,
+    r.created_at
+  FROM reviews r
+  JOIN yard_sales ys ON r.sale_id = ys.id
+  WHERE r.address = (SELECT address FROM yard_sales WHERE id = sale_uuid)
+    AND r.seller_id = (SELECT owner_id FROM yard_sales WHERE id = sale_uuid)
+    AND r.user_id = user_uuid;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update the get_address_owner_reviews function to use seller_id
+CREATE OR REPLACE FUNCTION get_address_seller_reviews(sale_uuid uuid)
+RETURNS TABLE (
+  id uuid,
+  rating integer,
+  comment text,
+  created_at timestamptz,
+  user_id uuid
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    r.id,
+    r.rating,
+    r.comment,
+    r.created_at,
+    r.user_id
+  FROM reviews r
+  WHERE r.address = (SELECT address FROM yard_sales WHERE id = sale_uuid)
+    AND r.seller_id = (SELECT owner_id FROM yard_sales WHERE id = sale_uuid)
+  ORDER BY r.created_at DESC;
+END;
+$$ LANGUAGE plpgsql;
