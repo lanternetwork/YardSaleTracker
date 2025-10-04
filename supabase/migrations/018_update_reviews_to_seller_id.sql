@@ -1,9 +1,16 @@
 -- Update reviews system to use seller_id instead of owner_id
 -- This provides a stable identifier that won't change if user updates username
 
--- Rename owner_id column to seller_id
-ALTER TABLE reviews 
-RENAME COLUMN owner_id TO seller_id;
+-- Check if owner_id column exists before renaming
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'reviews' AND column_name = 'owner_id'
+    ) THEN
+        ALTER TABLE reviews RENAME COLUMN owner_id TO seller_id;
+    END IF;
+END $$;
 
 -- Update the unique constraint to use seller_id
 ALTER TABLE reviews 
@@ -24,6 +31,14 @@ RETURNS TABLE (
   total_reviews bigint
 ) AS $$
 BEGIN
+  -- Check if yard_sales table exists and has owner_id column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'yard_sales' AND column_name = 'owner_id'
+  ) THEN
+    RETURN;
+  END IF;
+  
   RETURN QUERY
   SELECT 
     ROUND(AVG(r.rating)::numeric, 2) as average_rating,
@@ -44,6 +59,14 @@ RETURNS TABLE (
   created_at timestamptz
 ) AS $$
 BEGIN
+  -- Check if yard_sales table exists and has owner_id column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'yard_sales' AND column_name = 'owner_id'
+  ) THEN
+    RETURN;
+  END IF;
+  
   RETURN QUERY
   SELECT 
     r.id,
@@ -68,6 +91,14 @@ RETURNS TABLE (
   user_id uuid
 ) AS $$
 BEGIN
+  -- Check if yard_sales table exists and has owner_id column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'yard_sales' AND column_name = 'owner_id'
+  ) THEN
+    RETURN;
+  END IF;
+  
   RETURN QUERY
   SELECT 
     r.id,
