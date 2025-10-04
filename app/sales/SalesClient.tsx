@@ -260,7 +260,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       dateRange: filters.dateRange
     })
     fetchSales()
-  }, [filters.lat, filters.lng, debouncedDistance, filters.city, filters.categories, filters.dateRange, usingPreloadedSales, preloadedSales.length])
+  }, [filters.lat, filters.lng, debouncedDistance, filters.city, filters.categories, filters.dateRange])
 
 
   // Removed location detection to prevent pin UI

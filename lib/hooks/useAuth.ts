@@ -11,10 +11,13 @@ export function useAuth() {
     queryFn: async () => {
       const { data: { user }, error } = await sb.auth.getUser()
       if (error) {
-        throw new Error(error.message)
+        console.error('Auth error:', error)
+        return null // Return null instead of throwing to prevent loading state
       }
       return user
     },
+    retry: false, // Don't retry on error
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   })
 }
 
@@ -33,12 +36,15 @@ export function useProfile() {
         .single()
 
       if (error && error.code !== 'PGRST116') { // Not found error
-        throw new Error(error.message)
+        console.error('Profile error:', error)
+        return null // Return null instead of throwing
       }
 
       return data as Profile | null
     },
     enabled: !!user,
+    retry: false, // Don't retry on error
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   })
 }
 
