@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { getDateWindow, saleOverlapsWindow, formatDateWindow } from '@/lib/date/dateWindows'
 
 // CRITICAL: This API MUST require lat/lng - never remove this validation
 // See docs/AI_ASSISTANT_RULES.md for full guidelines
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now()
+  
   try {
     const supabase = createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
     
     // 2. Parse & validate other parameters
     const distanceKm = Math.max(1, Math.min(
-      searchParams.get('distanceKm') ? parseFloat(searchParams.get('distanceKm')!) : 40.2336,
+      searchParams.get('distanceKm') ? parseFloat(searchParams.get('distanceKm')!) : 40,
       160
     ))
     
@@ -60,35 +61,62 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50, 100)
     const offset = Math.max(searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0, 0)
     
-    // Log parameters
-    console.log(`[SALES] lat=${latitude},lng=${longitude},km=${distanceKm},dateRange=${dateRange},cats=${categories.join(',')},q=${q} -> returned=count degraded?=bool`)
+    // Convert date range to start/end dates
+    let startDateParam: string | null = null
+    let endDateParam: string | null = null
     
-    // 3. Compute date window if needed
-    const dateWindow = dateRange !== 'any' ? getDateWindow(dateRange, startDate, endDate) : null
-    if (dateRange !== 'any' && !dateWindow) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Invalid date range parameters' 
-      }, { status: 400 })
+    if (dateRange !== 'any') {
+      if (startDate && endDate) {
+        startDateParam = startDate
+        endDateParam = endDate
+      } else {
+        // Handle predefined date ranges
+        const now = new Date()
+        switch (dateRange) {
+          case 'today':
+            startDateParam = now.toISOString().split('T')[0]
+            endDateParam = now.toISOString().split('T')[0]
+            break
+          case 'weekend':
+            const saturday = new Date(now)
+            saturday.setDate(now.getDate() + (6 - now.getDay()))
+            const sunday = new Date(saturday)
+            sunday.setDate(saturday.getDate() + 1)
+            startDateParam = saturday.toISOString().split('T')[0]
+            endDateParam = sunday.toISOString().split('T')[0]
+            break
+          case 'next_weekend':
+            const nextSaturday = new Date(now)
+            nextSaturday.setDate(now.getDate() + (6 - now.getDay()) + 7)
+            const nextSunday = new Date(nextSaturday)
+            nextSunday.setDate(nextSaturday.getDate() + 1)
+            startDateParam = nextSaturday.toISOString().split('T')[0]
+            endDateParam = nextSunday.toISOString().split('T')[0]
+            break
+        }
+      }
     }
+    
+    console.log(`[SALES] Query params: lat=${latitude}, lng=${longitude}, km=${distanceKm}, start=${startDateParam}, end=${endDateParam}, categories=[${categories.join(',')}], q=${q}, limit=${limit}, offset=${offset}`)
     
     let results: any[] = []
     let degraded = false
     
-    // 4. Try PostGIS distance calculation first
+    // 3. Try PostGIS spatial search first
     try {
-      console.log(`[SALES] Attempting PostGIS distance calculation for lat=${latitude}, lng=${longitude}, km=${distanceKm}`)
+      console.log(`[SALES] Attempting PostGIS spatial search...`)
       
       const { data: postgisData, error: postgisError } = await supabase
-        .rpc('search_sales_by_distance', {
-          search_lat: latitude,
-          search_lng: longitude,
-          max_distance_km: distanceKm,
-          date_filter: dateRange !== 'any' ? dateRange : null,
-          category_filter: categories.length > 0 ? categories : null,
-          text_filter: q || null,
-          result_limit: limit,
-          result_offset: offset
+        .rpc('search_sales_within_distance_v2', {
+          p_lat: latitude,
+          p_lng: longitude,
+          p_distance_km: distanceKm,
+          p_start_date: startDateParam,
+          p_end_date: endDateParam,
+          p_categories: categories.length > 0 ? categories : null,
+          p_query: q || null,
+          p_limit: limit,
+          p_offset: offset
         })
       
       if (postgisError) {
@@ -97,93 +125,75 @@ export async function GET(request: NextRequest) {
       
       console.log(`[SALES] PostGIS returned ${postgisData?.length || 0} results`)
       
-      // Apply date filtering in application layer for PostGIS results
-      results = (postgisData || [])
-        .filter((row: any) => {
-          if (!dateWindow) return true
-          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
-        })
-        .map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          starts_at: row.start_at,
-          ends_at: row.end_at,
-          latitude: row.lat,
-          longitude: row.lng,
-          city: row.city,
-          state: row.state,
-          zip: row.zip,
-          categories: row.tags || [],
-          cover_image_url: null,
-          distance_m: row.distance_m
-        }))
+      results = (postgisData || []).map((row: any) => ({
+        id: row.id,
+        title: row.title,
+        starts_at: row.starts_at,
+        ends_at: row.date_end ? `${row.date_end}T${row.time_end || '23:59:59'}` : null,
+        latitude: row.lat,
+        longitude: row.lng,
+        city: row.city,
+        state: row.state,
+        zip: row.zip_code,
+        categories: [], // TODO: Add categories support
+        cover_image_url: null,
+        distance_m: row.distance_m
+      }))
         
       console.log(`[SALES] PostGIS success: ${results.length} results`)
       
     } catch (postgisError: any) {
-      console.log(`[SALES] PostGIS failed: ${postgisError.message}, falling back to bounding box`)
+      console.log(`[SALES] PostGIS failed: ${postgisError.message}, falling back to bbox search`)
       degraded = true
       
-      // Fallback to bounding box approximation
-      const latRange = distanceKm / 111 // 1 degree ≈ 111 km
-      const lngRange = distanceKm / (111 * Math.cos(latitude * Math.PI / 180)) // Adjust for latitude
-      
-      console.log(`[SALES] Bounding box: lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`)
-      
-      let query = supabase
-        .from('yard_sales')
-        .select('*')
-        .eq('status', 'active')
-        .gte('lat', latitude - latRange)
-        .lte('lat', latitude + latRange)
-        .gte('lng', longitude - lngRange)
-        .lte('lng', longitude + lngRange)
-        .order('start_at', { ascending: true })
-        .limit(limit)
-        .range(offset, offset + limit - 1)
-      
-      // Apply category filter
-      if (categories.length > 0) {
-        query = query.overlaps('tags', categories)
-      }
-      
-      // Apply text filter
-      if (q) {
-        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,city.ilike.%${q}%`)
-      }
-      
-      const { data: bboxData, error: bboxError } = await query
-      
-      if (bboxError) {
-        console.log(`[SALES][ERROR][BOUNDING_BOX] ${bboxError.message}`)
+      // Fallback to bbox search
+      try {
+        const { data: bboxData, error: bboxError } = await supabase
+          .rpc('search_sales_bbox_v2', {
+            p_lat: latitude,
+            p_lng: longitude,
+            p_distance_km: distanceKm,
+            p_start_date: startDateParam,
+            p_end_date: endDateParam,
+            p_categories: categories.length > 0 ? categories : null,
+            p_query: q || null,
+            p_limit: limit,
+            p_offset: offset
+          })
+        
+        if (bboxError) {
+          throw new Error(`Bbox RPC failed: ${bboxError.message}`)
+        }
+        
+        console.log(`[SALES] Bbox returned ${bboxData?.length || 0} results`)
+        
+        results = (bboxData || []).map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          starts_at: row.starts_at,
+          ends_at: row.date_end ? `${row.date_end}T${row.time_end || '23:59:59'}` : null,
+          latitude: row.lat,
+          longitude: row.lng,
+          city: row.city,
+          state: row.state,
+          zip: row.zip_code,
+          categories: [], // TODO: Add categories support
+          cover_image_url: null,
+          distance_m: row.distance_m
+        }))
+        
+        console.log(`[SALES] Bbox success: ${results.length} results`)
+        
+      } catch (bboxError: any) {
+        console.log(`[SALES] Both PostGIS and bbox failed: ${bboxError.message}`)
         return NextResponse.json({ 
           ok: false, 
           error: 'Database query failed' 
         }, { status: 500 })
       }
-      
-      // Apply date filtering in application layer for bounding box results
-      results = (bboxData || [])
-        .filter((row: any) => {
-          if (!dateWindow) return true
-          return saleOverlapsWindow(row.start_at, row.end_at, dateWindow)
-        })
-        .map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          starts_at: row.start_at,
-          ends_at: row.end_at,
-          latitude: row.lat,
-          longitude: row.lng,
-          city: row.city,
-          state: row.state,
-          zip: row.zip,
-          categories: row.tags || [],
-          cover_image_url: null
-        }))
     }
     
-    // 5. Return normalized response
+    // 4. Return normalized response
     const response = {
       ok: true,
       data: results,
@@ -191,15 +201,10 @@ export async function GET(request: NextRequest) {
       distanceKm,
       count: results.length,
       ...(degraded && { degraded: true }),
-      ...(dateWindow && { dateWindow: {
-        label: dateWindow.label,
-        start: dateWindow.start.toISOString(),
-        end: dateWindow.end.toISOString(),
-        display: formatDateWindow(dateWindow)
-      }})
+      durationMs: Date.now() - startedAt
     }
     
-    console.log(`[SALES] lat=${latitude},lng=${longitude},km=${distanceKm},dateRange=${dateRange},cats=${categories.join(',')},q=${q} -> returned=${results.length} degraded=${degraded}`)
+    console.log(`[SALES] Final result: ${results.length} sales, degraded=${degraded}, duration=${Date.now() - startedAt}ms`)
     
     return NextResponse.json(response)
     
@@ -217,25 +222,25 @@ export async function POST(request: NextRequest) {
     const supabase = createSupabaseServerClient()
     const body = await request.json()
     
-    const { title, description, address, city, state, zip, lat, lng, start_at, end_at, tags, contact } = body
+    const { title, description, address, city, state, zip_code, lat, lng, date_start, time_start, date_end, time_end, tags, contact } = body
     
     const { data, error } = await supabase
-      .from('yard_sales')
+      .from('sales_v2')
       .insert({
         title,
         description,
         address,
         city,
         state,
-        zip,
+        zip_code,
         lat,
         lng,
-        start_at,
-        end_at,
-        tags: tags || [],
-        contact,
-        status: 'active',
-        source: 'manual'
+        date_start,
+        time_start,
+        date_end,
+        time_end,
+        status: 'published',
+        owner_id: (await supabase.auth.getUser()).data.user?.id
       })
       .select()
       .single()

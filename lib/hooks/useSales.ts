@@ -48,7 +48,7 @@ export function useSale(id: string) {
     queryKey: ['sale', id],
     queryFn: async () => {
       const { data, error } = await sb
-        .from('yard_sales')
+        .from('sales_v2')
         .select('*')
         .eq('id', id)
         .single()
@@ -74,7 +74,7 @@ export function useCreateSale() {
       }
 
       const { data, error } = await sb
-        .from('yard_sales')
+        .from('sales_v2')
         .insert([parsed.data])
         .select()
         .single()
@@ -102,7 +102,7 @@ export function useUpdateSale() {
       }
 
       const { data, error } = await sb
-        .from('yard_sales')
+        .from('sales_v2')
         .update(parsed.data)
         .eq('id', id)
         .select()
@@ -127,7 +127,7 @@ export function useDeleteSale() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await sb
-        .from('yard_sales')
+        .from('sales_v2')
         .delete()
         .eq('id', id)
 
@@ -146,7 +146,7 @@ export function useSaleItems(saleId: string) {
     queryKey: ['sale-items', saleId],
     queryFn: async () => {
       const { data, error } = await sb
-        .from('sale_items')
+        .from('items_v2')
         .select('*')
         .eq('sale_id', saleId)
         .order('created_at', { ascending: false })
@@ -169,10 +169,10 @@ export function useFavorites() {
       if (!user) return []
 
       const { data, error } = await sb
-        .from('favorites')
+        .from('favorites_v2')
         .select(`
           sale_id,
-          yard_sales (*)
+          sales_v2 (*)
         `)
         .eq('user_id', user.id)
 
@@ -180,7 +180,7 @@ export function useFavorites() {
         throw new Error(error.message)
       }
 
-      return data?.map((fav: any) => fav.yard_sales).filter(Boolean) as Sale[]
+      return data?.map((fav: any) => fav.sales_v2).filter(Boolean) as Sale[]
     },
   })
 }
