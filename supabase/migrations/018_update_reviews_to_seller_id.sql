@@ -6,6 +6,23 @@ ALTER TABLE reviews
 ADD COLUMN IF NOT EXISTS address text,
 ADD COLUMN IF NOT EXISTS owner_id uuid REFERENCES auth.users(id) ON DELETE CASCADE;
 
+-- Populate existing reviews with address and owner_id data (before renaming)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'reviews' AND column_name = 'owner_id'
+    ) THEN
+        UPDATE reviews 
+        SET 
+          address = ys.address,
+          owner_id = ys.owner_id
+        FROM yard_sales ys 
+        WHERE reviews.sale_id = ys.id
+          AND reviews.address IS NULL;
+    END IF;
+END $$;
+
 -- Check if owner_id column exists before renaming
 DO $$
 BEGIN
@@ -16,15 +33,6 @@ BEGIN
         ALTER TABLE reviews RENAME COLUMN owner_id TO seller_id;
     END IF;
 END $$;
-
--- Populate existing reviews with address and owner_id data
-UPDATE reviews 
-SET 
-  address = ys.address,
-  owner_id = ys.owner_id
-FROM yard_sales ys 
-WHERE reviews.sale_id = ys.id
-  AND reviews.address IS NULL;
 
 -- Update the unique constraint to use seller_id
 ALTER TABLE reviews 
