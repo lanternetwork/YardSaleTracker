@@ -7,7 +7,7 @@ export async function GET() {
     
     // Test basic database connection
     const { data: testData, error: testError } = await supabase
-      .from('yard_sales')
+      .from('sales')
       .select('id, title, city, lat, lng, status')
       .limit(5)
     
@@ -36,8 +36,8 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       message: 'Database connection successful',
-      yard_sales_count: testData?.length || 0,
-      yard_sales_data: testData,
+      sales_count: testData?.length || 0,
+      sales_data: testData,
       sales_v2_available: !viewError,
       sales_v2_count: viewData?.length || 0,
       sales_v2_data: viewData,
