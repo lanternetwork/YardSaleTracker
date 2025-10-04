@@ -227,6 +227,19 @@ export async function GET(request: NextRequest) {
           sample: directData?.[0],
           error: directError?.message
         })
+        
+        // Also check yard_sales table directly
+        console.log(`[SALES][DEBUG] Checking yard_sales table directly...`)
+        const { data: yardSalesData, error: yardSalesError } = await supabase
+          .from('yard_sales')
+          .select('id, title, city, state, lat, lng, status')
+          .limit(5)
+        console.log(`[SALES][DEBUG] Direct yard_sales query:`, {
+          hasData: !!yardSalesData,
+          dataLength: yardSalesData?.length || 0,
+          sample: yardSalesData?.[0],
+          error: yardSalesError?.message
+        })
       }
       if (bboxError && (bboxError as any).code === '42501') {
         console.log('[SALES][ERROR][BOUNDING_BOX] RLS denied; attempting anon-friendly public view if available')
