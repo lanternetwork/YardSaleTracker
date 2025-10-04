@@ -36,11 +36,11 @@ export default function SalesMap({
 
   // Initialize supercluster
   const clusterIndex = useMemo(() => {
-    console.log('[SalesMap] Processing sales data:', {
-      totalSales: sales.length,
-      salesWithCoords: sales.filter(sale => sale.lat && sale.lng).length,
-      sampleSale: sales[0]
-    })
+    console.log('[SalesMap] Processing sales data:')
+    console.log('  - Total sales:', sales.length)
+    console.log('  - Sales with coords:', sales.filter(sale => sale.lat && sale.lng).length)
+    console.log('  - Sample sale:', sales[0])
+    console.log('  - All sales:', sales)
     
     const index = new Supercluster({
       radius: 40, // Cluster radius in pixels
@@ -88,12 +88,12 @@ export default function SalesMap({
     const clusters = clusterIndex.getClusters(bounds, Math.floor(viewState.zoom))
     const individualPoints = clusters.filter(cluster => !cluster.properties.cluster)
     
-    console.log('[SalesMap] Clusters generated:', {
-      totalClusters: clusters.length,
-      individualPoints: individualPoints.length,
-      viewState: viewState,
-      bounds: bounds
-    })
+    console.log('[SalesMap] Clusters generated:')
+    console.log('  - Total clusters:', clusters.length)
+    console.log('  - Individual points:', individualPoints.length)
+    console.log('  - View state:', viewState)
+    console.log('  - Bounds:', bounds)
+    console.log('  - Clusters:', clusters)
     
     return { clusters, individualPoints }
   }, [clusterIndex, viewState])
@@ -148,7 +148,10 @@ export default function SalesMap({
 
   // Token via util for flexibility
   const token = getMapboxToken()
-  console.log('[SalesMap] Mapbox token check:', { hasToken: !!token, tokenLength: token.length })
+  console.log('[SalesMap] Mapbox token check:')
+  console.log('  - Has token:', !!token)
+  console.log('  - Token length:', token.length)
+  console.log('  - Token (first 10 chars):', token.substring(0, 10))
   
   if (!token) {
     return (
