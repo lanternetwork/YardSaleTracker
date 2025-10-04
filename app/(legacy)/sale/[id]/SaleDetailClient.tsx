@@ -175,7 +175,7 @@ export function SaleDetailClient({ sale }: SaleDetailClientProps) {
 
       <div className="mt-8 pt-6 border-t">
         <a 
-          href="/explore" 
+          href="/sales" 
           className="text-amber-600 hover:text-amber-700 font-medium"
         >
           ← Back to all sales
