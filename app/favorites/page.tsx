@@ -54,7 +54,7 @@ export default function Favorites() {
                   Browse sales and click the heart icon to save the ones you're interested in.
                 </p>
                 <a 
-                  href="/explore" 
+                  href="/sales" 
                   className="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
                 >
                   Browse Sales →
