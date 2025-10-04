@@ -206,6 +206,12 @@ export async function GET(request: NextRequest) {
       }
 
       let { data: bboxData, error: bboxError } = await query
+      console.log(`[SALES][DEBUG] Database query result:`, {
+        hasData: !!bboxData,
+        dataLength: bboxData?.length || 0,
+        firstRow: bboxData?.[0],
+        error: bboxError?.message
+      })
       if (bboxError && (bboxError as any).code === '42501') {
         console.log('[SALES][ERROR][BOUNDING_BOX] RLS denied; attempting anon-friendly public view if available')
       }
