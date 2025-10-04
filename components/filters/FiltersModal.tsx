@@ -74,7 +74,7 @@ export default function FiltersModal({ isOpen, onClose, className = '' }: Filter
     const categories = searchParams.get('cat') ? searchParams.get('cat')!.split(',') : []
 
     setFilters({
-      distance: Math.max(1, Math.min(100, distance)),
+      distance: Math.max(5, Math.min(100, distance)),
       dateRange: { 
         type: dateType as DateRange['type'], 
         startDate, 
@@ -252,8 +252,9 @@ function FiltersContent({
         <div className="py-2">
           <input
             type="range"
-            min="1"
+            min="5"
             max="100"
+            step="5"
             value={filters.distance}
             onChange={(e) => onDistanceChange(parseInt(e.target.value))}
             aria-label={`Distance: ${filters.distance} miles`}
@@ -261,7 +262,7 @@ function FiltersContent({
           />
         </div>
         <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>1 mi</span>
+          <span>5 mi</span>
           <span>100 mi</span>
         </div>
       </div>
