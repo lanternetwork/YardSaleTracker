@@ -72,6 +72,28 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     return initialSales
   })
   const [loading, setLoading] = useState(false)
+  const [showLoading, setShowLoading] = useState(false) // Delayed loading state
+  
+  // Add delay to loading message to prevent flash
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout
+    
+    if (loading || (sales.length === 0 && preloadedSales.length === 0)) {
+      // Show loading after 300ms delay
+      timeoutId = setTimeout(() => {
+        setShowLoading(true)
+      }, 300)
+    } else {
+      // Hide loading immediately when data is available
+      setShowLoading(false)
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [loading, sales.length, preloadedSales.length])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
@@ -381,11 +403,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
           {/* Sales Grid */}
           <div className="mb-6">
-            {loading || (sales.length === 0 && preloadedSales.length === 0) ? (
+            {showLoading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading yard sales...</span>
-                <div className="text-xs text-gray-400 mt-2">Debug: loading={loading}, sales={sales.length}, preloaded={preloadedSales.length}</div>
               </div>
             ) : (
               <>
