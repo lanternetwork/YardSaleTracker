@@ -27,10 +27,10 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protected routes that require authentication
-  const protectedRoutes = ['/sell', '/favorites', '/account']
-  const isProtectedRoute = protectedRoutes.some(route => 
-    req.nextUrl.pathname.startsWith(route)
-  )
+  const isProtectedRoute = 
+    req.nextUrl.pathname.startsWith('/favorites') ||
+    req.nextUrl.pathname.startsWith('/account') ||
+    (req.nextUrl.pathname.startsWith('/sell/') && req.nextUrl.pathname.includes('/edit'))
 
   // If accessing a protected route without authentication
   if (isProtectedRoute && !user) {

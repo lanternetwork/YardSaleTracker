@@ -7,6 +7,7 @@ import { SaleSchema } from '@/lib/zodSchemas'
 import CloudinaryUploadWidget from '@/components/upload/CloudinaryUploadWidget'
 import ImageThumbnailGrid from '@/components/upload/ImageThumbnailGrid'
 import { useToast } from '@/components/ui/Toast'
+import { useAuth } from '@/lib/hooks/useAuth'
 
 interface SaleFormProps {
   initialData?: Partial<SaleInput>
@@ -22,8 +23,10 @@ interface FieldError {
 export default function SaleForm({ initialData, isEdit = false, saleId }: SaleFormProps) {
   const router = useRouter()
   const { success: toastSuccess, error: toastError } = useToast()
+  const { data: user, isLoading: authLoading } = useAuth()
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<FieldError[]>([])
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [formData, setFormData] = useState<Partial<SaleInput>>({
     title: initialData?.title || '',
     description: initialData?.description || '',
@@ -89,6 +92,12 @@ export default function SaleForm({ initialData, isEdit = false, saleId }: SaleFo
       }))
       setErrors(fieldErrors)
       toastError('Please fix the errors below')
+      return
+    }
+
+    // Check authentication before submission
+    if (!user && !authLoading) {
+      setShowLoginPrompt(true)
       return
     }
 
@@ -436,5 +445,34 @@ export default function SaleForm({ initialData, isEdit = false, saleId }: SaleFo
         </button>
       </div>
     </form>
+
+    {/* Login Prompt Modal */}
+    {showLoginPrompt && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sign in to post your sale</h3>
+          <p className="text-gray-600 mb-6">
+            You need to create an account or sign in to post your yard sale. This helps us keep the platform safe and allows you to manage your listings.
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setShowLoginPrompt(false)
+                router.push('/auth/signin?returnTo=/sell/new')
+              }}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => setShowLoginPrompt(false)}
+              className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   )
 }
