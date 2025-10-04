@@ -1,55 +1,53 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
-export const dynamic = 'force-dynamic'
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = createSupabaseServerClient()
     
-    // Test basic connection with simple query
-    console.log('[TEST-DB] Testing yard_sales table...')
-    const { data, error } = await supabase
+    // Test basic database connection
+    const { data: testData, error: testError } = await supabase
       .from('yard_sales')
-      .select('id, title, city, state, lat, lng')
-      .eq('status', 'active')
+      .select('id, title, city, lat, lng, status')
       .limit(5)
     
-    console.log('[TEST-DB] Query result:', { data: data?.length, error: error?.message })
+    if (testError) {
+      return NextResponse.json({
+        ok: false,
+        error: 'Database connection failed',
+        details: testError.message
+      })
+    }
     
-    if (error) {
-      console.error('[TEST-DB] Database error:', error)
-      
-      // Try to get table info
-      const { data: tableInfo, error: tableError } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .limit(10)
-      
-      return NextResponse.json({ 
-        ok: false, 
-        error: 'Database query failed',
-        details: error.message,
-        code: error.code,
-        availableTables: tableInfo?.map(t => t.table_name) || [],
-        tableError: tableError?.message
-      }, { status: 500 })
+    // Test sales_v2 view if it exists
+    let viewData = null
+    let viewError = null
+    try {
+      const { data, error } = await supabase
+        .from('sales_v2')
+        .select('id, title, city, lat, lng')
+        .limit(5)
+      viewData = data
+      viewError = error
+    } catch (err) {
+      viewError = err
     }
     
     return NextResponse.json({
       ok: true,
-      count: data?.length || 0,
-      data: data || [],
-      message: 'Database connection successful'
+      message: 'Database connection successful',
+      yard_sales_count: testData?.length || 0,
+      yard_sales_data: testData,
+      sales_v2_available: !viewError,
+      sales_v2_count: viewData?.length || 0,
+      sales_v2_data: viewData,
+      view_error: viewError?.message || null
     })
-    
-  } catch (error: any) {
-    console.error('[TEST-DB] Unexpected error:', error)
-    return NextResponse.json({ 
-      ok: false, 
-      error: 'Internal server error',
-      details: error.message
-    }, { status: 500 })
+  } catch (error) {
+    return NextResponse.json({
+      ok: false,
+      error: 'API error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    })
   }
 }
