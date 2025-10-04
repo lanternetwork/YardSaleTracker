@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const { data: salesData, error: salesError } = await supabase
       .from('sales')
       .select('*')
-      .eq('status', 'published')
+      .in('status', ['published', 'active'])
       .not('lat', 'is', null)
       .not('lng', 'is', null)
     
