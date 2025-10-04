@@ -73,6 +73,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   })
   const [loading, setLoading] = useState(false)
   const [showLoading, setShowLoading] = useState(false) // Delayed loading state
+  const [debouncedDistance, setDebouncedDistance] = useState(filters.distance || 25)
   
   // Add delay to loading message to prevent flash
   useEffect(() => {
@@ -94,6 +95,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       }
     }
   }, [loading, sales.length, preloadedSales.length])
+
+  // Debounce distance changes to reduce slider lag
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedDistance(filters.distance || 25)
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [filters.distance])
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
@@ -172,7 +182,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     const params: GetSalesParams = {
       lat: filters.lat,
       lng: filters.lng,
-      distanceKm: (filters.distance || 25) * 1.60934, // Convert miles to km
+      distanceKm: debouncedDistance * 1.60934, // Convert miles to km
       city: filters.city,
       categories: filters.categories.length > 0 ? filters.categories : undefined,
       dateRange: filters.dateRange !== 'any' ? filters.dateRange : undefined,
@@ -228,7 +238,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     } finally {
       setLoading(false)
     }
-  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange, cursor])
+  }, [filters.lat, filters.lng, debouncedDistance, filters.city, filters.categories, filters.dateRange, cursor])
 
   useEffect(() => {
     console.log(`[SALES] Filters changed: lat=${filters.lat}, lng=${filters.lng}, city=${filters.city}`)
@@ -243,7 +253,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     }
     
     fetchSales()
-  }, [filters.lat, filters.lng, filters.distance, filters.city, filters.categories, filters.dateRange, usingPreloadedSales, preloadedSales.length])
+  }, [filters.lat, filters.lng, debouncedDistance, filters.city, filters.categories, filters.dateRange, usingPreloadedSales, preloadedSales.length])
 
 
   // Removed location detection to prevent pin UI
