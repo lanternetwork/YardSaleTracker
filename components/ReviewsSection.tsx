@@ -36,10 +36,21 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
 
   const fetchReviews = async () => {
     try {
+      // First get the sale's address and owner_id
+      const { data: saleData, error: saleError } = await supabase
+        .from('yard_sales')
+        .select('address, owner_id')
+        .eq('id', saleId)
+        .single()
+
+      if (saleError) throw saleError
+
+      // Then fetch reviews using dual-link (address + owner_id)
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
-        .eq('sale_id', saleId)
+        .eq('address', saleData.address)
+        .eq('owner_id', saleData.owner_id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -55,10 +66,21 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
     if (!user) return
 
     try {
+      // First get the sale's address and owner_id
+      const { data: saleData, error: saleError } = await supabase
+        .from('yard_sales')
+        .select('address, owner_id')
+        .eq('id', saleId)
+        .single()
+
+      if (saleError) throw saleError
+
+      // Then fetch user's review using dual-link (address + owner_id + user_id)
       const { data, error } = await supabase
         .from('reviews')
         .select('*')
-        .eq('sale_id', saleId)
+        .eq('address', saleData.address)
+        .eq('owner_id', saleData.owner_id)
         .eq('user_id', user.id)
         .single()
 
@@ -81,9 +103,20 @@ export default function ReviewsSection({ saleId, averageRating = 0, totalReviews
     setIsSubmitting(true)
 
     try {
+      // First get the sale's address and owner_id
+      const { data: saleData, error: saleError } = await supabase
+        .from('yard_sales')
+        .select('address, owner_id')
+        .eq('id', saleId)
+        .single()
+
+      if (saleError) throw saleError
+
       const reviewData = {
         sale_id: saleId,
         user_id: user.id,
+        address: saleData.address,
+        owner_id: saleData.owner_id,
         rating,
         comment: comment.trim() || null
       }
