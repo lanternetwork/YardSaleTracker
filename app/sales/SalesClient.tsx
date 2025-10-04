@@ -214,8 +214,8 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
             console.log(`[SALES] First sale from API:`, data.data[0])
             console.log(`[SALES] First sale lat:`, data.data[0].lat)
             console.log(`[SALES] First sale lng:`, data.data[0].lng)
-            console.log(`[SALES] First sale latitude:`, data.data[0].latitude)
-            console.log(`[SALES] First sale longitude:`, data.data[0].longitude)
+            console.log(`[SALES] First sale latitude:`, (data.data[0] as any).latitude)
+            console.log(`[SALES] First sale longitude:`, (data.data[0] as any).longitude)
           }
       
       if (data.ok) {
