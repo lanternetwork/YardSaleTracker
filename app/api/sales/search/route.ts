@@ -42,36 +42,65 @@ export async function GET(request: NextRequest) {
 
     console.log(`[SALES_SEARCH] params lat=${lat}, lng=${lng}, distKm=${distance}, city=${city}, cats=${categories?.join(',')}, limit=${limit}`)
 
-    // Build query using yard_sales table
-    let query = supabase
-      .from('yard_sales')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(limit)
+    // Use the new RPC function for spatial search
+    let sales: any[] = []
+    let error: any = null
 
-    // Apply location filter
-    if (lat && lng && distance) {
-      const latRange = distance / 111 // 1 degree ≈ 111 km
-      const lngRange = distance / (111 * Math.cos(lat * Math.PI / 180)) // Adjust for latitude
-      query = query
-        .gte('lat', lat - latRange)
-        .lte('lat', lat + latRange)
-        .gte('lng', lng - lngRange)
-        .lte('lng', lng + lngRange)
+    if (lat && lng) {
+      // Use PostGIS spatial search
+      const { data: postgisData, error: postgisError } = await supabase
+        .rpc('search_sales_within_distance_v2', {
+          p_lat: lat,
+          p_lng: lng,
+          p_distance_km: distance,
+          p_start_date: null,
+          p_end_date: null,
+          p_categories: categories || null,
+          p_query: city || null,
+          p_limit: limit,
+          p_offset: 0
+        })
+
+      if (postgisError) {
+        console.log(`[SALES_SEARCH] PostGIS failed: ${postgisError.message}, falling back to bbox`)
+        
+        // Fallback to bbox search
+        const { data: bboxData, error: bboxError } = await supabase
+          .rpc('search_sales_bbox_v2', {
+            p_lat: lat,
+            p_lng: lng,
+            p_distance_km: distance,
+            p_start_date: null,
+            p_end_date: null,
+            p_categories: categories || null,
+            p_query: city || null,
+            p_limit: limit,
+            p_offset: 0
+          })
+
+        if (bboxError) {
+          error = bboxError
+        } else {
+          sales = bboxData || []
+        }
+      } else {
+        sales = postgisData || []
+      }
+    } else {
+      // No location provided, use basic query on sales_v2
+      const { data: basicData, error: basicError } = await supabase
+        .from('sales_v2')
+        .select('*')
+        .eq('status', 'published')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (basicError) {
+        error = basicError
+      } else {
+        sales = basicData || []
+      }
     }
-
-    // Apply city filter
-    if (city) {
-      query = query.ilike('city', `%${city}%`)
-    }
-
-    // Apply category filter
-    if (categories && categories.length > 0) {
-      query = query.overlaps('tags', categories)
-    }
-
-    const { data: sales, error } = await query
 
     if (error) {
       console.error('Sales search error:', error)
