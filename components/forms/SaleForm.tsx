@@ -140,6 +140,7 @@ export default function SaleForm({ initialData, isEdit = false, saleId }: SaleFo
   ]
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div>
@@ -474,5 +475,6 @@ export default function SaleForm({ initialData, isEdit = false, saleId }: SaleFo
         </div>
       </div>
     )}
+    </>
   )
 }
