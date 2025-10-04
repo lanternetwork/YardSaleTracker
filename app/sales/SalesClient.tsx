@@ -205,6 +205,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
 
     try {
       console.log(`[SALES] Fetching from: /api/sales?${queryString}`)
+      console.log(`[SALES] API params:`, params)
       const res = await fetch(`/api/sales?${queryString}`)
       const data = await res.json()
       console.log(`[SALES] API response:`, data)
@@ -252,6 +253,12 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       setUsingPreloadedSales(false)
     }
     
+    console.log(`[SALES] About to call fetchSales with filters:`, {
+      lat: filters.lat,
+      lng: filters.lng,
+      distance: debouncedDistance,
+      dateRange: filters.dateRange
+    })
     fetchSales()
   }, [filters.lat, filters.lng, debouncedDistance, filters.city, filters.categories, filters.dateRange, usingPreloadedSales, preloadedSales.length])
 
