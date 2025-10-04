@@ -385,6 +385,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <span className="ml-2">Loading yard sales...</span>
+                <div className="text-xs text-gray-400 mt-2">Debug: loading={loading}, sales={sales.length}, preloaded={preloadedSales.length}</div>
               </div>
             ) : (
               <>
