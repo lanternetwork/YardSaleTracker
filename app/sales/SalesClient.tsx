@@ -241,7 +241,7 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
   }, [filters.lat, filters.lng, debouncedDistance, filters.city, filters.categories, filters.dateRange, cursor])
 
   useEffect(() => {
-    console.log(`[SALES] Filters changed: lat=${filters.lat}, lng=${filters.lng}, city=${filters.city}`)
+    console.log(`[SALES] Filters changed: lat=${filters.lat}, lng=${filters.lng}, city=${filters.city}, dateRange=${filters.dateRange}`)
     // Reset pagination on filter change
     setCursor(null)
     setHasMore(false)
