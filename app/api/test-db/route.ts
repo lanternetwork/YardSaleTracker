@@ -41,7 +41,7 @@ export async function GET() {
       sales_v2_available: !viewError,
       sales_v2_count: viewData?.length || 0,
       sales_v2_data: viewData,
-      view_error: viewError?.message || null
+      view_error: viewError ? (viewError as any)?.message || String(viewError) : null
     })
   } catch (error) {
     return NextResponse.json({
