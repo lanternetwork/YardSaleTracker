@@ -246,10 +246,10 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
     setCursor(null)
     setHasMore(false)
     
-    // Don't fetch from API if we're using preloaded sales and this is the initial load
-    if (usingPreloadedSales && preloadedSales.length > 0) {
-      console.log(`[SALES] Skipping API call - using preloaded sales`)
-      return
+    // Clear preloaded sales flag when filters change to allow API calls
+    if (usingPreloadedSales) {
+      console.log(`[SALES] Clearing preloaded sales flag due to filter change`)
+      setUsingPreloadedSales(false)
     }
     
     fetchSales()
