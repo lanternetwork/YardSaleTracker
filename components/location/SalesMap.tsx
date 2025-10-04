@@ -36,6 +36,12 @@ export default function SalesMap({
 
   // Initialize supercluster
   const clusterIndex = useMemo(() => {
+    console.log('[SalesMap] Processing sales data:', {
+      totalSales: sales.length,
+      salesWithCoords: sales.filter(sale => sale.lat && sale.lng).length,
+      sampleSale: sales[0]
+    })
+    
     const index = new Supercluster({
       radius: 40, // Cluster radius in pixels
       maxZoom: 16, // Max zoom level for clustering
@@ -81,6 +87,13 @@ export default function SalesMap({
     
     const clusters = clusterIndex.getClusters(bounds, Math.floor(viewState.zoom))
     const individualPoints = clusters.filter(cluster => !cluster.properties.cluster)
+    
+    console.log('[SalesMap] Clusters generated:', {
+      totalClusters: clusters.length,
+      individualPoints: individualPoints.length,
+      viewState: viewState,
+      bounds: bounds
+    })
     
     return { clusters, individualPoints }
   }, [clusterIndex, viewState])
@@ -135,6 +148,8 @@ export default function SalesMap({
 
   // Token via util for flexibility
   const token = getMapboxToken()
+  console.log('[SalesMap] Mapbox token check:', { hasToken: !!token, tokenLength: token.length })
+  
   if (!token) {
     return (
       <div className="h-96 bg-gray-200 rounded-lg flex items-center justify-center">
