@@ -210,8 +210,24 @@ export async function GET(request: NextRequest) {
         hasData: !!bboxData,
         dataLength: bboxData?.length || 0,
         firstRow: bboxData?.[0],
-        error: bboxError?.message
+        error: bboxError?.message,
+        query: `lat=${latitude}±${latRange}, lng=${longitude}±${lngRange}`
       })
+      
+      // Additional debugging: check if sales_v2 view exists and has data
+      if (!bboxError && (bboxData?.length ?? 0) === 0) {
+        console.log(`[SALES][DEBUG] No results found, checking sales_v2 view directly...`)
+        const { data: directData, error: directError } = await supabase
+          .from('sales_v2')
+          .select('id, title, city, state, lat, lng, status')
+          .limit(5)
+        console.log(`[SALES][DEBUG] Direct sales_v2 query:`, {
+          hasData: !!directData,
+          dataLength: directData?.length || 0,
+          sample: directData?.[0],
+          error: directError?.message
+        })
+      }
       if (bboxError && (bboxError as any).code === '42501') {
         console.log('[SALES][ERROR][BOUNDING_BOX] RLS denied; attempting anon-friendly public view if available')
       }
