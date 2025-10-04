@@ -208,7 +208,15 @@ export default function SalesClient({ initialSales, initialSearchParams, user }:
       console.log(`[SALES] API params:`, params)
       const res = await fetch(`/api/sales?${queryString}`)
       const data = await res.json()
-      console.log(`[SALES] API response:`, data)
+          console.log(`[SALES] API response:`, data)
+          console.log(`[SALES] API response data:`, data.data)
+          if (data.data && data.data.length > 0) {
+            console.log(`[SALES] First sale from API:`, data.data[0])
+            console.log(`[SALES] First sale lat:`, data.data[0].lat)
+            console.log(`[SALES] First sale lng:`, data.data[0].lng)
+            console.log(`[SALES] First sale latitude:`, data.data[0].latitude)
+            console.log(`[SALES] First sale longitude:`, data.data[0].longitude)
+          }
       
       if (data.ok) {
         setSales(prev => cursor ? [...prev, ...(data.data || [])] : (data.data || []))

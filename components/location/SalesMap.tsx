@@ -40,6 +40,10 @@ export default function SalesMap({
     console.log('  - Total sales:', sales.length)
     console.log('  - Sales with coords:', sales.filter(sale => sale.lat && sale.lng).length)
     console.log('  - Sample sale:', sales[0])
+    console.log('  - Sample sale lat:', sales[0]?.lat)
+    console.log('  - Sample sale lng:', sales[0]?.lng)
+    console.log('  - Sample sale latitude:', sales[0]?.latitude)
+    console.log('  - Sample sale longitude:', sales[0]?.longitude)
     console.log('  - All sales:', sales)
     
     const index = new Supercluster({
