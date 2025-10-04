@@ -7,9 +7,9 @@ export async function GET() {
   try {
     const supabase = createSupabaseServerClient()
 
-    // Use public view instead of schema switching
+    // Query the actual sales table
     const { count, error } = await supabase
-      .from('sales_v2')
+      .from('sales')
       .select('*', { count: 'exact' })
       .limit(0)
 
