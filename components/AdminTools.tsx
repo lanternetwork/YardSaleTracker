@@ -28,36 +28,36 @@ export default function AdminTools() {
     setError(null)
 
     try {
-      // Get sale information - try both sales_v2 and sales tables
+      // Get sale information - try different table names
       let sale: any = null
       let saleError: any = null
       
-      // First try sales_v2 view
-      const { data: saleV2Data, error: saleV2Error } = await supabase
-        .from('sales_v2')
-        .select('id, title, address, city, state, address_key, owner_id')
-        .eq('id', saleId.trim())
-        .single()
+      // Try different table names in order of preference
+      const tableNames = ['sales_v2', 'sales', 'yard_sales']
       
-      if (saleV2Error) {
-        console.log('sales_v2 failed, trying sales table:', saleV2Error.message)
-        
-        // Fallback to sales table
-        const { data: saleData, error: saleDataError } = await supabase
-          .from('sales')
-          .select('id, title, address, city, state, address_key, owner_id')
-          .eq('id', saleId.trim())
-          .single()
-        
-        sale = saleData
-        saleError = saleDataError
-      } else {
-        sale = saleV2Data
-        saleError = saleV2Error
+      for (const tableName of tableNames) {
+        try {
+          const { data, error } = await supabase
+            .from(tableName)
+            .select('id, title, address, city, state, address_key, owner_id')
+            .eq('id', saleId.trim())
+            .single()
+          
+          if (!error && data) {
+            sale = data
+            saleError = null
+            console.log(`Found sale in table: ${tableName}`)
+            break
+          } else {
+            console.log(`Table ${tableName} failed:`, error?.message)
+          }
+        } catch (err: any) {
+          console.log(`Table ${tableName} error:`, err.message)
+        }
       }
 
-      if (saleError) {
-        throw new Error(`Sale not found: ${saleError.message}`)
+      if (saleError || !sale) {
+        throw new Error(`Sale not found in any accessible table. Tried: ${tableNames.join(', ')}`)
       }
 
       // Compute review_key
