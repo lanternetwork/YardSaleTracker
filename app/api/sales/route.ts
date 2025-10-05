@@ -119,7 +119,10 @@ export async function GET(request: NextRequest) {
           p_offset: offset
         })
       
+      console.log(`[SALES] PostGIS RPC response:`, { data: postgisData, error: postgisError })
+      
       if (postgisError) {
+        console.log(`[SALES] PostGIS error details:`, postgisError)
         throw new Error(`PostGIS RPC failed: ${postgisError.message}`)
       }
       
@@ -148,6 +151,8 @@ export async function GET(request: NextRequest) {
       
       // Fallback to bbox search
       try {
+        console.log(`[SALES] Attempting bbox search...`)
+        
         const { data: bboxData, error: bboxError } = await supabase
           .rpc('search_sales_bbox_v2', {
             p_lat: latitude,
@@ -161,7 +166,10 @@ export async function GET(request: NextRequest) {
             p_offset: offset
           })
         
+        console.log(`[SALES] Bbox RPC response:`, { data: bboxData, error: bboxError })
+        
         if (bboxError) {
+          console.log(`[SALES] Bbox error details:`, bboxError)
           throw new Error(`Bbox RPC failed: ${bboxError.message}`)
         }
         
