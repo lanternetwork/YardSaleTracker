@@ -102,33 +102,81 @@ export async function GET(request: NextRequest) {
     let results: any[] = []
     let degraded = false
     
-    // 3. Try PostGIS spatial search first
+    // 3. Use direct query to sales_v2 view (RPC functions have permission issues)
     try {
-      console.log(`[SALES] Attempting PostGIS spatial search...`)
+      console.log(`[SALES] Querying sales_v2 view directly...`)
       
-      const { data: postgisData, error: postgisError } = await supabase
-        .rpc('search_sales_within_distance_v2', {
-          p_lat: latitude,
-          p_lng: longitude,
-          p_distance_km: distanceKm,
-          p_start_date: startDateParam,
-          p_end_date: endDateParam,
-          p_categories: categories.length > 0 ? categories : null,
-          p_query: q || null,
-          p_limit: limit,
-          p_offset: offset
-        })
+      // Calculate bounding box for approximate distance filtering
+      const latRange = distanceKm / 111.0 // 1 degree ≈ 111km
+      const lngRange = distanceKm / (111.0 * Math.cos(latitude * Math.PI / 180))
       
-      console.log(`[SALES] PostGIS RPC response:`, { data: postgisData, error: postgisError })
+      const minLat = latitude - latRange
+      const maxLat = latitude + latRange
+      const minLng = longitude - lngRange
+      const maxLng = longitude + lngRange
       
-      if (postgisError) {
-        console.log(`[SALES] PostGIS error details:`, postgisError)
-        throw new Error(`PostGIS RPC failed: ${postgisError.message}`)
+      console.log(`[SALES] Bounding box: lat=${minLat} to ${maxLat}, lng=${minLng} to ${maxLng}`)
+      
+      let query = supabase
+        .from('sales_v2')
+        .select('*')
+        .gte('lat', minLat)
+        .lte('lat', maxLat)
+        .gte('lng', minLng)
+        .lte('lng', maxLng)
+        .in('status', ['published', 'active'])
+      
+      // Add date filters
+      if (startDateParam) {
+        query = query.gte('date_start', startDateParam)
+      }
+      if (endDateParam) {
+        query = query.lte('date_start', endDateParam)
       }
       
-      console.log(`[SALES] PostGIS returned ${postgisData?.length || 0} results`)
+      // Add text search
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,address.ilike.%${q}%`)
+      }
       
-      results = (postgisData || []).map((row: any) => ({
+      const { data: salesData, error: salesError } = await query
+        .order('created_at', { ascending: false })
+        .limit(limit)
+        .range(offset, offset + limit - 1)
+      
+      console.log(`[SALES] Direct query response:`, { data: salesData, error: salesError })
+      
+      if (salesError) {
+        throw new Error(`Direct query failed: ${salesError.message}`)
+      }
+      
+      // Calculate distances and filter by actual distance
+      const salesWithDistance = (salesData || [])
+        .map((sale: any) => {
+          // Haversine distance calculation
+          const R = 6371000 // Earth's radius in meters
+          const dLat = (sale.lat - latitude) * Math.PI / 180
+          const dLng = (sale.lng - longitude) * Math.PI / 180
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                   Math.cos(latitude * Math.PI / 180) * Math.cos(sale.lat * Math.PI / 180) *
+                   Math.sin(dLng/2) * Math.sin(dLng/2)
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+          const distanceM = R * c
+          const distanceKm = distanceM / 1000
+          
+          return {
+            ...sale,
+            distance_m: Math.round(distanceM),
+            distance_km: Math.round(distanceKm * 100) / 100
+          }
+        })
+        .filter((sale: any) => sale.distance_km <= distanceKm)
+        .sort((a: any, b: any) => a.distance_m - b.distance_m)
+        .slice(0, limit)
+      
+      console.log(`[SALES] Filtered ${salesWithDistance.length} sales within ${distanceKm}km`)
+      
+      results = salesWithDistance.map((row: any) => ({
         id: row.id,
         title: row.title,
         starts_at: row.starts_at,
@@ -143,62 +191,14 @@ export async function GET(request: NextRequest) {
         distance_m: row.distance_m
       }))
         
-      console.log(`[SALES] PostGIS success: ${results.length} results`)
+      console.log(`[SALES] Direct query success: ${results.length} results`)
       
-    } catch (postgisError: any) {
-      console.log(`[SALES] PostGIS failed: ${postgisError.message}, falling back to bbox search`)
-      degraded = true
-      
-      // Fallback to bbox search
-      try {
-        console.log(`[SALES] Attempting bbox search...`)
-        
-        const { data: bboxData, error: bboxError } = await supabase
-          .rpc('search_sales_bbox_v2', {
-            p_lat: latitude,
-            p_lng: longitude,
-            p_distance_km: distanceKm,
-            p_start_date: startDateParam,
-            p_end_date: endDateParam,
-            p_categories: categories.length > 0 ? categories : null,
-            p_query: q || null,
-            p_limit: limit,
-            p_offset: offset
-          })
-        
-        console.log(`[SALES] Bbox RPC response:`, { data: bboxData, error: bboxError })
-        
-        if (bboxError) {
-          console.log(`[SALES] Bbox error details:`, bboxError)
-          throw new Error(`Bbox RPC failed: ${bboxError.message}`)
-        }
-        
-        console.log(`[SALES] Bbox returned ${bboxData?.length || 0} results`)
-        
-        results = (bboxData || []).map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          starts_at: row.starts_at,
-          ends_at: row.date_end ? `${row.date_end}T${row.time_end || '23:59:59'}` : null,
-          latitude: row.lat,
-          longitude: row.lng,
-          city: row.city,
-          state: row.state,
-          zip: row.zip_code,
-          categories: [], // TODO: Add categories support
-          cover_image_url: null,
-          distance_m: row.distance_m
-        }))
-        
-        console.log(`[SALES] Bbox success: ${results.length} results`)
-        
-      } catch (bboxError: any) {
-        console.log(`[SALES] Both PostGIS and bbox failed: ${bboxError.message}`)
-        return NextResponse.json({ 
-          ok: false, 
-          error: 'Database query failed' 
-        }, { status: 500 })
-      }
+    } catch (queryError: any) {
+      console.log(`[SALES] Direct query failed: ${queryError.message}`)
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Database query failed' 
+      }, { status: 500 })
     }
     
     // 4. Return normalized response
