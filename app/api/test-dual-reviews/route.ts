@@ -8,11 +8,11 @@ export async function POST(request: NextRequest) {
     // Create test users if they don't exist
     const testUsers = [
       {
-        id: 'test-user-1-1111-1111-1111-111111111111',
+        id: '11111111-1111-1111-1111-111111111111',
         email: 'user1@test.com'
       },
       {
-        id: 'test-user-2-2222-2222-2222-222222222222', 
+        id: '22222222-2222-2222-2222-222222222222', 
         email: 'user2@test.com'
       }
     ]
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Create two sales at the same address by different users
     const sales = [
       {
-        id: 'test-sale-1-1111-1111-1111-111111111111',
+        id: '33333333-3333-3333-3333-333333333333',
         owner_id: testUsers[0].id,
         title: 'User 1 Yard Sale',
         description: 'First user at same address',
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         status: 'published'
       },
       {
-        id: 'test-sale-2-2222-2222-2222-222222222222',
+        id: '44444444-4444-4444-4444-444444444444',
         owner_id: testUsers[1].id,
         title: 'User 2 Yard Sale', 
         description: 'Second user at same address',
