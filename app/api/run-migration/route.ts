@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
     // Split the migration into individual statements
     const statements = migrationSQL
       .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'))
+      .map((stmt: string) => stmt.trim())
+      .filter((stmt: string) => stmt.length > 0 && !stmt.startsWith('--'))
     
-    const results = []
+    const results: any[] = []
     
     for (const statement of statements) {
       if (statement.trim()) {
