@@ -202,14 +202,17 @@ export async function GET(request: NextRequest) {
     }
     
     // 4. Return normalized response
-    const response = {
+    const response: any = {
       ok: true,
       data: results,
       center: { lat: latitude, lng: longitude },
       distanceKm,
       count: results.length,
-      ...(degraded && { degraded: true }),
       durationMs: Date.now() - startedAt
+    }
+    
+    if (degraded) {
+      response.degraded = true
     }
     
     console.log(`[SALES] Final result: ${results.length} sales, degraded=${degraded}, duration=${Date.now() - startedAt}ms`)
