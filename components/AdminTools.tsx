@@ -28,12 +28,33 @@ export default function AdminTools() {
     setError(null)
 
     try {
-      // Get sale information
-      const { data: sale, error: saleError } = await supabase
+      // Get sale information - try both sales_v2 and sales tables
+      let sale: any = null
+      let saleError: any = null
+      
+      // First try sales_v2 view
+      const { data: saleV2Data, error: saleV2Error } = await supabase
         .from('sales_v2')
         .select('id, title, address, city, state, address_key, owner_id')
         .eq('id', saleId.trim())
         .single()
+      
+      if (saleV2Error) {
+        console.log('sales_v2 failed, trying sales table:', saleV2Error.message)
+        
+        // Fallback to sales table
+        const { data: saleData, error: saleDataError } = await supabase
+          .from('sales')
+          .select('id, title, address, city, state, address_key, owner_id')
+          .eq('id', saleId.trim())
+          .single()
+        
+        sale = saleData
+        saleError = saleDataError
+      } else {
+        sale = saleV2Data
+        saleError = saleV2Error
+      }
 
       if (saleError) {
         throw new Error(`Sale not found: ${saleError.message}`)
