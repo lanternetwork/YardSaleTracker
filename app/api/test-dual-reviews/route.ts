@@ -86,83 +86,38 @@ export async function POST(request: NextRequest) {
       }
     ]
 
-    // Insert sales
+    // Insert sales (without address_key for now)
     const { data: insertedSales, error: salesError } = await supabase
       .from('sales_v2')
       .upsert(sales)
-      .select('id, title, address_key, owner_id')
+      .select('id, title, owner_id')
 
     if (salesError) {
       throw new Error(`Failed to create sales: ${salesError.message}`)
     }
 
-    // Create test reviews for each sale
-    const reviews = [
-      // Reviews for User 1's sale
-      {
-        sale_id: sales[0].id,
-        user_id: testUsers[1].id, // User 2 reviews User 1's sale
-        rating: 5,
-        comment: 'Great sale by User 1!'
-      },
-      {
-        sale_id: sales[0].id,
-        user_id: '11111111-1111-1111-1111-111111111111', // Another user reviews User 1's sale
-        rating: 4,
-        comment: 'Good selection at User 1 sale'
-      },
-      // Reviews for User 2's sale  
-      {
-        sale_id: sales[1].id,
-        user_id: testUsers[0].id, // User 1 reviews User 2's sale
-        rating: 3,
-        comment: 'User 2 had okay items'
-      },
-      {
-        sale_id: sales[1].id,
-        user_id: '22222222-2222-2222-2222-222222222222', // Another user reviews User 2's sale
-        rating: 5,
-        comment: 'Excellent sale by User 2!'
-      }
-    ]
+    // Skip reviews creation for now (requires migration)
+    console.log('Skipping reviews creation - migration not run yet')
 
-    const { data: insertedReviews, error: reviewsError } = await supabase
-      .from('reviews_v2')
-      .upsert(reviews)
-
-    if (reviewsError) {
-      throw new Error(`Failed to create reviews: ${reviewsError.message}`)
-    }
-
-    // Get the computed review keys
+    // Get the sales data
     const { data: salesWithKeys, error: keysError } = await supabase
       .from('sales_v2')
-      .select('id, title, address_key, owner_id')
+      .select('id, title, owner_id')
       .in('id', [sales[0].id, sales[1].id])
 
     if (keysError) {
-      throw new Error(`Failed to fetch sales with keys: ${keysError.message}`)
+      throw new Error(`Failed to fetch sales: ${keysError.message}`)
     }
 
-    // Get review counts for each sale
+    // For now, just show the sales without review keys (migration not run yet)
     const reviewCounts = []
     for (const sale of salesWithKeys || []) {
-      const reviewKey = `${sale.address_key}|${sale.owner_id}`
-      const { count, error: countError } = await supabase
-        .from('reviews_v2')
-        .select('*', { count: 'exact', head: true })
-        .eq('review_key', reviewKey)
-
-      if (countError) {
-        throw new Error(`Failed to count reviews: ${countError.message}`)
-      }
-
       reviewCounts.push({
         sale_id: sale.id,
         title: sale.title,
-        address_key: sale.address_key,
-        review_key: reviewKey,
-        review_count: count || 0
+        address_key: 'Migration not run yet',
+        review_key: 'Migration not run yet',
+        review_count: 0
       })
     }
 
