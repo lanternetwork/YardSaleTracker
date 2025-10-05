@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create profiles for test users
-    await supabase
+    const { error: profilesError } = await supabase
       .from('profiles_v2')
       .upsert([
         {
@@ -47,6 +47,12 @@ export async function POST(request: NextRequest) {
           full_name: 'Test User 2'
         }
       ])
+
+    if (profilesError) {
+      console.log('Error creating profiles:', profilesError.message)
+    } else {
+      console.log('Created user profiles successfully')
+    }
 
     // Same address for both sales
     const testAddress = {
