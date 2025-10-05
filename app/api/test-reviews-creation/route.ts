@@ -13,7 +13,10 @@ export async function GET(request: NextRequest) {
       seller_id: '11111111-1111-1111-1111-111111111111',
       sale_id: '33333333-3333-3333-3333-333333333333',
       rating: 5,
-      comment: 'Test review creation'
+      comment: 'Test review creation',
+      address: '123 Test Street',
+      address_key: '123 test street|test city|TS|12345',
+      review_key: '123 test street|test city|TS|12345|11111111-1111-1111-1111-111111111111'
     }
     
     const { data: insertData, error: insertError } = await supabase

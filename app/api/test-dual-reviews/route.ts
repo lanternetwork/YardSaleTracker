@@ -110,14 +110,20 @@ export async function POST(request: NextRequest) {
         user_id: testUsers[1].id, // User 2 reviews User 1's sale
         seller_id: sales[0].owner_id, // User 1 is the seller
         rating: 5,
-        comment: 'Great sale by User 1!'
+        comment: 'Great sale by User 1!',
+        address: '123 Test Street',
+        address_key: '123 test street|test city|TS|12345',
+        review_key: '123 test street|test city|TS|12345|11111111-1111-1111-1111-111111111111'
       },
       {
         sale_id: sales[0].id,
         user_id: '11111111-1111-1111-1111-111111111111', // Another user reviews User 1's sale
         seller_id: sales[0].owner_id, // User 1 is the seller
         rating: 4,
-        comment: 'Good selection at User 1 sale'
+        comment: 'Good selection at User 1 sale',
+        address: '123 Test Street',
+        address_key: '123 test street|test city|TS|12345',
+        review_key: '123 test street|test city|TS|12345|11111111-1111-1111-1111-111111111111'
       },
       // Reviews for User 2's sale  
       {
@@ -125,14 +131,20 @@ export async function POST(request: NextRequest) {
         user_id: testUsers[0].id, // User 1 reviews User 2's sale
         seller_id: sales[1].owner_id, // User 2 is the seller
         rating: 3,
-        comment: 'User 2 had okay items'
+        comment: 'User 2 had okay items',
+        address: '123 Test Street',
+        address_key: '123 test street|test city|TS|12345',
+        review_key: '123 test street|test city|TS|12345|22222222-2222-2222-2222-222222222222'
       },
       {
         sale_id: sales[1].id,
         user_id: '22222222-2222-2222-2222-222222222222', // Another user reviews User 2's sale
         seller_id: sales[1].owner_id, // User 2 is the seller
         rating: 5,
-        comment: 'Excellent sale by User 2!'
+        comment: 'Excellent sale by User 2!',
+        address: '123 Test Street',
+        address_key: '123 test street|test city|TS|12345',
+        review_key: '123 test street|test city|TS|12345|22222222-2222-2222-2222-222222222222'
       }
     ]
 

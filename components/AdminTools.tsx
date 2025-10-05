@@ -28,61 +28,24 @@ export default function AdminTools() {
     setError(null)
 
     try {
-      // Get sale information - try different table names
-      let sale: any = null
-      let saleError: any = null
+      // Use server-side lookup endpoint
+      const response = await fetch(`/api/lookup-sale?saleId=${encodeURIComponent(saleId.trim())}`)
+      const data = await response.json()
       
-      // Try different table names in order of preference
-      const tableNames = ['sales_v2', 'sales', 'yard_sales']
-      
-      for (const tableName of tableNames) {
-        try {
-          const { data, error } = await supabase
-            .from(tableName)
-            .select('id, title, address, city, state, address_key, owner_id')
-            .eq('id', saleId.trim())
-            .single()
-          
-          if (!error && data) {
-            sale = data
-            saleError = null
-            console.log(`Found sale in table: ${tableName}`)
-            break
-          } else {
-            console.log(`Table ${tableName} failed:`, error?.message)
-          }
-        } catch (err: any) {
-          console.log(`Table ${tableName} error:`, err.message)
-        }
-      }
-
-      if (saleError || !sale) {
-        throw new Error(`Sale not found in any accessible table. Tried: ${tableNames.join(', ')}`)
-      }
-
-      // Compute review_key
-      const reviewKey = `${sale.address_key}|${sale.owner_id}`
-
-      // Count reviews for this review_key
-      const { count: reviewCount, error: countError } = await supabase
-        .from('reviews_v2')
-        .select('*', { count: 'exact', head: true })
-        .eq('review_key', reviewKey)
-
-      if (countError) {
-        throw new Error(`Failed to count reviews: ${countError.message}`)
+      if (!data.ok) {
+        throw new Error(data.error)
       }
 
       setReviewInfo({
-        sale_id: sale.id,
-        address_key: sale.address_key,
-        review_key: reviewKey,
-        review_count: reviewCount || 0,
-        seller_id: sale.owner_id,
-        title: sale.title,
-        address: sale.address,
-        city: sale.city,
-        state: sale.state
+        sale_id: data.sale.id,
+        address_key: data.sale.address_key,
+        review_key: data.review_key,
+        review_count: data.review_count,
+        seller_id: data.sale.owner_id,
+        title: data.sale.title,
+        address: data.sale.address,
+        city: data.sale.city,
+        state: data.sale.state
       })
     } catch (err: any) {
       setError(err.message)
