@@ -71,15 +71,15 @@ export function useRealtimeReviews(saleId: string, onUpdate: (payload: any) => v
   useEffect(() => {
     if (!saleId) return
 
-    // Subscribe to reviews changes for this sale
+    // Subscribe to reviews_v2 changes for this sale
     const channel = supabase
-      .channel('reviews_changes')
+      .channel('reviews_v2_changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'reviews',
+          table: 'reviews_v2',
           filter: `sale_id=eq.${saleId}`
         },
         onUpdate
